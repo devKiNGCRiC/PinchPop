@@ -9,9 +9,9 @@ export default function HomePage() {
         Capture. Solve. Remember.
       </h1>
       <p className="max-w-xl text-base leading-[1.5] text-paper-warm">
-        Frame a photo with your hands, pinch to capture it, solve the
-        resulting puzzle with gestures, and keep the polaroid-style memory —
-        PinchPop turns your webcam into a gesture-controlled photobooth.
+        Frame a photo with your hands, pinch to capture it, solve the resulting puzzle with
+        gestures, and keep the polaroid-style memory — PinchPop turns your webcam into a
+        gesture-controlled photobooth.
       </p>
       <Button asChild size="lg">
         <Link to="/game">Start Playing</Link>
