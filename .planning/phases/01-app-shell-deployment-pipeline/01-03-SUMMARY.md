@@ -99,3 +99,7 @@ None - no external service configuration required. (The GitHub Actions workflow 
 ---
 *Phase: 01-app-shell-deployment-pipeline*
 *Completed: 2026-09-09*
+
+## Self-Check: PASSED
+
+All claimed files verified present (vercel.json, .github/workflows/ci.yml, this SUMMARY.md). All claimed commit hashes verified in `git log` (ee6459f, 25ec524, fc078b0).
