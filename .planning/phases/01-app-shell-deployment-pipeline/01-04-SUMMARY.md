@@ -127,3 +127,7 @@ None - no external service configuration required.
 ---
 *Phase: 01-app-shell-deployment-pipeline*
 *Completed: 2026-09-09*
+
+## Self-Check: PASSED
+
+All claimed files verified present (`src/components/NavBar.tsx`, `src/components/MobileNavSheet.tsx`, `src/components/AppShell.tsx`, `src/components/PlaceholderCard.tsx`, this SUMMARY.md). All claimed commit hashes verified in `git log` (`d07a1d1`, `81ccfa7`, `c641ee6`).
