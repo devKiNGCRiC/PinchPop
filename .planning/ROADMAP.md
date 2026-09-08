@@ -41,7 +41,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Move the legacy prototype into `legacy/`, scaffold Vite + React + TypeScript at the repo root, pin Node 22, and configure ESLint + Prettier
+- [x] 01-01-PLAN.md — Move the legacy prototype into `legacy/`, scaffold Vite + React + TypeScript at the repo root, pin Node 22, and configure ESLint + Prettier
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -193,7 +193,7 @@ Phases 2 and 3 are architecturally parallelizable (no shared code) but execute i
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. App Shell & Deployment Pipeline | 0/7 | Planned | - |
+| 1. App Shell & Deployment Pipeline | 1/7 | In Progress|  |
 | 2. Game Engine Port | 0/TBD | Not started | - |
 | 3. Supabase Schema & RLS | 0/TBD | Not started | - |
 | 4. Auth & Guest Mode | 0/TBD | Not started | - |
