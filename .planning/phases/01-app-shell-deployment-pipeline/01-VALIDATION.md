@@ -1,9 +1,9 @@
 ---
 phase: 01
 slug: app-shell-deployment-pipeline
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-09-09
 ---
 
@@ -76,11 +76,11 @@ created: 2026-09-09
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify (lint/typecheck/build) or are explicitly Manual-Only above
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references (typecheck script, CI workflow)
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 60s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify (lint/typecheck/build) or are explicitly Manual-Only above
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (typecheck script, CI workflow)
+- [x] No watch-mode flags
+- [x] Feedback latency < 60s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-09-09 (verified against the 7 finished plans by gsd-plan-checker: every task, including checkpoint tasks, carries an `<automated>` command; no gaps)

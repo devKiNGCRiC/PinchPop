@@ -542,17 +542,19 @@ import "@fontsource/ibm-plex-mono/400.css";
 | A3 | Vercel's zero-config Vite framework preset uses build command `vite build` and output directory `dist` with no extra `vercel.json` `buildCommand`/`outputDirectory` overrides needed | Architecture Patterns / DEPLOY-01 | If Vercel's auto-detection ever requires an explicit `outputDirectory` override for this specific repo layout, the first deploy would fail with a "no output directory found" error — easily caught and fixed during the first Phase 1 deploy attempt, low risk |
 | A4 | The `checks` array form (`{context, app_id}`) for `required_status_checks` is accepted by the current GitHub REST API version alongside the older `contexts` array, based on a WebFetch summary rather than a direct read of the raw OpenAPI schema | Code Examples (`gh` CLI branch protection) | If GitHub has since removed the `checks` form or changed its shape, the `gh api` command would return a 422 error — recoverable immediately at execution time by falling back to the `contexts: [string]` form, which was also confirmed in the same fetch |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Exact GitHub Actions job/check name to require in branch protection**
+1. **Exact GitHub Actions job/check name to require in branch protection** — RESOLVED: see 01-06 Task 1
    - What we know: The workflow file will be named `ci.yml` with a single job (suggested id `ci`), which is what must appear as the required status check context.
    - What's unclear: GitHub sometimes reports the check context as `<workflow name> / <job name>` (e.g., `CI / ci`) rather than just the job id, depending on workflow structure — this can't be known with certainty until the workflow actually runs once.
    - Recommendation: Sequence the Phase 1 plan so the CI workflow is pushed and run (via an initial PR) BEFORE the branch-protection `gh api` task executes, and have the executor read the actual context string from that PR's checks UI or via `gh api repos/{owner}/{repo}/commits/{sha}/status` rather than guessing it in advance.
+   - Resolution: Plan 01-06 Task 1 pushes and waits for a green CI run, then reads the real check-run name from `gh api .../check-runs` before Task 2 sets branch protection with that observed name.
 
-2. **Whether Vercel needs manual "Add New Project" / GitHub App installation as a prerequisite, or can be fully scripted**
+2. **Whether Vercel needs manual "Add New Project" / GitHub App installation as a prerequisite, or can be fully scripted** — RESOLVED: see 01-06 Task 3
    - What we know: DEPLOY-01 requires the app "deployed to Vercel and publicly reachable"; Vercel's git integration auto-deploys on push once a project is linked to the repo.
    - What's unclear: Initial Vercel project creation/GitHub App authorization is typically a one-time interactive step (via Vercel dashboard or `vercel link` CLI prompting for login) — this research did not find a fully non-interactive, secrets-free way to provision a brand-new Vercel project from a fresh GitHub repo without at least one authenticated `vercel` CLI or dashboard action.
    - Recommendation: Plan for one `checkpoint:human-verify`-style task for the initial Vercel project linkage/first deploy, distinct from the fully automatable `vercel.json` and GitHub Actions pieces.
+   - Resolution: Plan 01-06 Task 3 is a `checkpoint:human-action` task for the Vercel project link/first deploy — no scriptable non-interactive path exists, so this is recorded as a real human step rather than automated.
 
 ## Environment Availability
 
