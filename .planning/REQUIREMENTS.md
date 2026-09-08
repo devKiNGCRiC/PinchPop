@@ -119,22 +119,58 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| GAME-01 .. GAME-09 | TBD | Pending |
-| SHELL-01 .. SHELL-05 | TBD | Pending |
-| AUTH-01 .. AUTH-06 | TBD | Pending |
-| GALL-01 .. GALL-04 | TBD | Pending |
-| SCORE-01 .. SCORE-04 | TBD | Pending |
-| LEAD-01 .. LEAD-04 | TBD | Pending |
-| ACHV-01 .. ACHV-03 | TBD | Pending |
-| PROF-01 | TBD | Pending |
-| SHARE-01 .. SHARE-05 | TBD | Pending |
-| DEPLOY-01 .. DEPLOY-03 | TBD | Pending |
+| GAME-01 | Phase 2 - Game Engine Port | Pending |
+| GAME-02 | Phase 2 - Game Engine Port | Pending |
+| GAME-03 | Phase 2 - Game Engine Port | Pending |
+| GAME-04 | Phase 2 - Game Engine Port | Pending |
+| GAME-05 | Phase 2 - Game Engine Port | Pending |
+| GAME-06 | Phase 2 - Game Engine Port | Pending |
+| GAME-07 | Phase 2 - Game Engine Port | Pending |
+| GAME-08 | Phase 2 - Game Engine Port | Pending |
+| GAME-09 | Phase 2 - Game Engine Port | Pending |
+| SHELL-01 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| SHELL-02 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| SHELL-03 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| SHELL-04 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| SHELL-05 | Phase 2 - Game Engine Port | Pending |
+| AUTH-01 | Phase 4 - Auth & Guest Mode | Pending |
+| AUTH-02 | Phase 4 - Auth & Guest Mode | Pending |
+| AUTH-03 | Phase 4 - Auth & Guest Mode | Pending |
+| AUTH-04 | Phase 4 - Auth & Guest Mode | Pending |
+| AUTH-05 | Phase 4 - Auth & Guest Mode | Pending |
+| AUTH-06 | Phase 4 - Auth & Guest Mode | Pending |
+| GALL-01 | Phase 5 - Capture → Save Integration (Results Flow) | Pending |
+| GALL-02 | Phase 6 - Gallery | Pending |
+| GALL-03 | Phase 6 - Gallery | Pending |
+| GALL-04 | Phase 6 - Gallery | Pending |
+| SCORE-01 | Phase 5 - Capture → Save Integration (Results Flow) | Pending |
+| SCORE-02 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| SCORE-03 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| SCORE-04 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| LEAD-01 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| LEAD-02 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| LEAD-03 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| LEAD-04 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| ACHV-01 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| ACHV-02 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| ACHV-03 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| PROF-01 | Phase 7 - Scoring, Speed Run, Leaderboard, Achievements & Profile | Pending |
+| SHARE-01 | Phase 8 - Public Sharing | Pending |
+| SHARE-02 | Phase 8 - Public Sharing | Pending |
+| SHARE-03 | Phase 8 - Public Sharing | Pending |
+| SHARE-04 | Phase 8 - Public Sharing | Pending |
+| SHARE-05 | Phase 8 - Public Sharing | Pending |
+| DEPLOY-01 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| DEPLOY-02 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| DEPLOY-03 | Phase 9 - Deployment Hardening | Pending |
+
+**Note:** Phase 3 (Supabase Schema & RLS) is a pure infrastructure phase with no directly-assigned v1 requirement — it enables Phases 4-8 but delivers no standalone user-facing requirement itself.
 
 **Coverage:**
-- v1 requirements: 42 total
-- Mapped to phases: 0 (populated by roadmap creation)
-- Unmapped: 42 ⚠️ (expected prior to roadmap)
+- v1 requirements: 44 total (corrected from an earlier "42 total" summary that didn't match the itemized list above)
+- Mapped to phases: 44
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-09-09*
-*Last updated: 2026-09-09 after initial definition*
+*Last updated: 2026-09-09 after roadmap creation*
