@@ -1,10 +1,11 @@
 ---
 phase: 1
 slug: app-shell-deployment-pipeline
-status: draft
+status: approved
 shadcn_initialized: false
 preset: "style=new-york, base-color=neutral, css-variables=true, dark-mode-default=true — NOT YET RUN (see Implementation Notes)"
 created: 2026-09-09
+reviewed_at: 2026-09-09
 ---
 
 # Phase 1 — UI Design Contract
@@ -99,7 +100,7 @@ Tailwind v4 default breakpoints, used as-is (no custom scale):
 | `md` | ≥ 768px | Nav bar expands to full horizontal link row; `Display`/`Heading` sizes step up |
 | `lg` | ≥ 1024px | Max content width `1200px`, centered; multi-column placeholder grids (e.g. gallery placeholder grid) |
 
-**Navigation pattern:** persistent top nav bar, dark ink background (`.hud-top` visual lineage), full-width, `h-16` (64px) tall. Left: mono uppercase wordmark "PINCHPOP" in `Label` style, signal-colored. Right (≥768px): horizontal nav links (Home, Play, Gallery, Profile) in `Label` style, active route gets a 2px signal-colored bottom border. Below 768px: wordmark stays left, a 44×44px hamburger icon-button replaces the link row and opens a right-side `Sheet` drawer with the same links stacked vertically.
+**Navigation pattern:** persistent top nav bar, dark ink background (`.hud-top` visual lineage), full-width, `h-16` (64px) tall. Left: mono uppercase wordmark "PINCHPOP" in `Label` style, signal-colored. Right (≥768px): horizontal nav links (Home, Play, Gallery, Profile) in `Label` style, active route gets a 2px signal-colored bottom border. Below 768px: wordmark stays left, a 44×44px hamburger icon-button replaces the link row and opens a right-side `Sheet` drawer with the same links stacked vertically. The hamburger button carries `aria-label="Open navigation menu"` (icon-only control, no visible text).
 
 **Footer:** minimal single line, centered, `Label` style at reduced opacity (`~30%`) on ink background — carries forward the existing `.copyright` pattern. Must include preserved PuzzleCam attribution per PROJECT.md's non-negotiable constraint (e.g. "PinchPop — built on PuzzleCam by Unnati-23").
 
@@ -184,11 +185,11 @@ After init, extend the generated Tailwind theme's CSS variables with the token v
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (FLAG resolved — hamburger `aria-label` added above)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-09-09
