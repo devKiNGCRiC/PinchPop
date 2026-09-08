@@ -77,8 +77,8 @@ Requirements for the Web MVP milestone. Each maps to roadmap phases.
 
 ### Deployment & Production
 
-- [ ] **DEPLOY-01**: The web app is deployed to Vercel and publicly reachable
-- [ ] **DEPLOY-02**: Client-side routes (e.g. `/gallery`, `/share/:slug`) work correctly on direct navigation and page refresh, not only in-app navigation
+- [x] **DEPLOY-01**: The web app is deployed to Vercel and publicly reachable
+- [x] **DEPLOY-02**: Client-side routes (e.g. `/gallery`, `/share/:slug`) work correctly on direct navigation and page refresh, not only in-app navigation
 - [ ] **DEPLOY-03**: Supabase Row Level Security policies are audited across every table before launch to confirm only intended data is exposed
 
 ## v2 Requirements
@@ -160,8 +160,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | SHARE-03 | Phase 8 - Public Sharing | Pending |
 | SHARE-04 | Phase 8 - Public Sharing | Pending |
 | SHARE-05 | Phase 8 - Public Sharing | Pending |
-| DEPLOY-01 | Phase 1 - App Shell & Deployment Pipeline | Pending |
-| DEPLOY-02 | Phase 1 - App Shell & Deployment Pipeline | Pending |
+| DEPLOY-01 | Phase 1 - App Shell & Deployment Pipeline | Complete |
+| DEPLOY-02 | Phase 1 - App Shell & Deployment Pipeline | Complete |
 | DEPLOY-03 | Phase 9 - Deployment Hardening | Pending |
 
 **Note:** Phase 3 (Supabase Schema & RLS) is a pure infrastructure phase with no directly-assigned v1 requirement — it enables Phases 4-8 but delivers no standalone user-facing requirement itself.
