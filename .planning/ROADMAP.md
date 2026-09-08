@@ -33,7 +33,15 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. User can navigate from the home page to a game screen and see a results page after completing the (placeholder) flow
   3. The application layout adapts correctly across desktop and common mobile viewport widths
   4. Direct navigation or a page refresh on any client-side route (e.g. `/gallery`, `/share/:slug`) loads correctly instead of 404ing
-**Plans**: TBD
+**Plans**: 7 plans
+Plans:
+- [ ] 01-01-PLAN.md — Move the legacy prototype into `legacy/`, scaffold Vite + React + TypeScript at the repo root, pin Node 22, and configure ESLint + Prettier
+- [ ] 01-02-PLAN.md — Wire Tailwind v4 and the `@` alias, initialize shadcn/ui, generate the six primitives, and overlay the PinchPop brand tokens and self-hosted fonts
+- [ ] 01-03-PLAN.md — Commit the `vercel.json` SPA catch-all rewrite and the GitHub Actions lint + typecheck + build workflow, dry-run locally
+- [ ] 01-04-PLAN.md — Build the `NavBar`, `MobileNavSheet`, `AppShell`, and `PlaceholderCard` shell components
+- [ ] 01-05-PLAN.md — Create the seven route pages, wire the `createBrowserRouter` tree, mount it, and verify SHELL-01..04 locally
+- [ ] 01-06-PLAN.md — Run CI against the repo, enable branch protection on `main`, and link the Vercel project for the first production deploy
+- [ ] 01-07-PLAN.md — Smoke-check and human-verify DEPLOY-01 and DEPLOY-02 on the live deployment
 **UI hint**: yes
 
 ### Phase 2: Game Engine Port
@@ -136,7 +144,7 @@ Phases 2 and 3 are architecturally parallelizable (no shared code) but execute i
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. App Shell & Deployment Pipeline | 0/TBD | Not started | - |
+| 1. App Shell & Deployment Pipeline | 0/7 | Planned | - |
 | 2. Game Engine Port | 0/TBD | Not started | - |
 | 3. Supabase Schema & RLS | 0/TBD | Not started | - |
 | 4. Auth & Guest Mode | 0/TBD | Not started | - |
