@@ -1,0 +1,12 @@
+node_modules
+dist
+legacy
+package-lock.json
+src/components/ui
+
+# Protected project docs — must never be reformatted by this project's
+# tooling (PROJECT.md attribution requirement, CLAUDE.md/planning artifacts
+# owned by the GSD workflow, not this app's source tree).
+README.md
+CLAUDE.md
+.planning
