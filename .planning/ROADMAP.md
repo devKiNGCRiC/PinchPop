@@ -53,7 +53,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 01-04-PLAN.md — Build the `NavBar`, `MobileNavSheet`, `AppShell`, and `PlaceholderCard` shell components
+- [x] 01-04-PLAN.md — Build the `NavBar`, `MobileNavSheet`, `AppShell`, and `PlaceholderCard` shell components
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
@@ -193,7 +193,7 @@ Phases 2 and 3 are architecturally parallelizable (no shared code) but execute i
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. App Shell & Deployment Pipeline | 3/7 | In Progress|  |
+| 1. App Shell & Deployment Pipeline | 4/7 | In Progress|  |
 | 2. Game Engine Port | 0/TBD | Not started | - |
 | 3. Supabase Schema & RLS | 0/TBD | Not started | - |
 | 4. Auth & Guest Mode | 0/TBD | Not started | - |
