@@ -57,14 +57,14 @@ The gesture-controlled capture → puzzle → polaroid experience must feel exac
 
 ## Context
 
-- **Brownfield starting point:** the existing prototype lives at the repo root (`index.html`, `app.js`, `css/styles.css`) as a single ~1283-line ES module with no build step, no backend, and no auth. Forked from PuzzleCam by Unnati-23 — original attribution/license must be preserved.
+- **Brownfield starting point:** the existing prototype lives at the repo root (`index.html`, `app.js`, `css/styles.css`) as a single ~1283-line ES module with no build step, no backend, and no auth. Forked from PuzzleCam, a prior open-source browser prototype with no license file on record — see Constraints for the current attribution decision.
 - **Codebase map exists:** full architecture, stack, and structure analysis already captured in `.planning/codebase/` (ARCHITECTURE.md, STACK.md, STRUCTURE.md, CONVENTIONS.md, INTEGRATIONS.md, TESTING.md, CONCERNS.md) — read these before planning phases that touch the existing gameplay code.
 - **Hand tracking dependency:** MediaPipe `@mediapipe/tasks-vision` is loaded from a CDN at runtime, and its model is fetched from Google Cloud Storage — the app is non-functional offline or if either CDN is unreachable.
 - **No tests currently exist** in the prototype.
 
 ## Constraints
 
-- **Attribution**: Preserve PuzzleCam's original attribution/license — carried over from the existing README, non-negotiable
+- **Attribution**: No PuzzleCam/original-author attribution is displayed in the app or README (explicit user decision, 2026-09-09) — do not reintroduce it in future phases
 - **Backend**: Supabase only, for Auth, Postgres, and Storage — explicit user choice, matches README's planned architecture
 - **Platform**: Web only for this milestone — the mobile companion app is explicitly excluded and comes later
 - **Browser support**: Chrome/Edge primary targets, Firefox supported, Safari limited — per existing README

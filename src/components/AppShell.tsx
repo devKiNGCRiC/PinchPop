@@ -11,12 +11,8 @@ export function AppShell() {
         <Outlet />
       </main>
       <Separator className="bg-paper-border/20" />
-      {/* PROJECT.md's non-negotiable PuzzleCam attribution constraint — rendered
-          exactly once, here, so no page component needs its own footer. */}
       <footer className="py-4 text-center opacity-30">
-        <p className="font-mono text-xs tracking-wide text-paper-warm uppercase">
-          PinchPop — built on PuzzleCam by Unnati-23
-        </p>
+        <p className="font-mono text-xs tracking-wide text-paper-warm uppercase">PinchPop</p>
       </footer>
     </div>
   );

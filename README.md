@@ -1059,19 +1059,9 @@ The repository documents the evolution from the original browser prototype towar
 
 ---
 
-# 📄 Attribution & License
+# 📄 License
 
-PinchPop was initially developed from the existing **PuzzleCam** prototype by **Unnati-23**.
-
-Original repository:
-
-```text
-https://github.com/Unnati-23/puzzlecam
-```
-
-The original project's license and attribution requirements should be reviewed and preserved where applicable.
-
-PinchPop's licensing will follow the applicable requirements of the original project while documenting the modifications and additions made during its development.
+PinchPop's licensing will be finalized as the project approaches release.
 
 ---
 
