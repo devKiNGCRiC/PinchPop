@@ -145,3 +145,7 @@ None - no external service configuration required.
 ---
 *Phase: 01-app-shell-deployment-pipeline*
 *Completed: 2026-09-09*
+
+## Self-Check: PASSED
+
+All claimed files verified present (package.json, eslint.config.js, .prettierrc.json, .prettierignore, .nvmrc, legacy/app.js, legacy/index.html, legacy/guide.html, legacy/css/styles.css, src/main.tsx, this SUMMARY.md). All claimed commit hashes verified in `git log` (16dab76, 690135a, 0233df7, 3013d0b).
