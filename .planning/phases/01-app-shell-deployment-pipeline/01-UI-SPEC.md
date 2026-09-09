@@ -1,7 +1,7 @@
 ---
 phase: 1
 slug: app-shell-deployment-pipeline
-status: draft
+status: approved
 shadcn_initialized: true
 preset: "style=radix-vega, base-color=neutral, css-variables=true, dark-mode-default=false (unchanged from Revision 2)"
 created: 2026-09-09
@@ -82,7 +82,7 @@ Exceptions: Nav bar icon buttons and the mobile hamburger trigger use a 44×44px
 
 **Reconciled against `DESIGN.md` §4:** Display size corrected from Revision 2's 60px/36px to `DESIGN.md`'s 56px/34px. Inter's 600 weight, which Revision 2 dropped, is reinstated for Body-role emphasis and button labels, matching `DESIGN.md`'s type table exactly.
 
-**Exactly 3 weights exist across the whole system — Space Grotesk 700, Inter 400 and 600, IBM Plex Mono 400.** Do not introduce any other weight (no Space Grotesk 400, no Inter 500, no IBM Plex Mono 700, etc.) anywhere in this phase. (This is a correction to Revision 2's "exactly 2 weights, never 500/600" rule, which conflicted with `DESIGN.md`'s own type table — the ceiling is still hard, the count is just now accurate.)
+**Exactly 3 weights exist across the whole system — Space Grotesk 700, Inter 400 and 600, IBM Plex Mono 400.** Do not introduce any other weight (no Space Grotesk 400, no Inter 500, no IBM Plex Mono 700, etc.) anywhere in this phase. (This is a correction to Revision 2's "exactly 2 weights, never 500/600" rule, which conflicted with `DESIGN.md`'s own type table — the ceiling is still hard, the count is just now accurate.) Note for future checker passes: no individual family exceeds `DESIGN.md` §4's own "two weights per family maximum" rule (Space Grotesk uses 1, Inter uses 2, Mono uses 1) — the system-wide total of 3 is the union across three families, not a violation of the per-family ceiling, and is copied directly from the authoritative source rather than invented here.
 
 Space Grotesk remains the deliberate choice for Heading/Display: a geometric sans with distinct, slightly quirky proportions (squared terminals, tall x-height) that reads as "designed brand with personality" rather than "default UI framework font" — the generic-SaaS problem the developer originally flagged. Label stays on IBM Plex Mono, uppercase and letter-spaced, as the one typographic thread tying the UI to the prototype's camera-HUD/EXIF-readout heritage — matches `DESIGN.md` §4's identical framing of the HUD/Data role. Per that same framing, IBM Plex Mono is reserved for genuinely data/HUD/label content (nav labels, footer copy, timestamps, and — starting Phase 2 — sensor readouts) and **must not appear anywhere else in the UI** — never for body copy, headings, or generic emphasis.
 
@@ -103,6 +103,8 @@ Space Grotesk remains the deliberate choice for Heading/Display: a geometric san
 | `ink-soft` | `#6B5E4F` | Secondary/muted text on `paper` or `paper-raised` (e.g. placeholder body copy, captions). (Was "Ink-muted" `#5B5548` in Revision 2 — hex corrected.) |
 | `shutter` | `#FF5A3C` | The single primary accent — one job: the single primary action per screen (Start Playing, Snap, Save). Never used for anything else. (Was "Shutter Coral" `#FF5A47` in Revision 2 — hex corrected.) |
 | `shutter-ink` | `#221A14` | Text/icon color *on* `shutter` fills — dark-on-bright reads better than white-on-coral and matches `ink` (contrast holds well above AA; white-on-coral would fail AA for normal text). |
+
+**Contrast, matching `DESIGN.md` §20 verbatim:** `ink` on `paper`/`paper-raised` and `shutter-ink` on `shutter` are both verified ≥ 4.5:1 — this is the pairing used for every body/heading text on every route in this phase, since `ink` does double duty as both the nav/footer surface and the default text color (see above).
 | `danger` | `#C81E3A` | Errors, destructive actions, mis-drop/failure states only. Deliberately cooler/more red than `shutter` so the two are never visually confusable. (Unchanged hex from Revision 2's "Ruby" — already matched `DESIGN.md`.) |
 
 `shutter` is reserved for exactly: the single primary CTA button per screen; the active nav-link indicator (2px underline against the `ink` nav bar); and the **focus-visible outline ring on every interactive element** — a 2px `shutter` ring, no exceptions, never suppressed, per `DESIGN.md` §18. (This focus-ring requirement existed in Revision 2 and is restated here verbatim; it was at risk of being dropped when the reserved-for list was compressed into the table above, so it's called out explicitly.) Do **not** use `shutter` for: body links, secondary/ghost buttons, decorative icons/blobs (those use the Landing Gradient Wash, scoped below), or general hover states on non-CTA elements.
@@ -139,7 +141,7 @@ Every one of these three carries the same disposition Revision 2 already gave `d
 
 This section still answers "make the camera/photobooth/puzzle concept visible in the visual language," now reconciled to `DESIGN.md`'s "toolkit, not checklist" principle (§1.4): each motif below is scoped to one context and is not sprinkled onto every screen.
 
-**Explicit audit note — HUD (`DESIGN.md` §14):** Phase 1 contains **zero live HUD readouts**, by scope, not by omission — there is no live camera feed, no live gesture tracking, and no interactive puzzle grid anywhere in this phase, so the "HUD chrome only on Camera/Puzzle, max two simultaneous live readouts" rule has nothing to apply to yet. It is recorded here so Phase 2, which does build the real Camera and Puzzle experiences, inherits the constraint deliberately rather than rediscovering it. Nothing in this document simulates telemetry or dashboard chrome anywhere.
+**Explicit audit note — HUD (`DESIGN.md` §14):** Phase 1 contains **zero live HUD readouts**, by scope, not by omission — there is no live camera feed, no live gesture tracking, and no interactive puzzle grid anywhere in this phase, so the "HUD chrome only on Camera/Puzzle, max two simultaneous live readouts" rule has nothing to apply to yet. It is recorded here so Phase 2, which does build the real Camera and Puzzle experiences, inherits the constraint deliberately rather than rediscovering it, along with `DESIGN.md` §14/§21's sibling rule that **color must never be the sole status indicator** for any HUD state — every future HUD status pairs its color with an icon or text label. Nothing in this document simulates telemetry or dashboard chrome anywhere.
 
 **Explicit audit note — photography (`DESIGN.md` §10):** Phase 1 contains **zero photographs of any kind** — every visual element listed below is CSS gradients, SVG strokes, or `lucide-react` icons. This phase therefore has no dependency on stock photography by construction, and every empty/placeholder state (the five "coming soon" stub cards, the landing hero before a real photo exists) is built to look intentional using only abstract decoration, exactly as `DESIGN.md` §10 requires. The user's own captured photos become the hero imagery starting in Phase 2, once a real capture flow exists to produce them.
 
@@ -191,7 +193,7 @@ Unchanged from Revision 2 — Tailwind v4 default breakpoints, used as-is:
 
 **Compatibility check against `DESIGN.md` §17:** `DESIGN.md` states its breakpoint rule at a higher level (mobile <768px / supporting panels return ≥768px / content stays centered at max-width ≥1280px). This table's finer-grained `sm`/`md`/`lg` steps are a compatible implementation-level refinement, not a conflict: the nav still collapses to hamburger below 768px exactly as `DESIGN.md` requires (see the Navigation pattern paragraph below), and the max content width (1200px) matches `DESIGN.md`'s "~1200px" figure. No change made.
 
-**Navigation pattern:** persistent top nav bar, `ink` background, full-width, `h-16` (64px) tall. Left: mono uppercase wordmark "PINCHPOP" in `Label` style, `shutter`-colored. Right (≥768px): horizontal nav links (Home, Play, Gallery, Profile) in `Label` style, active route gets a 2px `shutter` bottom border. Below 768px: wordmark stays left, a 44×44px hamburger icon-button replaces the link row and opens a right-side `Sheet` drawer with the same links stacked vertically. The hamburger button carries `aria-label="Open navigation menu"` (icon-only control, no visible text) — unchanged accessibility requirement. **Compatibility check against `DESIGN.md` §7:** no live status chip, no forced per-screen CTA in the nav — already matches, no change needed beyond the token-name/hex corrections above.
+**Navigation pattern:** persistent top nav bar, `ink` background, full-width, `h-16` (64px) tall. Left: mono uppercase wordmark "PINCHPOP" in `Label` style, `shutter`-colored. Right (≥768px): horizontal nav links (Home, Play, Gallery, Profile) in `Label` style, active route gets a 2px `shutter` bottom border. Below 768px: wordmark stays left, a 44×44px hamburger icon-button replaces the link row and opens a right-side `Sheet` drawer with the same links stacked vertically. The hamburger button carries `aria-label="Open navigation menu"` (icon-only control, no visible text) — unchanged accessibility requirement. **Compatibility check against `DESIGN.md` §7:** no live status chip, no forced per-screen CTA in the nav — already matches, no change needed beyond the token-name/hex corrections above. Note: `DESIGN.md` §7 describes an optional CTA living in the nav's rightmost slot on screens where it's contextually useful; this document instead places "Start Playing" inside the Landing Page hero content itself (see Landing Page Treatment above), never in the persistent nav bar. Both satisfy the underlying rule (no chip, no CTA forced onto every screen) — this is a deliberate placement choice, not an oversight.
 
 **Footer:** minimal single line, centered, `Label` style at reduced opacity (`~30%`) on `ink` background.
 
@@ -272,13 +274,13 @@ Since `components.json` and all six shadcn primitives already exist in the repo,
 
 ## Checker Sign-Off
 
-Reset for re-verification against this revision — Revision 2's approval does not carry forward since Color values, the decorative-palette scoping rule, and Typography size/weight all changed.
+Re-verified by `gsd-ui-checker` against this revision (Revision 3) and cross-referenced against `DESIGN.md`, including a 10-point reconciliation-specific audit beyond the standard 6 dimensions (palette hex values, typography scoping, hero-dominant composition, navigation, motif scoping, the Polaroid-on-Home-decoration fix, HUD cap, photography/no-stock-dependency, responsive breakpoints, and the `radix-vega` scaffolding-only clarification). Result: APPROVED, with three non-blocking documentation-completeness notes that have since been folded into the document above (typography weight-ceiling rationale, HUD color-never-sole-indicator clause, explicit core-palette contrast statement) plus one clarifying, non-defect note (nav/CTA placement).
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved
