@@ -9,7 +9,7 @@ PinchPop is a gesture-controlled photobooth game: users frame a photo with their
 
 ### Constraints
 
-- **Attribution**: Preserve PuzzleCam's original attribution/license — carried over from the existing README, non-negotiable
+- **Attribution**: No PuzzleCam/original-author attribution is displayed in the app or README (explicit user decision, 2026-09-09) — do not reintroduce it in future phases
 - **Backend**: Supabase only, for Auth, Postgres, and Storage — explicit user choice, matches README's planned architecture
 - **Platform**: Web only for this milestone — the mobile companion app is explicitly excluded and comes later
 - **Browser support**: Chrome/Edge primary targets, Firefox supported, Safari limited — per existing README

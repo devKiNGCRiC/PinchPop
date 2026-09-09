@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 Phase: 01 (app-shell-deployment-pipeline) — EXECUTING
 Plan: 1 of 7
 Status: Executing Phase 01
-Last activity: 2026-09-08 -- Phase 01 execution started
+Last activity: 2026-09-09 - Completed quick task 260909-m96: Reconcile stale attribution instruction in root CLAUDE.md with PROJECT.md
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -75,6 +75,12 @@ None yet.
 - Phase 7 (Scoring/Leaderboard): Anti-cheat session-start/session-submit RPC pattern is a synthesized recommendation, not a single canonical pattern — flagged for a focused research pass during phase planning.
 - Phase 8 (Public Sharing): Open Graph/SSR mechanism for a Vite SPA on Vercel not resolved to a single approach during research — needs a research pass at phase planning time.
 - Phase 4 (Auth/Guest Mode): Supabase anonymous-account cleanup policy (no auto-delete of abandoned guests) needs an explicit product decision (e.g. scheduled deletion after N days) during phase planning.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260909-m96 | Reconcile stale attribution instruction in root CLAUDE.md with PROJECT.md | 2026-09-09 | (pending) | [260909-m96-claude-md-attribution-fix](./quick/260909-m96-claude-md-attribution-fix/) |
 
 ## Deferred Items
 
