@@ -10,11 +10,12 @@
 
 PinchPop is a **coin-op photobooth arcade cabinet, rebuilt for the browser.** Every surface should feel like it was designed by the same small team that built a physical arcade kiosk: warm paper and instant film on the outside, a live optical sensor HUD on the inside, a shutter-red button in the middle that you actually want to press.
 
-Three ideas govern every screen:
+Four ideas govern every screen:
 
-1. **The camera is always the hero.** This is not a dashboard that happens to have a camera feature — it is a camera that happens to have a dashboard around it. Live gesture feedback (pinch state, tracking confidence, shutter countdown) is the most important visual content on any screen where it's relevant, never a decorative afterthought.
+1. **There is always one hero.** Every screen has one dominant element it exists to show off — a live camera feed, a puzzle grid, a captured Polaroid — and that element must visually dominate the page: largest, most central, most colorful. Live gesture feedback (pinch state, tracking confidence, shutter countdown) is the most important visual content on any screen where it's relevant, never a decorative afterthought.
 2. **Physical media, not files.** Every photo is treated as an object — a Polaroid, a contact print, a print strip — with weight, a border, a slight rotation, a piece of tape. Never a plain `<img>` in a plain card.
 3. **Arcade, not laboratory.** HUD chrome (brackets, readouts, monospace data) exists to communicate *this machine is watching your hands right now* — a feeling of aliveness — not to simulate a technical control panel. If a screen has more than two live readouts fighting for attention, cut it down. See §17.
+4. **Toolkit, not checklist.** Every motif described in this document (HUD brackets, Polaroid treatment, puzzle-grid language, decorative gradients) belongs to a specific context, not to every screen. Camera and Puzzle get HUD chrome; Results, Gallery, and captured moments get Polaroid treatment; Home and other promotional surfaces get quiet, sparing decoration and no HUD at all. A screen that reaches for every motif at once has lost the plot — see the per-section scoping in §11–§14 and the summary in §21.
 
 ## 2. Brand Personality
 
@@ -66,9 +67,9 @@ Standard 8-point scale: `4 · 8 · 16 · 24 · 32 · 48 · 64px`. One accessibil
 
 ## 6. Layout Principles
 
-- **Desktop is the primary canvas**, composed as a multi-panel "control room" — center stage (camera/puzzle/photo) flanked by supporting panels (HUD status, gesture guide, score) — but see §14 for the mobile collapse rule; this is not license to skip mobile design.
+- **Centered arcade-kiosk composition with one dominant hero and supporting information around it** — not a multi-panel dashboard. The hero (live camera feed, puzzle grid, captured Polaroid) must always visually dominate the page: it is bigger, more central, and more colorful than anything around it. Supporting cards and panels frame the hero — they announce themselves quietly at the edges, they never compete with it for size, color weight, or attention. See §14 for the mobile collapse rule; that section is not license to skip mobile design.
 - **Center-weighted, not edge-to-edge.** Max content width ~1200px, centered, generous outer margin — echoes an arcade cabinet's bezel, keeps the "screen inside a machine" feeling.
-- **One hero element per screen.** Landing: the live-camera hero card. Puzzle: the 3×3 grid. Results: the Polaroid. Never let a HUD panel visually compete with the hero for size or color weight.
+- **One hero element per screen.** Landing: the live-camera hero card. Puzzle: the 3×3 grid. Results: the Polaroid. Never let a HUD panel or a supporting card visually compete with the hero for size or color weight. If a layout starts to look like a control panel with many equally-weighted boxes, that's the signal to cut panels, not to shrink them.
 - Left-aligned reading columns; hero visuals and score numbers may center.
 
 ## 7. Navigation
@@ -77,7 +78,8 @@ Persistent top bar, `ink` background, 64px tall, centered content column.
 
 - Left: wordmark, `Space Grotesk` bold, `shutter` color.
 - Center/right: four links (Home, Play, Gallery, Profile) in the mono Label style, uppercase, letter-spaced. Active link gets a 2px `shutter`-colored underline.
-- Right-most: a live status chip (token/score count) in `token-gold`, and the single primary CTA in `shutter`.
+- Right-most: the primary CTA in `shutter`, shown only where it's contextually useful (e.g. "Start Playing" on Home) — the nav is not required to carry a CTA on every screen, and never carries more than one.
+- The nav bar carries no live gameplay state. Token counts, scores, streaks, and any other live/session status belong inside the Game experience itself, never in the persistent global chrome — a player who isn't in a game shouldn't see a scoreboard following them around the site.
 - Below 768px: link row collapses to a 44×44px hamburger opening a right-side drawer on the `ink` surface; drawer links dismiss on tap.
 
 ## 8. Buttons
@@ -96,7 +98,11 @@ Two card families, never mixed:
 
 ## 10. Photography Treatment
 
-Real, warm-toned photography throughout (night-market neon, sunlit alleys, arcade interiors) — never stock-photo-flat lighting. A consistent light grade: slightly lifted shadows, warm white balance, mild grain at low opacity — enough to feel "shot on film," not enough to look degraded. Every photo that represents a captured moment (not decorative background imagery) is framed as a **print**, per §11 — it never floats as a bare rectangle.
+**The user's own captured photos are the product's hero imagery.** The moment someone frames a shot and pinches to snap it, that photo — not a curated reference image — is the most important visual content on the page it appears on: largest, most central, given the full print treatment in §11. Nothing in this system is implemented in a way that depends on stock or licensed photography.
+
+Decorative and promotional imagery (Home, empty states, marketing surfaces) is built from things that don't require a photo library: soft abstract gradients, geometric shapes, a sparing halftone-dot or lens-aperture-ring motif, or — once they exist — real captured photos pulled from the gallery. These decorative devices are reserved for landing/promotional surfaces per §21 — they are seasoning for a page that doesn't yet have a live camera or a real photo to show, not a texture layered onto every screen. A screen is not "finished" if it only looks good with a hand-picked hero photo in place; it must read as complete, confident, and on-brand on day one, before a single user photo has been captured. Where a captured-photo treatment (§11) is shown without a real photo yet, use a plain color/gradient card in the same frame shape rather than a placeholder image or lorem-picture.
+
+When a captured photo *is* shown (Puzzle source image, Results, Gallery), apply a consistent light grade so it reads as "shot on the PinchPop booth": slightly lifted shadows, warm white balance, mild grain at low opacity — enough to feel like instant film, not enough to look degraded. Every photo that represents a captured moment is framed as a **print**, per §11 — it never floats as a bare rectangle.
 
 ## 11. Polaroid / Print Treatment
 
@@ -125,7 +131,9 @@ The single most important recurring motif. Every captured/saved photo:
 
 ## 14. HUD Elements
 
-HUD chrome (brackets, mono readouts, status dots) is PinchPop's signature texture — but it is a **spice, not the meal.** Hard rule: **no screen may show more than two simultaneous live-updating HUD readouts.** Everything else is either (a) not shown, (b) moved to a results/summary screen where the moment has passed and detail is welcome, or (c) tucked behind a "details" disclosure. This is the direct, deliberate correction against the most HUD-dense reference concept, which read as a technical dashboard rather than a game.
+HUD chrome (brackets, mono readouts, status dots) is PinchPop's signature texture — but it is a **spice, not the meal.** It appears only where live interaction genuinely requires it: the Camera and Puzzle experiences, where something real is being tracked in real time. It does not appear on Home, Gallery, Profile, Leaderboard, or Results — those screens communicate through typography, color, and the Polaroid treatment instead, never through simulated sensor readouts.
+
+Within Camera and Puzzle, hard rule: **no screen may show more than two simultaneous live-updating HUD readouts.** Everything else is either (a) not shown, (b) moved to a results/summary screen where the moment has passed and detail is welcome, or (c) tucked behind a "details" disclosure. This is the direct, deliberate correction against the most HUD-dense reference concept, which read as a technical dashboard rather than a game.
 
 Every HUD status must pair color with an icon or text label — never color alone.
 
@@ -141,14 +149,14 @@ Pinboard/wall metaphor: prints (per §11) arranged with slight independent rotat
 
 ## 17. Responsive Behavior
 
-The multi-panel "control room" layout is a desktop **enhancement**, not the baseline. Mobile rule, applied consistently:
+The centered arcade-kiosk composition's supporting panels are a desktop **enhancement**, not the baseline — the hero element itself (camera, grid, print) is present and dominant at every width. Mobile rule, applied consistently:
 
 1. Identify each screen's one hero element (camera feed, puzzle grid, Polaroid).
 2. Stack everything else below it in priority order.
 3. Collapse any panel with more than 2 live readouts into a single-line summary with a tap-to-expand disclosure.
 4. Never shrink HUD text below 13px mono / 16px body — reduce readout *count*, not text size, to fit small screens.
 
-Breakpoints: mobile <768px (single column, hamburger nav), tablet/desktop ≥768px (multi-panel layout returns), wide ≥1280px (content stays centered at max-width, never stretches edge-to-edge).
+Breakpoints: mobile <768px (single column, hamburger nav), tablet/desktop ≥768px (supporting panels return around the dominant hero), wide ≥1280px (content stays centered at max-width, never stretches edge-to-edge).
 
 ## 18. Interaction States
 
@@ -187,6 +195,10 @@ One deliberate, orchestrated moment per major flow — not scattered fade-ins:
 - A children's-game register: no bubble fonts, no cartoon mascots, no oversaturated primary-only palette.
 - Numbered step markers on anything that isn't a genuine sequence.
 - Scroll-triggered fade-and-slide-up on every section (§19).
+- A multi-panel dashboard composition anywhere in the app (§6) — the hero always dominates; supporting panels frame it and stay quiet.
+- A persistent, always-visible token/score/status chip in the global navigation (§7) — live gameplay state belongs inside the Game experience only.
+- Any motif used outside its scoped context: HUD chrome outside Camera/Puzzle (§14); Polaroid/print treatment on something that isn't a captured photo (§11); puzzle-grid language outside the Puzzle screen (§12); halftone/aperture/gradient decoration anywhere but Home and other promotional surfaces, and even there, sparingly (§10). Treat every motif in this document as a toolkit entry with one home, not a default to sprinkle everywhere.
+- Making any screen's visual identity depend on a specific stock or reference photo being present — the design must hold up with only abstract/generated decoration and no user photos yet (§10).
 
 ---
 
