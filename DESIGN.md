@@ -1,6 +1,6 @@
 # PinchPop — Visual Design System
 
-**Status:** Recommended direction, pending developer approval. Not yet implemented.
+**Status:** Approved visual direction. Not yet implemented.
 **Source:** Independent analysis of three Google Stitch concept explorations in `design-exploration/` (concept-01, concept-02, concept-03), evaluated against PinchPop's core identity: a gesture-controlled photobooth puzzle game (Camera → Hand Gestures → Capture → Photo Puzzle → Solve → Polaroid Memory → Gallery → Score).
 **Relationship to existing work:** This is an independent recommendation built from the three new references, not a restatement of the in-flight `01-UI-SPEC.md` Revision 2 (cream/coral/Space Grotesk, still awaiting its own browser checkpoint approval). There is real overlap — both land on a warm cream base and a coral primary — because that combination is a genuinely good fit for this brief, not because one was copied into the other. Where this document's specifics diverge from Revision 2, this document is the newer, more deeply-considered recommendation.
 
