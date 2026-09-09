@@ -37,7 +37,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The application layout adapts correctly across desktop and common mobile viewport widths
   4. Direct navigation or a page refresh on any client-side route (e.g. `/gallery`, `/share/:slug`) loads correctly instead of 404ing
 
-**Plans**: 7 plans
+**Plans**: 8 plans
 Plans:
 **Wave 1**
 
@@ -66,6 +66,10 @@ Plans:
 **Wave 7** *(blocked on Wave 6 completion)*
 
 - [ ] 01-07-PLAN.md — Smoke-check and human-verify DEPLOY-01 and DEPLOY-02 on the live deployment
+
+**Wave 8** *(blocked on Wave 5 completion; independent of Waves 6-7)*
+
+- [ ] 01-08-PLAN.md — Apply the 01-UI-SPEC.md Revision 2 palette, type system, and visual motif treatment across the shell and pages, then human-verify the new direction
 
 **UI hint**: yes
 
