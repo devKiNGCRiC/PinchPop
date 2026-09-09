@@ -3,7 +3,7 @@ phase: 01-app-shell-deployment-pipeline
 plan: 05
 subsystem: ui
 tags: [react-router-dom, routing, shadcn, tailwind-v4, app-shell]
-status: AWAITING HUMAN CHECKPOINT
+status: STRUCTURALLY VERIFIED — visual sign-off deferred to 01-08 Task 5 (see Resolution Note, 2026-09-10)
 
 # Dependency graph
 requires:
@@ -160,3 +160,18 @@ None introduced beyond what 01-UI-SPEC.md's placeholder pages intentionally spec
 ## Self-Check: PASSED
 
 All claimed files verified present: `src/pages/{HomePage,GamePage,ResultsPage,GalleryPage,ProfilePage,SharePage,NotFoundPage}.tsx`, `src/router.tsx`, `src/main.tsx`, `index.html`. Both claimed deletions confirmed absent: `src/App.tsx`, `src/assets/react.svg`. Both claimed commit hashes verified in `git log` (`620aaa6`, `a45c08a`).
+
+---
+
+## Resolution Note — 2026-09-10
+
+**Task 3's original checkpoint was never approved or rejected on functional grounds — it was superseded.** The developer ran `npm run dev`, reviewed the app, and stopped the checkpoint specifically because the *visual direction* (Revision 1's dark minimal palette) read as generic/SaaS-like — not because SHELL-01 through SHELL-04's underlying routing/navigation/responsive behavior was broken. That rejection is what triggered the design-exploration review, `DESIGN.md`, and `01-UI-SPEC.md` Revision 3 — all now approved — and Plan 01-08 (regenerated, checker-approved) exists specifically to bring the visual layer into compliance with that new direction.
+
+**What was verified today (automated, not a human/visual judgment):**
+- `npm run lint`, `npm run typecheck`, and `npm run build` all exit 0 against the current committed source.
+- `src/router.tsx` correctly wires all seven routes (`/`, `/game`, `/results`, `/gallery`, `/profile`, `/share/:slug`, `*`) as children of a single `AppShell` nested layout route (D-01, D-03, D-04) — structurally unchanged since this plan's own Task 2.
+- No functional defect was found in the routing/navigation/shell structure this plan built.
+
+**What is deliberately NOT being claimed here:** a human visual approval. The developer's own, real visual sign-off against the current live rendering did not happen for Revision 1's palette (that's the whole reason 01-08 exists), and it would be meaningless to seek it now for a palette that's about to be replaced. Final human visual verification of SHELL-01 through SHELL-04 — the same requirements this plan's Task 3 was meant to confirm — happens at **Plan 01-08's own Task 5 checkpoint**, against the now-approved `DESIGN.md`/`01-UI-SPEC.md` Revision 3 rendering. `REQUIREMENTS.md`'s SHELL-01–04 checkboxes are deliberately left unchecked here for the same reason; they should be marked complete only once that checkpoint is approved.
+
+**Conclusion:** Plan 01-05's *structural* implementation is verified sound and is a safe foundation for Plan 01-08 to build on. Its checkpoint is closed on that basis. No code was changed to reach this conclusion — this is a verification-only resolution.
