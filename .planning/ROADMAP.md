@@ -69,7 +69,7 @@ Plans:
 
 **Wave 8** *(blocked on Wave 5 completion; independent of Waves 6-7)*
 
-- [ ] 01-08-PLAN.md — Apply the 01-UI-SPEC.md Revision 2 palette, type system, and visual motif treatment across the shell and pages, then human-verify the new direction
+- [ ] 01-08-PLAN.md — Apply the DESIGN.md / 01-UI-SPEC.md Revision 3 palette, type system, and context-scoped visual motifs across the shell and pages, then human-verify the new direction
 
 **UI hint**: yes
 
