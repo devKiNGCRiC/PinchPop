@@ -4,8 +4,8 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: context exhaustion at 75% (2026-09-09)
-last_updated: "2026-09-09T19:01:09.210Z"
-last_activity: "2026-09-09 - Completed quick task 260909-m96: Reconcile stale attribution instruction in root CLAUDE.md with PROJECT.md"
+last_updated: "2026-09-10T11:05:02.000Z"
+last_activity: "2026-09-10 - Completed quick task 260910-mug: Reconcile 01-UI-SPEC.md Landing Page Treatment with DESIGN.md's page arc"
 progress:
   total_phases: 9
   completed_phases: 0
@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-09-09)
 Phase: 01 (app-shell-deployment-pipeline) — EXECUTING
 Plan: 1 of 7
 Status: Executing Phase 01
-Last activity: 2026-09-09 - Completed quick task 260909-m96: Reconcile stale attribution instruction in root CLAUDE.md with PROJECT.md
+Last activity: 2026-09-10 - Completed quick task 260910-mug: Reconcile 01-UI-SPEC.md Landing Page Treatment with DESIGN.md's page arc
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -81,6 +81,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260909-m96 | Reconcile stale attribution instruction in root CLAUDE.md with PROJECT.md | 2026-09-09 | (pending) | [260909-m96-claude-md-attribution-fix](./quick/260909-m96-claude-md-attribution-fix/) |
+| 260910-mug | Reconcile 01-UI-SPEC.md Landing Page Treatment with DESIGN.md's page arc (Hero → How PinchPop Works → deferred proof content → Closing CTA → Footer) | 2026-09-10 | bfdf1a1 | [260910-mug-reconcile-ui-spec-page-arc](./quick/260910-mug-reconcile-ui-spec-page-arc/) |
 
 ## Deferred Items
 
