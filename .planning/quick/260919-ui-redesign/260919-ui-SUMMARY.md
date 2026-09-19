@@ -29,3 +29,8 @@ lint, typecheck, format:check, build all exit 0. Real-browser test (headless Chr
 - Puzzle art replaced with four illustrated destinations (Taj Mahal, Hawa Mahal, Kerala backwaters, Ladakh prayer flags). Each solve pins a postmarked polaroid to the Album and stamps the Passport (gallery = Album, profile = Passport).
 - Custom scrollbar (saffron sticker thumb; Firefox gets a colour-only fallback), rebuilt multi-column footer with a tricolour stripe, destination deep links (`/game?art=<id>`), album filter by destination, hover hints on stats.
 - Verified: lint, typecheck, format:check, build exit 0; mouse/touch drag solve in headless Chrome; no horizontal overflow at 375px.
+
+## Follow-up pass: Leaderboard and How to play pages
+- `/leaderboard`: All time / Today (UTC) tabs, destination filter, gold/silver/bronze podium with open spots, ranked table for 4th onward, score rules, and an honest note that online rankings need accounts. Ranks the player's own runs from localStorage (`src/lib/leaderboard.ts`).
+- `/how-to-play`: current controls (mouse, touch, keyboard), the five camera-mode gestures from the legacy guide (marked coming soon), scoring tips with a worked example, and an FAQ.
+- Nav now has 5 links (Leaderboard added); How to play lives in the footer and mobile menu and is linked from Home and Play.

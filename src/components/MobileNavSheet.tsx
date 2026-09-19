@@ -1,13 +1,20 @@
 import { Menu } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
-import { NAV_LINKS } from "@/components/nav-links";
+import { ALL_LINKS } from "@/components/nav-links";
 import { Wordmark } from "@/components/Wordmark";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 // The three stripes of the flag, then white: saffron, white, green, marigold.
-const CARD_COLORS = ["bg-saffron", "bg-white", "bg-leaf text-white", "bg-marigold"];
+const CARD_COLORS = [
+  "bg-saffron",
+  "bg-white",
+  "bg-leaf text-white",
+  "bg-marigold",
+  "bg-coral",
+  "bg-white",
+];
 
 export function MobileNavSheet() {
   return (
@@ -30,7 +37,7 @@ export function MobileNavSheet() {
           <Wordmark />
         </div>
         <nav aria-label="Primary" className="mt-2 flex flex-col gap-3 px-5">
-          {NAV_LINKS.map((link, i) => (
+          {ALL_LINKS.map((link, i) => (
             <SheetClose asChild key={link.to}>
               <NavLink
                 to={link.to}

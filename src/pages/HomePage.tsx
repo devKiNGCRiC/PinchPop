@@ -112,7 +112,13 @@ export default function HomePage() {
             </div>
             <p className="mt-6 max-w-md text-base text-white/75">
               Camera mode is on the way. Right now you play with your mouse or finger, and every
-              solve is saved on this device.
+              solve is saved on this device.{" "}
+              <Link
+                to="/how-to-play"
+                className="font-semibold text-marigold underline underline-offset-4"
+              >
+                New here? See how to play.
+              </Link>
             </p>
           </div>
 

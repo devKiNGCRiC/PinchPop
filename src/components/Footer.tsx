@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
-import { NAV_LINKS } from "@/components/nav-links";
+import { ALL_LINKS } from "@/components/nav-links";
 import { Wordmark } from "@/components/Wordmark";
 import { ART_LIST } from "@/lib/art";
 
@@ -34,7 +34,7 @@ export function Footer() {
             Explore
           </h2>
           <ul className="mt-3">
-            {NAV_LINKS.map((link) => (
+            {ALL_LINKS.map((link) => (
               <li key={link.to}>
                 <Link to={link.to} className={linkClass}>
                   {link.label}

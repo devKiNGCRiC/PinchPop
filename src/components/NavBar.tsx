@@ -43,7 +43,7 @@ export function NavBar() {
 
         <div className="flex items-center gap-2">
           {pathname === "/game" ? null : (
-            <PopLink to="/game" tone="saffron" size="sm" className="hidden sm:inline-flex">
+            <PopLink to="/game" tone="saffron" size="sm" className="hidden lg:inline-flex">
               Play now
             </PopLink>
           )}

@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Check, Eye, EyeOff, Lock, Shuffle } from "lucide-react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 import { Art } from "@/components/Art";
 import { Confetti } from "@/components/Confetti";
@@ -60,7 +60,10 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
         Swap the tiles until {art.name} comes back together. Fewer moves and less time means a
-        bigger score.
+        bigger score.{" "}
+        <Link to="/how-to-play" className="font-semibold text-chakra underline underline-offset-4">
+          How to play
+        </Link>
       </p>
 
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
