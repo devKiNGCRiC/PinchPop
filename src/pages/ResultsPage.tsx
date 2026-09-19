@@ -1,10 +1,15 @@
-import { PlaceholderCard } from "@/components/PlaceholderCard";
+import { Sparkles } from "lucide-react";
+
+import { PlaceholderCard, StubLayout } from "@/components/PlaceholderCard";
 
 export default function ResultsPage() {
   return (
-    <PlaceholderCard
-      heading="Results coming soon"
-      body="Your photo and score will appear here once the capture flow is built."
-    />
+    <StubLayout>
+      <PlaceholderCard
+        icon={Sparkles}
+        heading="Results coming soon"
+        body="Your photo and score will appear here once the capture flow is built."
+      />
+    </StubLayout>
   );
 }

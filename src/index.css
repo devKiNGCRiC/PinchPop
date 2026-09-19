@@ -4,24 +4,42 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* PinchPop brand tokens (01-UI-SPEC.md Color table; values carried over verbatim
-   from the legacy prototype's :root custom properties) — named Tailwind theme
-   colors + self-hosted font stacks, layered on top of shadcn's generated theme
-   below. */
+/* PinchPop brand tokens — values are copied verbatim from DESIGN.md §3 (the approved visual
+   source of truth). Each accent has exactly one job; see DESIGN.md before using one. */
 @theme {
-  --color-ink: #0a0a08;
-  --color-signal: #f5c518;
-  --color-danger: #e0533d;
-  --color-paper: #ffffff;
-  --color-paper-warm: #eae5d6;
-  --color-paper-border: #e3e0d8;
-  --color-ink-soft: #6b665c;
+  /* Surfaces + text */
+  --color-paper: #fbf1e4;
+  --color-paper-raised: #ffffff;
+  --color-paper-border: #e7dcc8;
+  --color-ink: #221a14;
+  --color-ink-soft: #6b5e4f;
 
+  /* The one primary accent: the single primary action per screen */
+  --color-shutter: #ff5a3c;
+  --color-shutter-ink: #221a14;
+
+  /* Failure / destructive only — deliberately cooler than shutter */
+  --color-danger: #c81e3a;
+
+  /* Reserved functional accents, unused until the game screen exists (DESIGN.md §3) */
+  --color-viewfinder: #1e9e8c; /* live gesture / tracking state */
+  --color-token-gold: #ffc531; /* score, currency, reward */
+  --color-neon-violet: #7b5cf0; /* the puzzle tile currently being dragged */
+
+  /* Landing Gradient Wash — Home hero decoration only (01-UI-SPEC.md) */
+  --color-flash-pink: #ff3d9a;
+  --color-lens-blue: #2f80ed;
+  --color-darkroom-violet: #8b5cf6;
+
+  --font-heading: "Space Grotesk", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "IBM Plex Mono", "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --animate-eject: eject 900ms cubic-bezier(0.22, 1.2, 0.36, 1) both;
+  --animate-flash: flash 700ms ease-out both;
+  --animate-snap: snap 600ms cubic-bezier(0.22, 1, 0.36, 1) 250ms both;
 }
 
 @theme inline {
-  --font-heading: var(--font-sans);
   --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -63,87 +81,132 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* shadcn semantic variables, mapped onto the PinchPop palette. Light is the only theme. */
 :root {
-  /* PinchPop brand overrides (01-UI-SPEC.md Color table) replacing shadcn's
-     default neutral palette — oklch equivalents of the locked hex tokens above,
-     kept in the same notation shadcn generated for this file. */
-  --background: oklch(0.144 0.005 106.95); /* ink #0a0a08 */
-  --foreground: oklch(0.922 0.021 91.59); /* paper-warm #eae5d6 */
-  --card: oklch(1 0 0); /* paper #ffffff */
-  --card-foreground: oklch(0.144 0.005 106.95); /* ink #0a0a08 */
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.842 0.168 90.43); /* signal #f5c518 */
-  --primary-foreground: oklch(0.144 0.005 106.95); /* ink #0a0a08 */
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.512 0.017 84.59); /* ink-soft #6b665c */
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.628 0.18 31.38); /* danger #e0533d */
-  --border: oklch(0.907 0.011 89.73); /* paper-border #e3e0d8 */
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.842 0.168 90.43); /* signal #f5c518 */
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
+  --background: #fbf1e4; /* paper */
+  --foreground: #221a14; /* ink */
+  --card: #ffffff; /* paper-raised */
+  --card-foreground: #221a14;
+  --popover: #ffffff;
+  --popover-foreground: #221a14;
+  --primary: #ff5a3c; /* shutter */
+  --primary-foreground: #221a14; /* shutter-ink */
+  --secondary: #ffffff;
+  --secondary-foreground: #221a14;
+  --muted: #f3e6d2;
+  --muted-foreground: #6b5e4f; /* ink-soft */
+  --accent: #f3e6d2;
+  --accent-foreground: #221a14;
+  --destructive: #c81e3a; /* danger */
+  --border: #e7dcc8; /* paper-border */
+  --input: #e7dcc8;
+  --ring: #ff5a3c; /* shutter */
+  --chart-1: #ff5a3c;
+  --chart-2: #1e9e8c;
+  --chart-3: #ffc531;
+  --chart-4: #7b5cf0;
+  --chart-5: #221a14;
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
-}
-
-.dark {
-  /* Dark mode is the default per 01-UI-SPEC.md — same brand overrides as :root. */
-  --background: oklch(0.144 0.005 106.95); /* ink #0a0a08 */
-  --foreground: oklch(0.922 0.021 91.59); /* paper-warm #eae5d6 */
-  --card: oklch(1 0 0); /* paper #ffffff */
-  --card-foreground: oklch(0.144 0.005 106.95); /* ink #0a0a08 */
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.842 0.168 90.43); /* signal #f5c518 */
-  --primary-foreground: oklch(0.144 0.005 106.95); /* ink #0a0a08 */
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.512 0.017 84.59); /* ink-soft #6b665c */
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.628 0.18 31.38); /* danger #e0533d */
-  --border: oklch(0.907 0.011 89.73); /* paper-border #e3e0d8 */
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.842 0.168 90.43); /* signal #f5c518 */
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #ffffff;
+  --sidebar-foreground: #221a14;
+  --sidebar-primary: #ff5a3c;
+  --sidebar-primary-foreground: #221a14;
+  --sidebar-accent: #f3e6d2;
+  --sidebar-accent-foreground: #221a14;
+  --sidebar-border: #e7dcc8;
+  --sidebar-ring: #ff5a3c;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
+    @apply border-border;
   }
   html {
     @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+  ::selection {
+    background: var(--color-shutter);
+    color: var(--color-shutter-ink);
+  }
+}
+
+/* DESIGN.md §18: a 2px shutter focus ring on every interactive element, never suppressed.
+   Unlayered on purpose so it outranks component-level `outline-none` utilities. */
+:where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
+  outline: 2px solid var(--color-shutter);
+  outline-offset: 2px;
+}
+
+/* "Shutter click" feedback (DESIGN.md §8, §18): every clickable thing compresses on press;
+   primary buttons additionally grow and bloom on hover. Uses the individual `scale`
+   property so it composes with Tailwind's translate utilities. */
+.press {
+  transition:
+    scale 150ms ease-out,
+    box-shadow 200ms ease-out,
+    background-color 150ms ease-out;
+}
+.press:active {
+  scale: 0.97;
+}
+.press-primary:hover {
+  scale: 1.03;
+  box-shadow: 0 12px 30px -8px rgb(255 90 60 / 0.55);
+}
+.press-primary:active {
+  scale: 0.97;
+}
+
+/* One deliberate beat on Home: prints slide out of the booth chute and settle with a small
+   overshoot (DESIGN.md §19). Each card carries its own final rotation via --print-rot. */
+@keyframes eject {
+  0% {
+    transform: translateY(-85%) rotate(0deg);
+  }
+  100% {
+    transform: translateY(0) rotate(var(--print-rot, 0deg));
+  }
+}
+@keyframes flash {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+@keyframes snap {
+  0% {
+    transform: scale(1.14);
+    opacity: 0.4;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press,
+  .press-primary:hover,
+  .press:active,
+  .press-primary:active {
+    transition: none;
+    scale: 1;
+  }
+  .press-primary:hover {
+    box-shadow: none;
+  }
+  * {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
   }
 }

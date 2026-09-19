@@ -2,6 +2,7 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { AppShell } from "@/components/AppShell";
+import ErrorPage from "@/pages/ErrorPage";
 import GalleryPage from "@/pages/GalleryPage";
 import GamePage from "@/pages/GamePage";
 import HomePage from "@/pages/HomePage";
@@ -13,6 +14,7 @@ import SharePage from "@/pages/SharePage";
 const router = createBrowserRouter([
   {
     element: <AppShell />,
+    errorElement: <ErrorPage />,
     children: [
       { index: true, element: <HomePage /> },
       { path: "game", element: <GamePage /> },

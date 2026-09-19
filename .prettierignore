@@ -10,3 +10,10 @@ src/components/ui
 README.md
 CLAUDE.md
 .planning
+
+# Reference material and local tooling output, not app source
+design-exploration
+DESIGN.md
+graphify-out
+.claude
+.kilo

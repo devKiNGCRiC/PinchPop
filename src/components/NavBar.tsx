@@ -1,28 +1,24 @@
 import { NavLink } from "react-router-dom";
 
 import { MobileNavSheet } from "@/components/MobileNavSheet";
+import { NAV_LINKS } from "@/components/nav-links";
+import { Wordmark } from "@/components/Wordmark";
 import { cn } from "@/lib/utils";
-
-const NAV_LINKS = [
-  { to: "/", label: "Home", end: true },
-  { to: "/game", label: "Play", end: false },
-  { to: "/gallery", label: "Gallery", end: false },
-  { to: "/profile", label: "Profile", end: false },
-];
 
 export function NavBar() {
   return (
-    <header className="h-16 w-full bg-ink">
+    <header className="sticky top-0 z-40 h-16 w-full bg-ink text-paper">
       <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4 sm:px-6 lg:px-8">
         <NavLink
           to="/"
           end
-          className="font-mono text-[13px] leading-[1.4] font-normal tracking-[0.08em] text-signal uppercase"
+          aria-label="PinchPop home"
+          className="press -mx-1 inline-flex h-11 items-center rounded-md px-1 text-shutter"
         >
-          PINCHPOP
+          <Wordmark />
         </NavLink>
 
-        <nav className="hidden md:flex md:items-center md:gap-6">
+        <nav aria-label="Primary" className="hidden md:flex md:items-center md:gap-8">
           {NAV_LINKS.map((link) => (
             <NavLink
               key={link.to}
@@ -30,8 +26,9 @@ export function NavBar() {
               end={link.end}
               className={({ isActive }) =>
                 cn(
-                  "border-b-2 font-mono text-[13px] leading-[1.4] font-normal tracking-[0.08em] text-paper-warm uppercase",
-                  isActive ? "border-signal" : "border-transparent",
+                  "relative inline-flex h-16 items-center font-mono text-[13px] leading-[1.4] font-normal tracking-[0.08em] uppercase transition-colors motion-reduce:transition-none",
+                  "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent after:content-['']",
+                  isActive ? "text-paper after:bg-shutter" : "text-paper/65 hover:text-paper",
                 )
               }
             >

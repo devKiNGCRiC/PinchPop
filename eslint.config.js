@@ -7,7 +7,19 @@ import eslintConfigPrettier from "eslint-config-prettier";
 import { globalIgnores } from "eslint/config";
 
 export default tseslint.config([
-  globalIgnores(["dist", "node_modules", "legacy", "src/components/ui"]),
+  // Editor/agent worktrees (.kilo, .claude) hold full repo copies with their own tsconfig.json,
+  // which makes typescript-eslint's parser refuse to guess a root — keep them out of the lint.
+  globalIgnores([
+    "dist",
+    "node_modules",
+    "legacy",
+    "src/components/ui",
+    ".kilo",
+    ".claude",
+    ".planning",
+    "design-exploration",
+    "graphify-out",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [js.configs.recommended, tseslint.configs.recommended, reactRefresh.configs.vite],
@@ -20,6 +32,9 @@ export default tseslint.config([
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.browser,
+      parserOptions: {
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
   },
   // eslint-config-prettier must stay last so it can disable stylistic
