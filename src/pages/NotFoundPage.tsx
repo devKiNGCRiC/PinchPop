@@ -1,27 +1,32 @@
-import { Link } from "react-router-dom";
-
-import { StubLayout } from "@/components/PlaceholderCard";
-import { Button } from "@/components/ui/button";
+import { Art } from "@/components/Art";
+import { PopLink } from "@/components/PopButton";
 
 export default function NotFoundPage() {
   return (
-    <StubLayout>
-      <div className="w-full max-w-md rounded-2xl border-[1.5px] border-danger/40 bg-paper-raised p-6 text-left shadow-xl shadow-ink/8 sm:p-8">
-        <title>Page not found · PinchPop</title>
-        <h1 className="font-heading text-[22px] leading-[1.15] font-bold text-danger md:text-[30px]">
-          Page not found.
-        </h1>
-        <p className="mt-3 font-sans text-base leading-[1.6] font-normal text-ink-soft">
-          We couldn't find that page. Head back and keep exploring PinchPop.
-        </p>
-        <Button
-          asChild
-          variant="outline"
-          className="press mt-6 h-12 min-h-11 rounded-2xl border-[1.5px] border-ink bg-paper-raised px-6 font-sans text-base font-semibold text-ink hover:bg-paper-raised hover:text-ink"
+    <div className="mx-auto flex max-w-[1120px] flex-col items-center px-5 pt-32 pb-8 text-center sm:px-6 sm:pt-40">
+      <title>Page not found · PinchPop</title>
+      <div className="relative">
+        <p
+          aria-hidden="true"
+          className="font-display text-[clamp(96px,26vw,260px)] leading-[0.85] font-extrabold tracking-[-0.08em] text-ultra"
         >
-          <Link to="/">Back to Home</Link>
-        </Button>
+          404
+        </p>
+        <div className="sticker-lg absolute -right-4 -bottom-4 size-20 rotate-12 overflow-hidden rounded-full bg-bubble sm:size-28">
+          <Art artId="blob" decorative className="size-full" />
+        </div>
       </div>
-    </StubLayout>
+      <h1 className="mt-8 font-display text-[clamp(26px,4.4vw,44px)] leading-tight font-extrabold tracking-[-0.045em]">
+        Page not found.
+      </h1>
+      <p className="mt-3 max-w-md text-lg leading-relaxed text-ink-soft">
+        We couldn't find that page. Head back and keep exploring PinchPop.
+      </p>
+      <div className="mt-8">
+        <PopLink to="/" tone="lemon" size="lg">
+          Back to home
+        </PopLink>
+      </div>
+    </div>
   );
 }

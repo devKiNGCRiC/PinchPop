@@ -1,24 +1,27 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 import { MobileNavSheet } from "@/components/MobileNavSheet";
+import { PopLink } from "@/components/PopButton";
 import { NAV_LINKS } from "@/components/nav-links";
 import { Wordmark } from "@/components/Wordmark";
 import { cn } from "@/lib/utils";
 
 export function NavBar() {
+  const { pathname } = useLocation();
+
   return (
-    <header className="sticky top-0 z-40 h-16 w-full bg-ink text-paper">
-      <div className="mx-auto flex h-full max-w-[1200px] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
+      <div className="sticker mx-auto flex h-16 max-w-[1120px] items-center justify-between rounded-full bg-cloud pr-2.5 pl-4 sm:pl-5">
         <NavLink
           to="/"
           end
           aria-label="PinchPop home"
-          className="press -mx-1 inline-flex h-11 items-center rounded-md px-1 text-shutter"
+          className="-mx-1 inline-flex h-11 items-center rounded-full px-1 text-ink"
         >
           <Wordmark />
         </NavLink>
 
-        <nav aria-label="Primary" className="hidden md:flex md:items-center md:gap-8">
+        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
           {NAV_LINKS.map((link) => (
             <NavLink
               key={link.to}
@@ -26,9 +29,10 @@ export function NavBar() {
               end={link.end}
               className={({ isActive }) =>
                 cn(
-                  "relative inline-flex h-16 items-center font-mono text-[13px] leading-[1.4] font-normal tracking-[0.08em] uppercase transition-colors motion-reduce:transition-none",
-                  "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-transparent after:content-['']",
-                  isActive ? "text-paper after:bg-shutter" : "text-paper/65 hover:text-paper",
+                  "inline-flex h-10 items-center rounded-full border-2 px-4 text-[15px] font-semibold transition-colors",
+                  isActive
+                    ? "border-ink bg-lemon text-ink"
+                    : "border-transparent text-ink-soft hover:border-ink hover:bg-lilac hover:text-ink",
                 )
               }
             >
@@ -37,8 +41,15 @@ export function NavBar() {
           ))}
         </nav>
 
-        <div className="md:hidden">
-          <MobileNavSheet />
+        <div className="flex items-center gap-2">
+          {pathname === "/game" ? null : (
+            <PopLink to="/game" tone="ultra" size="sm" className="hidden sm:inline-flex">
+              Play now
+            </PopLink>
+          )}
+          <div className="md:hidden">
+            <MobileNavSheet />
+          </div>
         </div>
       </div>
     </header>
