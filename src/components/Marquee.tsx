@@ -1,10 +1,10 @@
-import { Sparkle } from "lucide-react";
+import { Flower2 } from "lucide-react";
 
 interface MarqueeProps {
   words: string[];
 }
 
-/** A slow, tilted ticker band. The second copy is hidden from assistive tech. */
+/** A slow, tilted ticker band of destinations, strung like a marigold garland. */
 export function Marquee({ words }: MarqueeProps) {
   const row = (hidden: boolean) => (
     <ul
@@ -14,14 +14,14 @@ export function Marquee({ words }: MarqueeProps) {
       {words.map((word) => (
         <li key={word} className="flex items-center gap-6">
           {word}
-          <Sparkle className="size-6 fill-ink" aria-hidden="true" />
+          <Flower2 className="size-7 text-chakra" strokeWidth={2.4} aria-hidden="true" />
         </li>
       ))}
     </ul>
   );
 
   return (
-    <div className="relative z-10 -rotate-2 overflow-hidden border-y-[3px] border-ink bg-lemon py-3 text-ink">
+    <div className="relative z-10 -rotate-2 overflow-hidden border-y-[3px] border-ink bg-saffron py-3 text-ink">
       <div className="flex w-max animate-marquee">
         {row(false)}
         {row(true)}

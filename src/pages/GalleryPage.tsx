@@ -5,27 +5,32 @@ import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
-import { artName } from "@/lib/art";
+import { ART_LIST, getArt } from "@/lib/art";
+import type { ArtId } from "@/lib/art";
 import { clearMemories, deleteMemory, useMemories } from "@/lib/memories";
 import { formatDate, tiltFor } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
 type Sort = "newest" | "best";
+type Filter = "all" | ArtId;
 
 export default function GalleryPage() {
   const memories = useMemories();
   const [sort, setSort] = useState<Sort>("newest");
+  const [filter, setFilter] = useState<Filter>("all");
   const [confirmClear, setConfirmClear] = useState(false);
 
-  const sorted = sort === "best" ? [...memories].sort((a, b) => b.score - a.score) : memories;
+  const filtered =
+    filter === "all" ? memories : memories.filter((m) => getArt(m.artId).id === filter);
+  const shown = sort === "best" ? [...filtered].sort((a, b) => b.score - a.score) : filtered;
 
   return (
-    <div className="mx-auto max-w-[1120px] px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Gallery · PinchPop</title>
+    <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
+      <title>Album · PinchPop</title>
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
-            Your wall
+            Your album
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
             {memories.length === 0
@@ -49,7 +54,7 @@ export default function GalleryPage() {
                   onClick={() => setSort(option)}
                   className={cn(
                     "h-10 rounded-full px-4 text-[15px] font-semibold transition-colors",
-                    sort === option ? "bg-lemon" : "hover:bg-lilac",
+                    sort === option ? "bg-chakra text-white" : "hover:bg-marigold/40",
                   )}
                 >
                   {option === "newest" ? "Newest" : "Best score"}
@@ -59,7 +64,7 @@ export default function GalleryPage() {
             {confirmClear ? (
               <>
                 <PopButton
-                  tone="pink"
+                  tone="coral"
                   size="sm"
                   onClick={() => {
                     clearMemories();
@@ -81,47 +86,94 @@ export default function GalleryPage() {
         ) : null}
       </div>
 
+      {memories.length > 0 ? (
+        <div
+          role="group"
+          aria-label="Filter by destination"
+          className="mt-8 flex flex-wrap gap-2.5"
+        >
+          {[{ id: "all" as const, place: "All places", swatch: "bg-white" }, ...ART_LIST].map(
+            (option) => {
+              const count =
+                option.id === "all"
+                  ? memories.length
+                  : memories.filter((m) => getArt(m.artId).id === option.id).length;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  aria-pressed={filter === option.id}
+                  onClick={() => setFilter(option.id)}
+                  className={cn(
+                    "pop sticker inline-flex h-11 items-center gap-2 rounded-full px-4 text-[15px] font-semibold",
+                    filter === option.id ? "bg-marigold" : "bg-white",
+                  )}
+                >
+                  <span
+                    aria-hidden="true"
+                    className={cn("size-3 rounded-full border-2 border-ink", option.swatch)}
+                  />
+                  {option.place}
+                  <span className="text-ink-soft">{count}</span>
+                </button>
+              );
+            },
+          )}
+        </div>
+      ) : null}
+
       {memories.length === 0 ? (
         <div className="mt-16">
           <EmptyState
-            title="Your wall is blank"
-            body="Every puzzle you solve pins a polaroid here. Go get your first one."
+            title="Your album is empty"
+            body="Every puzzle you solve pins a polaroid here, postmarked with the place you solved."
           >
-            <PopLink to="/game" tone="lemon" size="lg">
+            <PopLink to="/game" tone="saffron" size="lg">
               Solve your first puzzle
             </PopLink>
           </EmptyState>
         </div>
+      ) : shown.length === 0 ? (
+        <p className="mt-14 text-lg text-ink-soft">
+          No polaroids from this destination yet.{" "}
+          <Link to={`/game?art=${filter}`} className="font-semibold text-chakra underline">
+            Solve one
+          </Link>
+          .
+        </p>
       ) : (
         <ul className="mt-14 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
-          {sorted.map((memory, i) => (
-            <li key={memory.id} className="relative mx-auto w-full max-w-[340px]">
-              <Link
-                to={`/results?m=${memory.id}`}
-                aria-label={`Open ${artName(memory.artId)} polaroid, ${memory.score} points`}
-                className="group block transition-transform duration-200 hover:-translate-y-1.5 hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:transform-none"
-              >
-                <Polaroid
-                  artId={memory.artId}
-                  caption={artName(memory.artId)}
-                  tilt={tiltFor(memory.id)}
-                  tape={i % 3 === 0}
+          {shown.map((memory, i) => {
+            const art = getArt(memory.artId);
+            return (
+              <li key={memory.id} className="relative mx-auto w-full max-w-85">
+                <Link
+                  to={`/results?m=${memory.id}`}
+                  aria-label={`Open ${art.name} polaroid, ${memory.score} points`}
+                  className="group block transition-transform duration-200 hover:-translate-y-1.5 hover:scale-[1.02] motion-reduce:transition-none motion-reduce:hover:transform-none"
                 >
-                  <span className="mt-1 text-sm font-semibold text-ink-soft">
-                    {memory.score} pts · {memory.moves} moves · {formatDate(memory.createdAt)}
-                  </span>
-                </Polaroid>
-              </Link>
-              <button
-                type="button"
-                aria-label={`Delete ${artName(memory.artId)} polaroid`}
-                onClick={() => deleteMemory(memory.id)}
-                className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-cloud"
-              >
-                <Trash2 className="size-5 text-danger" aria-hidden="true" />
-              </button>
-            </li>
-          ))}
+                  <Polaroid
+                    artId={memory.artId}
+                    caption={art.caption}
+                    tilt={tiltFor(memory.id)}
+                    tape={i % 3 === 0}
+                  >
+                    <span className="mt-1 text-sm font-semibold text-ink-soft">
+                      {memory.score} pts · {memory.moves} moves · {formatDate(memory.createdAt)}
+                    </span>
+                  </Polaroid>
+                </Link>
+                <button
+                  type="button"
+                  aria-label={`Delete ${art.name} polaroid`}
+                  onClick={() => deleteMemory(memory.id)}
+                  className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-cloud"
+                >
+                  <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </div>

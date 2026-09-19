@@ -11,7 +11,7 @@ export function NavBar() {
 
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
-      <div className="sticker mx-auto flex h-16 max-w-[1120px] items-center justify-between rounded-full bg-cloud pr-2.5 pl-4 sm:pl-5">
+      <div className="sticker mx-auto flex h-16 max-w-280 items-center justify-between rounded-full bg-cloud pr-2.5 pl-4 sm:pl-5">
         <NavLink
           to="/"
           end
@@ -31,8 +31,8 @@ export function NavBar() {
                 cn(
                   "inline-flex h-10 items-center rounded-full border-2 px-4 text-[15px] font-semibold transition-colors",
                   isActive
-                    ? "border-ink bg-lemon text-ink"
-                    : "border-transparent text-ink-soft hover:border-ink hover:bg-lilac hover:text-ink",
+                    ? "border-ink bg-chakra text-white"
+                    : "border-transparent text-ink-soft hover:border-ink hover:bg-marigold/40 hover:text-ink",
                 )
               }
             >
@@ -43,7 +43,7 @@ export function NavBar() {
 
         <div className="flex items-center gap-2">
           {pathname === "/game" ? null : (
-            <PopLink to="/game" tone="ultra" size="sm" className="hidden sm:inline-flex">
+            <PopLink to="/game" tone="saffron" size="sm" className="hidden sm:inline-flex">
               Play now
             </PopLink>
           )}

@@ -6,7 +6,8 @@ import { Wordmark } from "@/components/Wordmark";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
-const CARD_COLORS = ["bg-lemon", "bg-bubble", "bg-mint", "bg-cloud"];
+// The three stripes of the flag, then white: saffron, white, green, marigold.
+const CARD_COLORS = ["bg-saffron", "bg-white", "bg-leaf text-white", "bg-marigold"];
 
 export function MobileNavSheet() {
   return (
@@ -15,14 +16,14 @@ export function MobileNavSheet() {
         <button
           type="button"
           aria-label="Open navigation menu"
-          className="pop flex size-11 items-center justify-center rounded-full border-[2.5px] border-ink bg-lemon shadow-pop-sm"
+          className="pop flex size-11 items-center justify-center rounded-full border-[2.5px] border-ink bg-saffron shadow-pop-sm"
         >
           <Menu className="size-5 text-ink" strokeWidth={2.5} aria-hidden="true" />
         </button>
       </SheetTrigger>
       <SheetContent
         side="right"
-        className="w-[86%] border-l-[3px] border-ink bg-lilac text-ink data-[side=right]:sm:max-w-sm"
+        className="w-[86%] border-l-[3px] border-ink bg-ivory text-ink data-[side=right]:sm:max-w-sm"
       >
         <SheetTitle className="sr-only">Navigation</SheetTitle>
         <div className="px-5 pt-5" aria-hidden="true">
@@ -38,7 +39,7 @@ export function MobileNavSheet() {
                   cn(
                     "pop sticker flex min-h-16 items-center justify-between rounded-2xl px-5 font-display text-xl font-extrabold tracking-[-0.03em]",
                     CARD_COLORS[i % CARD_COLORS.length],
-                    isActive && "ring-4 ring-ink ring-offset-2 ring-offset-lilac",
+                    isActive && "ring-4 ring-chakra ring-offset-2 ring-offset-ivory",
                   )
                 }
               >

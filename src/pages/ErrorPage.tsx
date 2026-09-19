@@ -9,18 +9,18 @@ export default function ErrorPage() {
   console.warn("[PinchPop] Route error:", error);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-lilac px-5 text-center text-ink">
+    <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-ivory px-5 text-center text-ink">
       <title>Something went wrong · PinchPop</title>
       <Wordmark />
       <div className="sticker-lg max-w-md rounded-3xl bg-cloud p-8">
-        <h1 className="font-display text-3xl leading-tight font-extrabold tracking-[-0.04em] text-danger">
+        <h1 className="font-display text-3xl leading-tight font-extrabold tracking-[-0.04em] text-sindoor">
           Something went wrong.
         </h1>
         <p className="mt-3 text-lg leading-relaxed text-ink-soft">
           PinchPop hit an unexpected error. Reload the page, or head back home and try again.
         </p>
         <div className="mt-6">
-          <PopLink to="/" reloadDocument tone="lemon" size="lg">
+          <PopLink to="/" reloadDocument tone="saffron" size="lg">
             Back to home
           </PopLink>
         </div>

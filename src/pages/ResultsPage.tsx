@@ -5,10 +5,10 @@ import { Confetti } from "@/components/Confetti";
 import { EmptyState } from "@/components/EmptyState";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
-import { artName } from "@/lib/art";
+import { ART_LIST, getArt } from "@/lib/art";
 import { deleteMemory, useMemories } from "@/lib/memories";
 import { formatTime } from "@/lib/puzzle";
-import { formatDate, tiltFor } from "@/lib/stats";
+import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
 
 export default function ResultsPage() {
   const [params] = useSearchParams();
@@ -19,14 +19,14 @@ export default function ResultsPage() {
 
   if (!memory) {
     return (
-      <div className="mx-auto max-w-[1120px] px-5 pt-32 pb-8 sm:px-6 sm:pt-40">
+      <div className="mx-auto max-w-280 px-5 pt-32 pb-8 sm:px-6 sm:pt-40">
         <title>Results · PinchPop</title>
         <h1 className="sr-only">Results</h1>
         <EmptyState
           title="No polaroid yet"
-          body="Solve a puzzle and your print shows up here with your score."
+          body="Solve a puzzle and your print shows up here with its postmark and your score."
         >
-          <PopLink to="/game" tone="lemon" size="lg">
+          <PopLink to="/game" tone="saffron" size="lg">
             Solve a puzzle
           </PopLink>
         </EmptyState>
@@ -34,23 +34,26 @@ export default function ResultsPage() {
     );
   }
 
+  const art = getArt(memory.artId);
   const isBest = memories.length > 1 && memories.every((m) => m.score <= memory.score);
+  const visited = visitedPlaces(memories).size;
 
   return (
-    <div className="mx-auto max-w-[1120px] px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Your polaroid · PinchPop</title>
+    <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
+      <title>{`${art.place} polaroid · PinchPop`}</title>
       <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-        <div className="relative mx-auto w-full max-w-[400px] py-4">
+        <div className="relative mx-auto w-full max-w-100 py-4">
           <Confetti key={memory.id} />
           <Polaroid
             artId={memory.artId}
-            caption={artName(memory.artId)}
+            caption={art.caption}
             tilt={tiltFor(memory.id) || 3}
             tape
             develop
+            postmark={{ place: art.place, date: postmarkDate(memory.createdAt) }}
           >
             <span className="mt-1 text-sm font-semibold text-ink-soft">
-              {formatDate(memory.createdAt)}
+              {art.name}, {art.state}
             </span>
           </Polaroid>
         </div>
@@ -60,34 +63,41 @@ export default function ResultsPage() {
             Nailed it.
           </h1>
           {isBest ? (
-            <p className="sticker mt-4 inline-block -rotate-2 rounded-full bg-mint px-4 py-1.5 text-base font-semibold">
+            <p className="sticker mt-4 inline-block -rotate-2 rounded-full bg-marigold px-4 py-1.5 text-base font-semibold">
               New personal best
             </p>
           ) : null}
 
           <dl className="mt-8 grid grid-cols-3 gap-3 sm:gap-4">
-            <Tile label="Score" value={String(memory.score)} color="bg-lemon" />
-            <Tile label="Moves" value={String(memory.moves)} color="bg-bubble" />
-            <Tile label="Time" value={formatTime(memory.seconds)} color="bg-mint" />
+            <Tile label="Score" value={String(memory.score)} color="bg-marigold text-ink" />
+            <Tile label="Moves" value={String(memory.moves)} color="bg-saffron text-ink" />
+            <Tile label="Time" value={formatTime(memory.seconds)} color="bg-leaf text-white" />
           </dl>
 
-          <div className="mt-9 flex flex-wrap gap-3">
-            <PopLink to="/game" tone="ultra" size="lg">
+          <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
+            {art.place} is stamped in your passport. You have visited {visited} of {ART_LIST.length}{" "}
+            destinations.
+          </p>
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            <PopLink to={`/game?art=${art.id}`} tone="saffron" size="lg">
               Play again
             </PopLink>
+            <PopLink to="/profile" tone="chakra" size="lg">
+              Open passport
+            </PopLink>
             <PopLink to="/gallery" tone="white" size="lg">
-              Open gallery
+              Open album
             </PopLink>
             <PopButton
               tone="white"
               size="lg"
-              aria-label="Delete this polaroid"
               onClick={() => {
                 deleteMemory(memory.id);
                 navigate("/gallery");
               }}
             >
-              <Trash2 className="size-5 text-danger" aria-hidden="true" />
+              <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
               Delete
             </PopButton>
           </div>
@@ -101,7 +111,7 @@ function Tile({ label, value, color }: { label: string; value: string; color: st
   return (
     <div className={`sticker-lg rounded-3xl p-4 sm:p-5 ${color}`}>
       <dt className="text-sm font-semibold">{label}</dt>
-      <dd className="mt-1 font-display text-[clamp(24px,4vw,40px)] leading-none font-extrabold tracking-[-0.05em] tabular-nums">
+      <dd className="mt-1 font-display text-[clamp(24px,4vw,40px)] leading-none font-extrabold tracking-tighter tabular-nums">
         {value}
       </dd>
     </div>

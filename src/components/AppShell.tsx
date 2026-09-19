@@ -5,10 +5,10 @@ import { NavBar } from "@/components/NavBar";
 
 export function AppShell() {
   return (
-    <div className="flex min-h-screen flex-col overflow-x-clip bg-lilac text-ink">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-ivory text-ink">
       <a
         href="#main"
-        className="pop sticker sr-only z-50 rounded-full bg-lemon px-5 py-3 font-semibold text-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
+        className="pop sticker sr-only z-50 rounded-full bg-marigold px-5 py-3 font-semibold text-ink focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
       >
         Skip to content
       </a>

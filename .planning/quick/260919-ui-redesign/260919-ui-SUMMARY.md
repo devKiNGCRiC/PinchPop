@@ -23,3 +23,9 @@ lint, typecheck, format:check, build all exit 0. Real-browser test (headless Chr
 ## Not done
 - Webcam/MediaPipe gesture game still lives only in `legacy/` (roadmap Phase 2).
 - Accounts, Supabase storage and public share links (memories are per-browser localStorage).
+
+## Follow-up pass: India / travel / photography identity
+- Palette re-based on India's colours, each with one job: saffron (primary action), Ashoka chakra blue (structure), leaf green (success/saved), marigold (highlight), gold (score), coral (secondary), sindoor red (danger only), ivory/white surfaces, ink outlines.
+- Puzzle art replaced with four illustrated destinations (Taj Mahal, Hawa Mahal, Kerala backwaters, Ladakh prayer flags). Each solve pins a postmarked polaroid to the Album and stamps the Passport (gallery = Album, profile = Passport).
+- Custom scrollbar (saffron sticker thumb; Firefox gets a colour-only fallback), rebuilt multi-column footer with a tricolour stripe, destination deep links (`/game?art=<id>`), album filter by destination, hover hints on stats.
+- Verified: lint, typecheck, format:check, build exit 0; mouse/touch drag solve in headless Chrome; no horizontal overflow at 375px.

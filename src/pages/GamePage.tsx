@@ -1,58 +1,75 @@
 import { useCallback, useState } from "react";
-import { Eye, EyeOff, Lock, Shuffle } from "lucide-react";
+import { Check, Eye, EyeOff, Lock, Shuffle } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 
 import { Art } from "@/components/Art";
 import { Confetti } from "@/components/Confetti";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { PuzzleBoard } from "@/components/PuzzleBoard";
-import { ART_LIST, artName } from "@/lib/art";
-import { saveMemory } from "@/lib/memories";
+import { Stamp } from "@/components/Stamp";
+import { ART_LIST, getArt, isArtId } from "@/lib/art";
+import type { ArtId } from "@/lib/art";
+import { saveMemory, useMemories } from "@/lib/memories";
 import { formatTime, placedCount, scoreFor } from "@/lib/puzzle";
 import { usePuzzleGame } from "@/lib/usePuzzleGame";
 import type { PuzzleResult } from "@/lib/usePuzzleGame";
 import { cn } from "@/lib/utils";
 
+/** Reads the destination from the URL, so footer and Home links can deep-link straight to a puzzle. */
 export default function GamePage() {
-  const [artId, setArtId] = useState<string>("sunset");
+  const [params, setParams] = useSearchParams();
+  const requested = params.get("art");
+  const artId: ArtId = isArtId(requested) ? requested : "taj";
+
+  // Keyed by destination: choosing a new place starts a fresh round with a clean clock.
+  return <PracticeBooth key={artId} artId={artId} onPick={(id) => setParams({ art: id })} />;
+}
+
+function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) => void }) {
+  const art = getArt(artId);
+  const memories = useMemories();
   const [peek, setPeek] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [newStamp, setNewStamp] = useState(false);
 
   const handleSolved = useCallback(
     (result: PuzzleResult) => {
+      const firstVisit = !memories.some((m) => getArt(m.artId).id === artId);
       setPeek(false);
+      setNewStamp(firstVisit);
       setSavedId(saveMemory({ artId, ...result }).id);
     },
-    [artId],
+    [artId, memories],
   );
 
   const { order, moves, seconds, status, swap, shuffle } = usePuzzleGame(handleSolved);
   const solved = status === "solved";
 
-  function restart(nextArt?: string) {
-    if (nextArt) setArtId(nextArt);
+  function restart() {
     setPeek(false);
     setSavedId(null);
+    setNewStamp(false);
     shuffle();
   }
 
   return (
-    <div className="mx-auto max-w-[1120px] px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Practice booth · PinchPop</title>
+    <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
+      <title>{`${art.place} puzzle · PinchPop`}</title>
       <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
         Practice booth
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
-        Swap the tiles until the picture snaps back together. Fewer moves and less time means a
+        Swap the tiles until {art.name} comes back together. Fewer moves and less time means a
         bigger score.
       </p>
 
       <div className="mt-10 grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="relative mx-auto w-full max-w-[600px]">
+        <div className="relative mx-auto w-full max-w-150">
           {solved ? <Confetti key={savedId} /> : null}
           <div className="relative">
             <div
               aria-hidden="true"
-              className="absolute inset-0 -rotate-2 rounded-3xl border-[2.5px] border-ink bg-mint"
+              className="absolute inset-0 -rotate-2 rounded-3xl border-[2.5px] border-ink bg-saffron"
             />
             <PuzzleBoard
               artId={artId}
@@ -67,32 +84,41 @@ export default function GamePage() {
               </div>
             ) : null}
           </div>
+          <p className="mt-5 flex items-center justify-center gap-2 text-center text-base text-ink-soft">
+            <span className="flex size-5 items-center justify-center rounded-full border-2 border-ink bg-leaf">
+              <Check className="size-3 text-white" strokeWidth={4} aria-hidden="true" />
+            </span>
+            marks a tile that is already in the right place
+          </p>
         </div>
 
         <div className="flex flex-col gap-6">
-          <section aria-labelledby="pic-heading" className="sticker-lg rounded-3xl bg-cloud p-5">
-            <h2 id="pic-heading" className="font-display text-lg font-extrabold tracking-[-0.03em]">
-              Pick a picture
+          <section aria-labelledby="dest-heading" className="sticker-lg rounded-3xl bg-cloud p-5">
+            <h2
+              id="dest-heading"
+              className="font-display text-lg font-extrabold tracking-[-0.03em]"
+            >
+              Pick a destination
             </h2>
-            <ul className="mt-4 grid grid-cols-3 gap-3">
-              {ART_LIST.map((art) => (
-                <li key={art.id}>
+            <ul className="mt-4 grid grid-cols-4 gap-2.5 lg:grid-cols-2">
+              {ART_LIST.map((option) => (
+                <li key={option.id}>
                   <button
                     type="button"
-                    aria-pressed={artId === art.id}
-                    onClick={() => restart(art.id)}
+                    aria-pressed={artId === option.id}
+                    onClick={() => onPick(option.id)}
                     className={cn(
-                      "pop sticker block w-full overflow-hidden rounded-2xl bg-cloud p-1.5 text-left",
-                      artId === art.id && "bg-lemon",
+                      "pop sticker block w-full overflow-hidden rounded-2xl p-1.5 text-left",
+                      artId === option.id ? "bg-marigold" : "bg-white",
                     )}
                   >
                     <Art
-                      artId={art.id}
+                      artId={option.id}
                       decorative
                       className="block aspect-square w-full rounded-xl"
                     />
                     <span className="mt-1.5 block truncate px-1 text-sm font-semibold">
-                      {art.name}
+                      {option.place}
                     </span>
                   </button>
                 </li>
@@ -110,15 +136,24 @@ export default function GamePage() {
                 <p className="font-display text-2xl leading-tight font-extrabold tracking-[-0.04em]">
                   Nailed it. {scoreFor(moves, seconds)} pts
                 </p>
+                {newStamp ? (
+                  <div className="flex items-center gap-3 rounded-2xl border-2 border-ink bg-marigold/40 p-3">
+                    <Stamp art={art} earned className="size-16 shrink-0" />
+                    <p className="text-base leading-snug">
+                      <strong className="font-semibold">New stamp!</strong> {art.place} is now in
+                      your passport.
+                    </p>
+                  </div>
+                ) : null}
                 <p className="text-base text-ink-soft">
-                  {artName(artId)} solved in {moves} moves, {formatTime(seconds)}. It's on your wall
-                  now.
+                  {art.name} solved in {moves} moves, {formatTime(seconds)}. It is pinned to your
+                  album.
                 </p>
                 <div className="mt-1 flex flex-wrap gap-3">
-                  <PopLink to={`/results?m=${savedId ?? ""}`} tone="lemon">
+                  <PopLink to={`/results?m=${savedId ?? ""}`} tone="saffron">
                     See my polaroid
                   </PopLink>
-                  <PopButton onClick={() => restart()} tone="white">
+                  <PopButton onClick={restart} tone="white">
                     <Shuffle className="size-4" aria-hidden="true" />
                     Go again
                   </PopButton>
@@ -127,19 +162,23 @@ export default function GamePage() {
             ) : (
               <>
                 <div className="grid grid-cols-3 gap-3">
-                  <Stat label="Moves" value={String(moves)} />
-                  <Stat label="Time" value={formatTime(seconds)} />
-                  <Stat label="Placed" value={`${placedCount(order)}/9`} />
+                  <Stat label="Moves" value={String(moves)} hint="Swaps you have made" />
+                  <Stat label="Time" value={formatTime(seconds)} hint="Runs from your first swap" />
+                  <Stat
+                    label="Placed"
+                    value={`${placedCount(order)}/9`}
+                    hint="Tiles in the right place"
+                  />
                 </div>
                 <div className="mt-4 flex flex-wrap gap-3">
-                  <PopButton onClick={() => restart()} tone="pink">
+                  <PopButton onClick={restart} tone="coral">
                     <Shuffle className="size-4" aria-hidden="true" />
                     Shuffle
                   </PopButton>
                   <PopButton
                     onClick={() => setPeek((value) => !value)}
                     aria-pressed={peek}
-                    tone={peek ? "lemon" : "white"}
+                    tone={peek ? "marigold" : "white"}
                   >
                     {peek ? (
                       <EyeOff className="size-4" aria-hidden="true" />
@@ -153,7 +192,7 @@ export default function GamePage() {
             )}
           </section>
 
-          <section className="rounded-3xl border-[2.5px] border-dashed border-ink bg-lilac p-5">
+          <section className="rounded-3xl border-[2.5px] border-dashed border-ink bg-white/60 p-5">
             <div className="flex items-start gap-3">
               <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-cloud">
                 <Lock className="size-5" aria-hidden="true" />
@@ -163,8 +202,8 @@ export default function GamePage() {
                   Camera mode
                 </h2>
                 <p className="mt-1 text-base leading-snug text-ink-soft">
-                  Snap your own face with a pinch and puzzle that instead. Not live yet, so this
-                  booth uses illustrated pics for now.
+                  Frame and pinch to shoot your own photo, then solve that. Not live yet, so this
+                  booth uses illustrated destinations.
                 </p>
               </div>
             </div>
@@ -175,9 +214,9 @@ export default function GamePage() {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
-    <div className="rounded-2xl border-2 border-ink bg-lilac px-3 py-2">
+    <div className="rounded-2xl border-2 border-ink bg-ivory px-3 py-2" title={hint}>
       <p className="text-xs font-semibold text-ink-soft">{label}</p>
       <p className="font-display text-xl font-extrabold tabular-nums">{value}</p>
     </div>

@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-const COLORS = ["bg-lemon", "bg-bubble", "bg-mint", "bg-tang", "bg-cloud", "bg-ultra"];
+const COLORS = ["bg-saffron", "bg-marigold", "bg-leaf", "bg-coral", "bg-white", "bg-chakra"];
 const PIECES = 44;
 
 // Deterministic pseudo-random so a render is pure: same index, same piece.

@@ -113,15 +113,15 @@ export function PuzzleBoard({ artId, order, solved, onSwap, className }: PuzzleB
               className={cn(
                 "relative touch-none overflow-hidden border-[2.5px] border-ink bg-cloud p-0 disabled:opacity-100",
                 solved ? "rounded-none border-0 bg-transparent" : "cursor-grab rounded-xl",
-                isSelected && "z-10 scale-[0.94] ring-4 ring-lemon",
+                isSelected && "z-10 scale-[0.94] ring-4 ring-marigold",
                 isDragging && "pointer-events-none z-20 scale-105 cursor-grabbing shadow-pop-lg",
                 !isDragging && "transition-transform duration-150",
               )}
             >
               <ArtTile artId={artId} tile={tile} className="size-full" />
               {placed && !solved ? (
-                <span className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full border-2 border-ink bg-mint">
-                  <Check className="size-3 text-ink" strokeWidth={4} aria-hidden="true" />
+                <span className="absolute top-1 right-1 flex size-5 items-center justify-center rounded-full border-2 border-ink bg-leaf">
+                  <Check className="size-3 text-white" strokeWidth={4} aria-hidden="true" />
                 </span>
               ) : null}
             </button>

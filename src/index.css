@@ -4,20 +4,30 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* PinchPop "sticker booth" identity: loud saturated colour, chunky ink outlines and hard,
-   un-blurred shadows, so every surface feels like a die-cut sticker or an instant print. */
+/* PinchPop palette: a travel-photography kit built from India's own colours. Every colour has a job:
+   saffron  = energy and the primary action (first light, courage)
+   chakra   = structure and brand (the Ashoka Chakra blue, also the aperture)
+   leaf     = success, saved, "in the right place" (the green of the flag)
+   marigold = highlight and selection (garlands, haldi)
+   gold     = score and rewards
+   coral    = a friendly secondary accent
+   sindoor  = danger and delete only
+   ivory / white = paper, surfaces; ink = outlines and text (the black of a camera body). */
 @theme {
-  --color-ink: #16112b;
-  --color-ink-soft: #4b4570;
-  --color-ultra: #5a2bff; /* hero + brand */
-  --color-ultra-deep: #3b16d6;
-  --color-lilac: #e6deff; /* page */
-  --color-cloud: #f7f4ff; /* raised surfaces */
-  --color-lemon: #ffe53b;
-  --color-bubble: #ff7ac6;
-  --color-mint: #4df0b0;
-  --color-tang: #ff6b2c;
-  --color-danger: #e4234b;
+  --color-ink: #111426;
+  --color-ink-soft: #4a4f6e;
+  --color-chakra: #1c34a6;
+  --color-chakra-deep: #101d6b;
+  --color-saffron: #ff9933;
+  --color-marigold: #ffc61a;
+  --color-gold: #c9971c;
+  --color-leaf: #138808;
+  --color-leaf-light: #5bd16e;
+  --color-sindoor: #d7263d;
+  --color-danger: #d7263d;
+  --color-coral: #ff6b5b;
+  --color-ivory: #fff6e6;
+  --color-cloud: #fffdf8;
 
   --font-display: "Unbounded", "Bricolage Grotesque", system-ui, sans-serif;
   --font-hand: "Caveat", "Bricolage Grotesque", cursive;
@@ -26,10 +36,8 @@
   --shadow-pop-lg: 7px 7px 0 0 var(--color-ink);
   --shadow-pop-sm: 2px 2px 0 0 var(--color-ink);
 
-  --animate-marquee: marquee 28s linear infinite;
-  --animate-wiggle: wiggle 2.4s ease-in-out infinite;
-  --animate-float: float 5s ease-in-out infinite;
-  --animate-spin-slow: spin 18s linear infinite;
+  --animate-marquee: marquee 34s linear infinite;
+  --animate-spin-slow: spin 90s linear infinite;
   --animate-confetti: confetti 1.6s cubic-bezier(0.2, 0.7, 0.3, 1) both;
   --animate-print-in: print-in 800ms cubic-bezier(0.22, 1.25, 0.36, 1) both;
 }
@@ -63,26 +71,26 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* shadcn semantic variables (used by the Sheet drawer), mapped onto the sticker palette. */
+/* shadcn semantic variables (used by the Sheet drawer), mapped onto the palette. */
 :root {
-  --background: #e6deff;
-  --foreground: #16112b;
-  --card: #f7f4ff;
-  --card-foreground: #16112b;
-  --popover: #16112b;
-  --popover-foreground: #f7f4ff;
-  --primary: #ffe53b;
-  --primary-foreground: #16112b;
-  --secondary: #f7f4ff;
-  --secondary-foreground: #16112b;
-  --muted: #d5c9ff;
-  --muted-foreground: #4b4570;
-  --accent: #d5c9ff;
-  --accent-foreground: #16112b;
-  --destructive: #e4234b;
-  --border: #16112b;
-  --input: #16112b;
-  --ring: #5a2bff;
+  --background: #fff6e6;
+  --foreground: #111426;
+  --card: #fffdf8;
+  --card-foreground: #111426;
+  --popover: #101d6b;
+  --popover-foreground: #fffdf8;
+  --primary: #ff9933;
+  --primary-foreground: #111426;
+  --secondary: #fffdf8;
+  --secondary-foreground: #111426;
+  --muted: #ffe9c4;
+  --muted-foreground: #4a4f6e;
+  --accent: #ffe9c4;
+  --accent-foreground: #111426;
+  --destructive: #d7263d;
+  --border: #111426;
+  --input: #111426;
+  --ring: #1c34a6;
   --radius: 1rem;
 }
 
@@ -99,16 +107,50 @@
     @apply bg-background text-foreground antialiased;
   }
   ::selection {
-    background: var(--color-lemon);
+    background: var(--color-marigold);
     color: var(--color-ink);
   }
 }
 
-/* Keyboard focus: a thick ink ring with a lemon halo, visible on every surface. */
+/* Custom scrollbar: a saffron sticker thumb on an ivory rail, outlined in ink like everything else.
+   Chrome, Edge and Safari use the ::-webkit-scrollbar rules. Firefox ignores those and gets a
+   colour-only version (Chrome would drop the shaped thumb if it saw scrollbar-color, so it is
+   gated behind @supports). */
+::-webkit-scrollbar {
+  width: 18px;
+  height: 18px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-ivory);
+  border-left: 3px solid var(--color-ink);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-saffron);
+  border: 3px solid var(--color-ink);
+  border-radius: 999px;
+  min-height: 56px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-marigold);
+}
+::-webkit-scrollbar-thumb:active {
+  background: var(--color-coral);
+}
+::-webkit-scrollbar-corner {
+  background: var(--color-ivory);
+}
+@supports not selector(::-webkit-scrollbar) {
+  html {
+    scrollbar-width: auto;
+    scrollbar-color: var(--color-saffron) var(--color-ivory);
+  }
+}
+
+/* Keyboard focus: a thick ink ring with a marigold halo, readable on every surface. */
 :where(a, button, input, select, textarea, summary, [tabindex]:not([tabindex="-1"])):focus-visible {
   outline: 3px solid var(--color-ink);
   outline-offset: 3px;
-  box-shadow: 0 0 0 6px var(--color-lemon);
+  box-shadow: 0 0 0 6px var(--color-marigold);
 }
 
 /* Sticker surfaces */
@@ -140,24 +182,6 @@
 @keyframes marquee {
   to {
     transform: translateX(-50%);
-  }
-}
-@keyframes wiggle {
-  0%,
-  100% {
-    rotate: -4deg;
-  }
-  50% {
-    rotate: 4deg;
-  }
-}
-@keyframes float {
-  0%,
-  100% {
-    translate: 0 0;
-  }
-  50% {
-    translate: 0 -10px;
   }
 }
 @keyframes confetti {
