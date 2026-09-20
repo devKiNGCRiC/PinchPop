@@ -19,7 +19,8 @@ interface Step {
   body: string;
   Icon: LucideIcon;
   card: string;
-  live: boolean;
+  /** A short label saying how you can do this step today. */
+  tag: string;
 }
 
 // The three steps follow the tagline and take the flag's three stripes: saffron, white, green.
@@ -30,7 +31,7 @@ const STEPS: Step[] = [
     body: "Hold both hands up to frame the shot, then pinch to snap it. No mouse, no timer.",
     Icon: Hand,
     card: "bg-saffron text-ink",
-    live: false,
+    tag: "Camera mode",
   },
   {
     n: 2,
@@ -38,7 +39,7 @@ const STEPS: Step[] = [
     body: "Your photo breaks into nine tiles. Drag them back into place before the clock beats you.",
     Icon: Puzzle,
     card: "bg-white text-ink",
-    live: true,
+    tag: "Hands or mouse",
   },
   {
     n: 3,
@@ -46,11 +47,19 @@ const STEPS: Step[] = [
     body: "Every solve is pinned to your album as a postmarked polaroid and adds a stamp to your passport.",
     Icon: Stamp,
     card: "bg-leaf text-white",
-    live: true,
+    tag: "Album and passport",
   },
 ];
 
-const SAMPLES = [
+interface WallPrint {
+  artId: string;
+  caption: string;
+  tilt: number;
+  photo?: string;
+  aspect?: number;
+}
+
+const SAMPLES: WallPrint[] = [
   { artId: "taj", caption: "Agra, 6 am", tilt: -6 },
   { artId: "jaipur", caption: "Pink City, noon", tilt: 3 },
   { artId: "ladakh", caption: "prayer flags, Ladakh", tilt: -2 },
@@ -59,9 +68,11 @@ const SAMPLES = [
 export default function HomePage() {
   const memories = useMemories();
   const hasMemories = memories.length > 0;
-  const wall = hasMemories
+  const wall: WallPrint[] = hasMemories
     ? memories.slice(0, 3).map((m, i) => ({
         artId: m.artId,
+        photo: m.photo,
+        aspect: m.aspect,
         caption: getArt(m.artId).caption,
         tilt: [-5, 3, -2][i],
       }))
@@ -103,16 +114,16 @@ export default function HomePage() {
               together. A photobooth for the places you have been.
             </p>
             <div className="mt-9 flex flex-wrap gap-4">
-              <PopLink to="/game" tone="saffron" size="lg">
-                Play now
+              <PopLink to="/camera" tone="saffron" size="lg">
+                Start camera mode
               </PopLink>
               <PopLink to="/gallery" tone="white" size="lg">
                 Open my album
               </PopLink>
             </div>
             <p className="mt-6 max-w-md text-base text-white/75">
-              Camera mode is on the way. Right now you play with your mouse or finger, and every
-              solve is saved on this device.{" "}
+              Camera mode uses your webcam and hand gestures. Prefer a mouse or touch? Play the
+              puzzle here. Everything is saved on this device.{" "}
               <Link
                 to="/how-to-play"
                 className="font-semibold text-marigold underline underline-offset-4"
@@ -138,15 +149,10 @@ export default function HomePage() {
           Three things PinchPop does with every photo you take.
         </p>
         <ol className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
-          {STEPS.map(({ n, verb, body, Icon, card, live }) => (
+          {STEPS.map(({ n, verb, body, Icon, card, tag }) => (
             <li key={n} className={cn("sticker-lg relative rounded-4xl p-6 pt-8", card)}>
-              <span
-                className={cn(
-                  "absolute -top-4 right-5 rounded-full border-2 border-ink px-3 py-1 text-sm font-semibold",
-                  live ? "bg-ink text-marigold" : "bg-cloud text-ink",
-                )}
-              >
-                {live ? "Playable now" : "Camera mode, soon"}
+              <span className="absolute -top-4 right-5 rounded-full border-2 border-ink bg-cloud px-3 py-1 text-sm font-semibold text-ink">
+                {tag}
               </span>
               <div className="flex items-end justify-between">
                 <span className="font-display text-7xl leading-none font-extrabold tracking-[-0.08em]">
@@ -227,6 +233,8 @@ export default function HomePage() {
                 <li key={`${print.artId}-${i}`} className={i === 1 ? "mt-8" : undefined}>
                   <Polaroid
                     artId={print.artId}
+                    photo={print.photo}
+                    aspect={print.aspect}
                     caption={print.caption}
                     tilt={print.tilt}
                     tape={i === 0}

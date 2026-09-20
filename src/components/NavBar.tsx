@@ -42,9 +42,9 @@ export function NavBar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          {pathname === "/game" ? null : (
-            <PopLink to="/game" tone="saffron" size="sm" className="hidden lg:inline-flex">
-              Play now
+          {pathname === "/camera" ? null : (
+            <PopLink to="/camera" tone="saffron" size="sm" className="hidden lg:inline-flex">
+              Camera mode
             </PopLink>
           )}
           <div className="md:hidden">

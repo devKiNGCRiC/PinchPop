@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Check, Eye, EyeOff, Lock, Shuffle } from "lucide-react";
+import { Camera, Check, Eye, EyeOff, Shuffle } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { Art } from "@/components/Art";
@@ -195,20 +195,24 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
             )}
           </section>
 
-          <section className="rounded-3xl border-[2.5px] border-dashed border-ink bg-white/60 p-5">
+          <section className="sticker-lg rounded-3xl bg-chakra p-5 text-white">
             <div className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-cloud">
-                <Lock className="size-5" aria-hidden="true" />
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border-2 border-ink bg-marigold text-ink">
+                <Camera className="size-5" aria-hidden="true" />
               </span>
               <div>
                 <h2 className="font-display text-lg font-extrabold tracking-[-0.03em]">
                   Camera mode
                 </h2>
-                <p className="mt-1 text-base leading-snug text-ink-soft">
-                  Frame and pinch to shoot your own photo, then solve that. Not live yet, so this
-                  booth uses illustrated destinations.
+                <p className="mt-1 text-base leading-snug text-white/85">
+                  Frame and pinch to shoot your own photo with your hands, then solve that.
                 </p>
               </div>
+            </div>
+            <div className="mt-4">
+              <PopLink to="/camera" tone="saffron" size="md">
+                Open camera mode
+              </PopLink>
             </div>
           </section>
         </div>

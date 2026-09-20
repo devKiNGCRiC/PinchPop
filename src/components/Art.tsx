@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 import { getArt } from "@/lib/art";
-import type { ArtId } from "@/lib/art";
+import type { PlaceId } from "@/lib/art";
 
 interface ArtProps {
   artId: string;
@@ -253,8 +253,36 @@ function Ladakh() {
   );
 }
 
-function Scene({ artId }: { artId: ArtId }) {
+// Stand-in shown for a camera run when its photo is not available (for example, after storage was cleared).
+function CameraScene() {
+  return (
+    <>
+      <rect width="300" height="300" fill="#1c34a6" />
+      <circle cx="150" cy="150" r="96" fill="none" stroke="#fff" strokeWidth="10" />
+      <circle cx="150" cy="150" r="30" fill="#ff9933" stroke={INK} strokeWidth="6" />
+      {Array.from({ length: 12 }, (_, i) => {
+        const angle = (i * Math.PI) / 6;
+        return (
+          <line
+            key={i}
+            x1={150 + 40 * Math.cos(angle)}
+            y1={150 + 40 * Math.sin(angle)}
+            x2={150 + 90 * Math.cos(angle)}
+            y2={150 + 90 * Math.sin(angle)}
+            stroke="#fff"
+            strokeWidth="6"
+            strokeLinecap="round"
+          />
+        );
+      })}
+    </>
+  );
+}
+
+function Scene({ artId }: { artId: PlaceId }) {
   switch (artId) {
+    case "camera":
+      return <CameraScene />;
     case "jaipur":
       return <Jaipur />;
     case "kerala":

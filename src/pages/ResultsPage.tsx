@@ -5,7 +5,7 @@ import { Confetti } from "@/components/Confetti";
 import { EmptyState } from "@/components/EmptyState";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
-import { ART_LIST, getArt } from "@/lib/art";
+import { ART_LIST, getArt, isCameraId } from "@/lib/art";
 import { deleteMemory, useMemories } from "@/lib/memories";
 import { formatTime } from "@/lib/puzzle";
 import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
@@ -35,6 +35,7 @@ export default function ResultsPage() {
   }
 
   const art = getArt(memory.artId);
+  const camera = isCameraId(memory.artId);
   const isBest = memories.length > 1 && memories.every((m) => m.score <= memory.score);
   const visited = visitedPlaces(memories).size;
 
@@ -46,6 +47,8 @@ export default function ResultsPage() {
           <Confetti key={memory.id} />
           <Polaroid
             artId={memory.artId}
+            photo={memory.photo}
+            aspect={memory.aspect}
             caption={art.caption}
             tilt={tiltFor(memory.id) || 3}
             tape
@@ -53,7 +56,7 @@ export default function ResultsPage() {
             postmark={{ place: art.place, date: postmarkDate(memory.createdAt) }}
           >
             <span className="mt-1 text-sm font-semibold text-ink-soft">
-              {art.name}, {art.state}
+              {camera ? "Taken in camera mode" : `${art.name}, ${art.state}`}
             </span>
           </Polaroid>
         </div>
@@ -75,12 +78,13 @@ export default function ResultsPage() {
           </dl>
 
           <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
-            {art.place} is stamped in your passport. You have visited {visited} of {ART_LIST.length}{" "}
-            destinations.
+            {camera
+              ? "Saved from camera mode. Your photo counts toward the leaderboard and earns the Say cheese milestone."
+              : `${art.place} is stamped in your passport. You have visited ${visited} of ${ART_LIST.length} destinations.`}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <PopLink to={`/game?art=${art.id}`} tone="saffron" size="lg">
+            <PopLink to={camera ? "/camera" : `/game?art=${art.id}`} tone="saffron" size="lg">
               Play again
             </PopLink>
             <PopLink to="/profile" tone="chakra" size="lg">

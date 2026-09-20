@@ -1,6 +1,10 @@
-/** The illustrated destinations the practice puzzle is cut from, until webcam capture ships. */
+/** The illustrated destinations the practice puzzle is cut from, plus the player's own camera shots. */
+export type ArtId = "taj" | "jaipur" | "kerala" | "ladakh";
+/** Anything a saved run can be "of": a destination, or a photo taken in camera mode. */
+export type PlaceId = ArtId | "camera";
+
 export interface ArtMeta {
-  id: "taj" | "jaipur" | "kerala" | "ladakh";
+  id: PlaceId;
   /** The sight itself. */
   name: string;
   /** The place written on the stamp and postmark. */
@@ -14,7 +18,11 @@ export interface ArtMeta {
   swatch: string;
 }
 
-export const ART_LIST: ArtMeta[] = [
+export interface DestinationMeta extends ArtMeta {
+  id: ArtId;
+}
+
+export const ART_LIST: DestinationMeta[] = [
   {
     id: "taj",
     name: "Taj Mahal",
@@ -53,10 +61,28 @@ export const ART_LIST: ArtMeta[] = [
   },
 ];
 
-export type ArtId = ArtMeta["id"];
+/** Photos taken with the webcam in camera mode. Not a destination, so it earns no passport stamp. */
+export const CAMERA_META: ArtMeta = {
+  id: "camera",
+  name: "Your photo",
+  place: "Camera",
+  state: "Live camera",
+  caption: "your shot",
+  color: "#111426",
+  swatch: "bg-ink",
+};
+
+/** Every filterable kind of run: the four destinations, then camera shots. */
+export const PLACE_LIST: ArtMeta[] = [...ART_LIST, CAMERA_META];
+
+export const CAMERA_ID = "camera";
 
 // Puzzles saved before the destination artwork existed used these ids.
 const LEGACY_IDS: Record<string, ArtId> = { blob: "jaipur", sunset: "taj", disco: "kerala" };
+
+export function isCameraId(id: string): boolean {
+  return id === CAMERA_ID;
+}
 
 export function normalizeArtId(id: string): ArtId {
   const found = ART_LIST.find((art) => art.id === id);
@@ -68,6 +94,7 @@ export function isArtId(value: string | null): value is ArtId {
 }
 
 export function getArt(id: string): ArtMeta {
+  if (isCameraId(id)) return CAMERA_META;
   const normalized = normalizeArtId(id);
   return ART_LIST.find((art) => art.id === normalized) ?? ART_LIST[0];
 }

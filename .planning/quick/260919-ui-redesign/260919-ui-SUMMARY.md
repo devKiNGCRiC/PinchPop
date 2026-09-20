@@ -34,3 +34,11 @@ lint, typecheck, format:check, build all exit 0. Real-browser test (headless Chr
 - `/leaderboard`: All time / Today (UTC) tabs, destination filter, gold/silver/bronze podium with open spots, ranked table for 4th onward, score rules, and an honest note that online rankings need accounts. Ranks the player's own runs from localStorage (`src/lib/leaderboard.ts`).
 - `/how-to-play`: current controls (mouse, touch, keyboard), the five camera-mode gestures from the legacy guide (marked coming soon), scoring tips with a worked example, and an FAQ.
 - Nav now has 5 links (Leaderboard added); How to play lives in the footer and mobile menu and is linked from Home and Play.
+
+## Follow-up pass: Camera mode (Phase 2 game engine port)
+- `/camera` (lazy-loaded): webcam + free MediaPipe Hand Landmarker (Apache-2.0, runs in the browser, WASM from jsDelivr, model from Google's public bucket), so no server cost.
+- Ported the prototype's loop: raise both hands to frame with the two index fingertips, pinch both hands to arm and count down 3-2-1, capture with photobooth effect, solve the 3x3 puzzle by pinching and dragging pieces, hold a fist to save (or reset if unsolved).
+- Also works without hands: Snap now button, mouse/touch dragging of pieces, Save and Start over buttons; procedural Web Audio sounds with a mute toggle; clear permission, no-camera, busy-camera and load-failure messages.
+- Architecture: pure, unit-tested engine (`src/lib/camera/{gestures,pieces,engine}.ts`, 12 Vitest tests run in CI) separated from browser code (tracker, effects, render, sound, `useCameraGame`).
+- Camera photos are saved as small JPEGs in localStorage with an album/leaderboard/passport integration; if storage is full the oldest photo is dropped, never the newest run.
+- Verified in headless Chrome with a fake webcam: model load, snap, countdown, capture, mouse solve, save, results photo. Not verified: real hand gestures on a real webcam (covered by synthetic-landmark unit tests only).

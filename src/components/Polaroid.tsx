@@ -6,6 +6,10 @@ import { cn } from "@/lib/utils";
 
 interface PolaroidProps {
   artId: string;
+  /** A photo taken in camera mode. When present it is shown instead of the illustration. */
+  photo?: string;
+  /** Width divided by height of `photo`. */
+  aspect?: number;
   caption: string;
   /** Resting rotation in degrees. */
   tilt?: number;
@@ -21,6 +25,8 @@ interface PolaroidProps {
 /** An instant print: white frame, thick bottom margin, handwritten caption, optional tape and postmark. */
 export function Polaroid({
   artId,
+  photo,
+  aspect,
   caption,
   tilt = 0,
   tape = false,
@@ -46,7 +52,16 @@ export function Polaroid({
           className="absolute -top-3 left-1/2 z-10 h-6 w-20 -translate-x-1/2 -rotate-3 border-2 border-ink/70 bg-marigold/90"
         />
       ) : null}
-      <Art artId={artId} className="block aspect-square w-full border-2 border-ink" />
+      {photo ? (
+        <img
+          src={photo}
+          alt="Your photo from camera mode"
+          className="block w-full border-2 border-ink bg-ink object-cover"
+          style={{ aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)) }}
+        />
+      ) : (
+        <Art artId={artId} className="block aspect-square w-full border-2 border-ink" />
+      )}
       {postmark ? (
         <Postmark
           place={postmark.place}

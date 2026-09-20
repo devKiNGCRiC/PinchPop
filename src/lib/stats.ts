@@ -1,4 +1,4 @@
-import { ART_LIST, normalizeArtId } from "@/lib/art";
+import { ART_LIST, isCameraId, normalizeArtId } from "@/lib/art";
 import type { ArtId } from "@/lib/art";
 import type { Memory } from "@/lib/memories";
 
@@ -20,7 +20,7 @@ export function computeStats(memories: Memory[]): Stats {
 
 /** Destinations with at least one solved puzzle: the stamps in your passport. */
 export function visitedPlaces(memories: Memory[]): Set<ArtId> {
-  return new Set(memories.map((m) => normalizeArtId(m.artId)));
+  return new Set(memories.filter((m) => !isCameraId(m.artId)).map((m) => normalizeArtId(m.artId)));
 }
 
 export interface BadgeDef {
@@ -54,6 +54,12 @@ export const BADGES: BadgeDef[] = [
     name: "Album full",
     hint: "Pin 5 polaroids",
     earned: (m) => m.length >= 5,
+  },
+  {
+    id: "cheese",
+    name: "Say cheese",
+    hint: "Save a photo taken in camera mode",
+    earned: (m) => m.some((x) => isCameraId(x.artId)),
   },
   {
     id: "tour",

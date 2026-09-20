@@ -1,9 +1,9 @@
 import { getArt } from "@/lib/art";
-import type { ArtId } from "@/lib/art";
+import type { PlaceId } from "@/lib/art";
 import type { Memory } from "@/lib/memories";
 
 export type Period = "all" | "today";
-export type PlaceFilter = "all" | ArtId;
+export type PlaceFilter = "all" | PlaceId;
 
 export const MAX_ROWS = 20;
 

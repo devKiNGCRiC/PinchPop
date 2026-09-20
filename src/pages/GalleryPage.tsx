@@ -5,14 +5,14 @@ import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
-import { ART_LIST, getArt } from "@/lib/art";
-import type { ArtId } from "@/lib/art";
+import { getArt, PLACE_LIST } from "@/lib/art";
+import type { PlaceId } from "@/lib/art";
 import { clearMemories, deleteMemory, useMemories } from "@/lib/memories";
 import { formatDate, tiltFor } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
 type Sort = "newest" | "best";
-type Filter = "all" | ArtId;
+type Filter = "all" | PlaceId;
 
 export default function GalleryPage() {
   const memories = useMemories();
@@ -92,7 +92,7 @@ export default function GalleryPage() {
           aria-label="Filter by destination"
           className="mt-8 flex flex-wrap gap-2.5"
         >
-          {[{ id: "all" as const, place: "All places", swatch: "bg-white" }, ...ART_LIST].map(
+          {[{ id: "all" as const, place: "All places", swatch: "bg-white" }, ...PLACE_LIST].map(
             (option) => {
               const count =
                 option.id === "all"
@@ -136,7 +136,10 @@ export default function GalleryPage() {
       ) : shown.length === 0 ? (
         <p className="mt-14 text-lg text-ink-soft">
           No polaroids from this destination yet.{" "}
-          <Link to={`/game?art=${filter}`} className="font-semibold text-chakra underline">
+          <Link
+            to={filter === "camera" ? "/camera" : `/game?art=${filter}`}
+            className="font-semibold text-chakra underline"
+          >
             Solve one
           </Link>
           .
@@ -154,6 +157,8 @@ export default function GalleryPage() {
                 >
                   <Polaroid
                     artId={memory.artId}
+                    photo={memory.photo}
+                    aspect={memory.aspect}
                     caption={art.caption}
                     tilt={tiltFor(memory.id)}
                     tape={i % 3 === 0}

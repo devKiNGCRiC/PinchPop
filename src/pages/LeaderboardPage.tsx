@@ -2,10 +2,10 @@ import { useMemo, useState } from "react";
 import { Crown, Globe, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { Art } from "@/components/Art";
+import { MemoryImage } from "@/components/MemoryImage";
 import { EmptyState } from "@/components/EmptyState";
 import { PopLink } from "@/components/PopButton";
-import { ART_LIST, getArt } from "@/lib/art";
+import { getArt, PLACE_LIST } from "@/lib/art";
 import { rankRuns, todayKey } from "@/lib/leaderboard";
 import type { Period, PlaceFilter } from "@/lib/leaderboard";
 import { useMemories } from "@/lib/memories";
@@ -75,7 +75,7 @@ export default function LeaderboardPage() {
       </div>
 
       <div role="group" aria-label="Filter by destination" className="mt-5 flex flex-wrap gap-2.5">
-        {[{ id: "all" as const, place: "All places", swatch: "bg-white" }, ...ART_LIST].map(
+        {[{ id: "all" as const, place: "All places", swatch: "bg-white" }, ...PLACE_LIST].map(
           (option) => (
             <button
               key={option.id}
@@ -181,9 +181,8 @@ export default function LeaderboardPage() {
                             to={`/results?m=${run.id}`}
                             className="inline-flex min-h-11 items-center gap-3 font-semibold underline-offset-4 hover:underline"
                           >
-                            <Art
-                              artId={run.artId}
-                              decorative
+                            <MemoryImage
+                              memory={run}
                               className="size-9 shrink-0 rounded-lg border-2 border-ink"
                             />
                             {art.place}
@@ -285,7 +284,7 @@ function PodiumTop({ run, rank }: { run: Memory | undefined; rank: number }) {
             aria-hidden="true"
           />
         ) : null}
-        <Art artId={run.artId} decorative className="pop sticker size-14 rounded-full sm:size-20" />
+        <MemoryImage memory={run} className="pop sticker size-14 rounded-full sm:size-20" />
       </span>
       <span className="mt-2 font-display text-lg font-extrabold tracking-tighter tabular-nums sm:text-2xl">
         {run.score}

@@ -66,8 +66,11 @@ export function Footer() {
           <h2 className="font-display text-base font-extrabold text-marigold">Good to know</h2>
           <ul className="mt-3 space-y-3 text-base leading-snug text-white/80">
             <li>Works best in Chrome or Edge.</li>
-            <li>Camera mode is on the way. For now, play with mouse or touch.</li>
-            <li>Your polaroids and stamps stay in this browser.</li>
+            <li>Camera mode uses your webcam and never uploads your video.</li>
+            <li>
+              No camera? Play the puzzle with mouse or touch. Your polaroids and stamps stay in this
+              browser.
+            </li>
           </ul>
         </div>
       </div>

@@ -10,6 +10,10 @@ export interface Memory {
   seconds: number;
   score: number;
   createdAt: number;
+  /** A small JPEG data URL for photos taken in camera mode (artId "camera"). */
+  photo?: string;
+  /** Width divided by height of `photo`. */
+  aspect?: number;
 }
 
 const STORAGE_KEY = "pinchpop.memories.v1";
@@ -36,7 +40,9 @@ function isMemory(value: unknown): value is Memory {
     typeof m.moves === "number" &&
     typeof m.seconds === "number" &&
     typeof m.score === "number" &&
-    typeof m.createdAt === "number"
+    typeof m.createdAt === "number" &&
+    (m.photo === undefined || typeof m.photo === "string") &&
+    (m.aspect === undefined || typeof m.aspect === "number")
   );
 }
 
@@ -66,15 +72,33 @@ function subscribe(listener: () => void): () => void {
 }
 
 function write(next: Memory[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-  } catch {
-    console.warn("[PinchPop] Could not save to this browser's storage.");
+  let list = next;
+  // Photos are the bulky part. If the browser's storage is full, drop the oldest photo (keeping
+  // its score and stamp) and try again, instead of losing the newest run.
+  for (;;) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      break;
+    } catch {
+      const oldest = list.findLastIndex((m) => m.photo !== undefined);
+      if (oldest === -1) {
+        console.warn("[PinchPop] Could not save to this browser's storage.");
+        break;
+      }
+      console.warn("[PinchPop] Storage is full; removed the oldest saved photo to make room.");
+      list = list.map((m, i) => (i === oldest ? { ...m, photo: undefined, aspect: undefined } : m));
+    }
   }
   listeners.forEach((listener) => listener());
 }
 
-export function saveMemory(input: { artId: string; moves: number; seconds: number }): Memory {
+export function saveMemory(input: {
+  artId: string;
+  moves: number;
+  seconds: number;
+  photo?: string;
+  aspect?: number;
+}): Memory {
   const memory: Memory = {
     id: crypto.randomUUID().slice(0, 8),
     artId: input.artId,
@@ -82,6 +106,7 @@ export function saveMemory(input: { artId: string; moves: number; seconds: numbe
     seconds: input.seconds,
     score: scoreFor(input.moves, input.seconds),
     createdAt: Date.now(),
+    ...(input.photo ? { photo: input.photo, aspect: input.aspect } : {}),
   };
   write([memory, ...getSnapshot()]);
   return memory;

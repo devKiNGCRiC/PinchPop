@@ -22,7 +22,7 @@ interface Gesture {
   color: string;
 }
 
-// The five gestures of camera mode, in the order you use them. Camera mode is not live yet.
+// The five gestures of camera mode, in the order you use them.
 const GESTURES: Gesture[] = [
   {
     title: "Raise both hands",
@@ -91,7 +91,7 @@ const TIPS = [
 const FAQ = [
   {
     q: "Do I need a camera to play?",
-    a: "Not right now. Camera mode is still being built, so you play with your mouse, finger or keyboard. When camera mode arrives, your browser will ask for permission first.",
+    a: "Only for camera mode. The practice booth works with your mouse, finger or keyboard. When you start camera mode, your browser asks for permission first.",
   },
   {
     q: "Where are my polaroids and stamps saved?",
@@ -103,7 +103,15 @@ const FAQ = [
   },
   {
     q: "Can I play on my phone?",
-    a: "Yes. Touch dragging works on phones and tablets. Camera mode is aimed at laptops with a webcam.",
+    a: "Yes. Touch dragging works on phones and tablets. Camera mode can use a phone's front camera too, though a laptop gives your hands more room.",
+  },
+  {
+    q: "Is camera mode private?",
+    a: "Yes. Hand tracking runs inside your browser and your video is never uploaded. Only the small polaroid photo you choose to save is kept, and it stays on this device.",
+  },
+  {
+    q: "Camera mode does not see my hands. What can I try?",
+    a: "Add light on your face and hands, use a plain background, and keep both hands fully in view. You can also press Snap now and drag the pieces with your mouse.",
   },
   {
     q: "Why does the timer start late?",
@@ -123,15 +131,15 @@ export default function HowToPlayPage() {
         How to play
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
-        Frame a shot, snap it, then put it back together. Two ways to play: your hands (coming soon)
-        and your mouse or finger (right now).
+        Frame a shot, snap it, then put it back together. Two ways to play: your hands in camera
+        mode, or your mouse and finger in the practice booth.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <PopLink to="/game" tone="saffron" size="lg">
-          Play now
+        <PopLink to="/camera" tone="saffron" size="lg">
+          Start camera mode
         </PopLink>
-        <PopLink to="/gallery" tone="white" size="lg">
-          Open my album
+        <PopLink to="/game" tone="white" size="lg">
+          Practice with mouse
         </PopLink>
       </div>
 
@@ -168,8 +176,8 @@ export default function HowToPlayPage() {
           >
             Camera mode gestures
           </h2>
-          <span className="rounded-full border-2 border-ink bg-cloud px-3 py-1 text-sm font-semibold">
-            Coming soon
+          <span className="rounded-full border-2 border-ink bg-marigold px-3 py-1 text-sm font-semibold">
+            Live
           </span>
         </div>
         <p className="mt-3 max-w-xl text-lg text-ink-soft">

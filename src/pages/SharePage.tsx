@@ -22,6 +22,8 @@ export default function SharePage() {
           <h1 className="sr-only">Shared polaroid</h1>
           <Polaroid
             artId={memory.artId}
+            photo={memory.photo}
+            aspect={memory.aspect}
             caption={art.caption}
             tilt={tiltFor(memory.id)}
             tape
