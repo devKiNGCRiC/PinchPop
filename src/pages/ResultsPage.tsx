@@ -3,11 +3,13 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Confetti } from "@/components/Confetti";
 import { EmptyState } from "@/components/EmptyState";
+import { PolaroidActions } from "@/components/PolaroidActions";
 import { PopButton, PopLink } from "@/components/PopButton";
+import { ReplayDownload } from "@/components/ReplayDownload";
 import { Polaroid } from "@/components/Polaroid";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
 import { deleteMemory, useMemories } from "@/lib/memories";
-import { formatTime } from "@/lib/puzzle";
+import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
 
 export default function ResultsPage() {
@@ -71,10 +73,17 @@ export default function ResultsPage() {
             </p>
           ) : null}
 
-          <dl className="mt-8 grid grid-cols-3 gap-3 sm:gap-4">
+          <dl className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
             <Tile label="Score" value={String(memory.score)} color="bg-marigold text-ink" />
             <Tile label="Moves" value={String(memory.moves)} color="bg-saffron text-ink" />
             <Tile label="Time" value={formatTime(memory.seconds)} color="bg-leaf text-white" />
+            {memory.accuracy !== undefined ? (
+              <Tile
+                label="Accuracy"
+                value={formatAccuracy(memory.accuracy)}
+                color="bg-white text-ink"
+              />
+            ) : null}
           </dl>
 
           <p className="mt-6 max-w-md text-lg leading-relaxed text-ink-soft">
@@ -83,7 +92,12 @@ export default function ResultsPage() {
               : `${art.place} is stamped in your passport. You have visited ${visited} of ${ART_LIST.length} destinations.`}
           </p>
 
-          <div className="mt-8 flex flex-wrap gap-3">
+          <div className="mt-8">
+            <PolaroidActions memory={memory} />
+            <ReplayDownload memoryId={memory.id} />
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
             <PopLink to={camera ? "/camera" : `/game?art=${art.id}`} tone="saffron" size="lg">
               Play again
             </PopLink>

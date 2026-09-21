@@ -54,6 +54,8 @@ export interface EngineView {
 export interface RunStats {
   moves: number;
   seconds: number;
+  /** Share of drops that landed a piece in its right place, from 0 to 1. */
+  accuracy: number;
 }
 
 /**
@@ -73,6 +75,7 @@ export function createEngine() {
   let armed = false;
   let fingertips: Point[] = [];
   let moves = 0;
+  let cleanDrops = 0;
   let puzzleStartedAt = 0;
   let solvedAt: number | null = null;
   let lastNow = 0;
@@ -86,6 +89,7 @@ export function createEngine() {
     fistFrames = 0;
     armed = false;
     moves = 0;
+    cleanDrops = 0;
     solvedAt = null;
   }
 
@@ -115,6 +119,7 @@ export function createEngine() {
   function applyPuzzleEvents(list: PuzzleEvent[], now: number, events: EngineEvent[]): void {
     for (const name of list) {
       if (name === "drop") moves += 1;
+      if (name === "snap") cleanDrops += 1;
       if (name === "complete") solvedAt = now;
       events.push({ type: name });
     }
@@ -250,6 +255,7 @@ export function createEngine() {
     phase = "puzzle";
     fistFrames = 0;
     moves = 0;
+    cleanDrops = 0;
     puzzleStartedAt = now;
     solvedAt = puzzle.solved ? now : null;
     return puzzle;
@@ -273,7 +279,11 @@ export function createEngine() {
 
   function stats(): RunStats {
     const end = solvedAt ?? lastNow;
-    return { moves, seconds: Math.max(0, Math.round((end - puzzleStartedAt) / 1000)) };
+    return {
+      moves,
+      seconds: Math.max(0, Math.round((end - puzzleStartedAt) / 1000)),
+      accuracy: moves === 0 ? 1 : Math.min(1, cleanDrops / moves),
+    };
   }
 
   function view(): EngineView {

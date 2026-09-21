@@ -224,11 +224,13 @@ export default function LeaderboardPage() {
             </h2>
           </div>
           <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            You start at 2000. Every move costs 40 and every second costs 8. The lowest score is
-            100, so a slow solve still counts.
+            Every run is a Speed Run. You start at 2000; every move costs 40 and every second costs
+            8, down to a minimum of 100. Accuracy, the share of your moves that put a piece in the
+            right place, then scales that between 50% and 100%.
           </p>
           <p className="mt-3 text-base text-ink-soft">
-            Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560.
+            Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560. At 100% accuracy that scores
+            1560, at 60% accuracy 1248.
           </p>
         </section>
 

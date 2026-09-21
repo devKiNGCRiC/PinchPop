@@ -42,3 +42,14 @@ lint, typecheck, format:check, build all exit 0. Real-browser test (headless Chr
 - Architecture: pure, unit-tested engine (`src/lib/camera/{gestures,pieces,engine}.ts`, 12 Vitest tests run in CI) separated from browser code (tracker, effects, render, sound, `useCameraGame`).
 - Camera photos are saved as small JPEGs in localStorage with an album/leaderboard/passport integration; if storage is full the oldest photo is dropped, never the newest run.
 - Verified in headless Chrome with a fake webcam: model load, snap, countdown, capture, mouse solve, save, results photo. Not verified: real hand gestures on a real webcam (covered by synthetic-landmark unit tests only).
+
+## Follow-up pass: finishing the local core loop
+- GAME-05: the saved photo shatters into 40 fragments (canvas animation + sound) before the results page.
+- GAME-07: photo strip of the 3 latest camera photos on the Album page, downloadable as PNG.
+- GAME-08: WebM replay of the puzzle recorded in-browser (MediaRecorder on the canvas), downloadable from Results until the tab closes.
+- SCORE-02/03: every run is a Speed Run with moves, time and accuracy. One documented formula: base = max(100, 2000 - 40 x moves - 8 x seconds); score = round(base x (0.5 + 0.5 x accuracy)). Unit-tested; documented on How to play and Leaderboard.
+- ACHV-02: milestone unlock toast (grouped when a run earns several).
+- SHARE-04/05 (local): download the polaroid as PNG and open the OS share sheet (falls back to download). Works for camera photos and illustrated destinations.
+- Verified in headless Chrome with a fake webcam: solve, shatter, save, toast, PNG, replay, strip and destination export downloads (files created, no console errors). 20 Vitest tests pass.
+- Still needs Supabase (free tier): AUTH-02..06, cloud gallery/RLS, server-validated scores and leaderboards (SCORE-04, LEAD-*), public share links with previews (SHARE-01..03).
+- Not verified: GAME-09 feel with real hands on a real webcam.

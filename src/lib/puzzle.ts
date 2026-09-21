@@ -33,9 +33,28 @@ export function placedCount(order: number[]): number {
   return order.filter((tile, position) => tile === position).length;
 }
 
-/** Fewer moves and less time score higher; never drops below a small participation floor. */
-export function scoreFor(moves: number, seconds: number): number {
-  return Math.max(100, 2000 - moves * 40 - seconds * 8);
+// Speed Run scoring: one fixed formula for every run, documented on the How to play page.
+export const SCORE_START = 2000;
+export const MOVE_COST = 40;
+export const SECOND_COST = 8;
+export const SCORE_FLOOR = 100;
+
+/** Points left after paying for moves and time, before accuracy is applied. */
+export function baseScore(moves: number, seconds: number): number {
+  return Math.max(SCORE_FLOOR, SCORE_START - moves * MOVE_COST - seconds * SECOND_COST);
+}
+
+/**
+ * The Speed Run score. Fewer moves and less time score higher; accuracy (the share of moves that
+ * put a piece in its right place) scales it between 50% and 100% of the base score.
+ */
+export function scoreFor(moves: number, seconds: number, accuracy = 1): number {
+  const clamped = Math.min(1, Math.max(0, accuracy));
+  return Math.round(baseScore(moves, seconds) * (0.5 + 0.5 * clamped));
+}
+
+export function formatAccuracy(accuracy: number): string {
+  return `${Math.round(Math.min(1, Math.max(0, accuracy)) * 100)}%`;
 }
 
 export function formatTime(totalSeconds: number): string {

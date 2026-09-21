@@ -8,13 +8,15 @@ import { capturePhoto, slicePieces, toSavedPhoto } from "@/lib/camera/effects";
 import { describeCameraError, openCamera, stopStream } from "@/lib/camera/media";
 import type { CameraError } from "@/lib/camera/media";
 import { placedCount } from "@/lib/camera/pieces";
-import { renderScene } from "@/lib/camera/render";
-import type { SceneAssets } from "@/lib/camera/render";
+import { createShatter, renderScene, SHATTER_MS } from "@/lib/camera/render";
+import type { SceneAssets, Shatter } from "@/lib/camera/render";
 import { createSound } from "@/lib/camera/sound";
 import { loadTracker } from "@/lib/camera/tracker";
 import type { Tracker } from "@/lib/camera/tracker";
 import type { Box, Hand, Point } from "@/lib/camera/types";
 import { saveMemory } from "@/lib/memories";
+import { setRecording, startCanvasRecording } from "@/lib/recording";
+import type { CanvasRecorder } from "@/lib/recording";
 
 export type Stage = "idle" | "starting" | "running" | "error";
 
@@ -91,6 +93,9 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
   const pointerDownRef = useRef(false);
   const lastVideoTimeRef = useRef(-1);
   const lastHandsRef = useRef<Hand[]>([]);
+  const recorderRef = useRef<CanvasRecorder | null>(null);
+  const shatterRef = useRef<Shatter | null>(null);
+  const saveTimerRef = useRef<number | undefined>(undefined);
   const onSavedRef = useRef(onSaved);
 
   useEffect(() => {
@@ -100,6 +105,11 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
   const teardown = useCallback(() => {
     runningRef.current = false;
     cancelAnimationFrame(frameRef.current);
+    window.clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = undefined;
+    recorderRef.current?.discard();
+    recorderRef.current = null;
+    shatterRef.current = null;
     stopStream(streamRef.current);
     streamRef.current = null;
     trackerRef.current?.close();
@@ -142,19 +152,35 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
 
   const finishSave = useCallback(() => {
     const assets = assetsRef.current;
-    if (!assets) return;
+    if (!assets || saveTimerRef.current !== undefined) return;
     const stats = engine.stats();
     const photo = toSavedPhoto(assets.color);
+    // Keep the run immediately, so it survives even if the tab closes mid-animation.
     const memory = saveMemory({
       artId: CAMERA_ID,
       moves: Math.max(1, stats.moves),
       seconds: stats.seconds,
+      accuracy: stats.accuracy,
       photo: photo.dataUrl,
       aspect: photo.aspect,
     });
-    sound.saved();
-    teardown();
-    onSavedRef.current(memory.id);
+
+    const board = engine.view().puzzle?.box;
+    shatterRef.current = board ? createShatter(board, assets.color, performance.now()) : null;
+    sound.shatter();
+
+    // Let the photo burst apart, then finish the replay and move on to the results page.
+    saveTimerRef.current = window.setTimeout(() => {
+      void (async () => {
+        const recorder = recorderRef.current;
+        recorderRef.current = null;
+        const blob = await recorder?.stop();
+        if (blob) setRecording({ memoryId: memory.id, blob, mimeType: blob.type });
+        sound.saved();
+        teardown();
+        onSavedRef.current(memory.id);
+      })();
+    }, SHATTER_MS);
   }, [engine, sound, teardown]);
 
   const doCapture = useCallback(
@@ -165,6 +191,9 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
       const frame = fitBox(box, canvas.width, canvas.height);
       const photo = capturePhoto(video, frame);
       const puzzle = engine.beginPuzzle(frame, now, Math.random);
+      // Record the puzzle-solving as a WebM replay the player can download afterwards.
+      recorderRef.current?.discard();
+      recorderRef.current = startCanvasRecording(canvas);
       assetsRef.current = { pieces: slicePieces(photo.blackAndWhite, puzzle), color: photo.color };
       flashAtRef.current = now;
       solvedAtRef.current = puzzle.solved ? now : null;
@@ -197,6 +226,8 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
             finishSave();
             break;
           case "reset":
+            recorderRef.current?.discard();
+            recorderRef.current = null;
             assetsRef.current = null;
             flashAtRef.current = null;
             solvedAtRef.current = null;
@@ -283,6 +314,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
             now,
             flashAt: flashAtRef.current,
             solvedAt: solvedAtRef.current,
+            shatter: shatterRef.current,
           });
           syncUi();
         }
@@ -311,6 +343,8 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
   }, [engine]);
 
   const reset = useCallback(() => {
+    recorderRef.current?.discard();
+    recorderRef.current = null;
     engine.reset();
     assetsRef.current = null;
     flashAtRef.current = null;

@@ -1,6 +1,7 @@
 import { useParams } from "react-router-dom";
 
 import { EmptyState } from "@/components/EmptyState";
+import { PolaroidActions } from "@/components/PolaroidActions";
 import { PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
 import { getArt } from "@/lib/art";
@@ -34,6 +35,7 @@ export default function SharePage() {
               {memory.score} pts · {memory.moves} moves · {formatTime(memory.seconds)}
             </span>
           </Polaroid>
+          <PolaroidActions memory={memory} />
           <p className="text-base text-ink-soft">
             You can only see this print on this device. Public links arrive with accounts.
           </p>

@@ -1,5 +1,6 @@
 import { Outlet, ScrollRestoration } from "react-router-dom";
 
+import { AchievementToaster } from "@/components/AchievementToaster";
 import { Footer } from "@/components/Footer";
 import { NavBar } from "@/components/NavBar";
 
@@ -17,6 +18,7 @@ export function AppShell() {
         <Outlet />
       </main>
       <Footer />
+      <AchievementToaster />
       <ScrollRestoration />
     </div>
   );

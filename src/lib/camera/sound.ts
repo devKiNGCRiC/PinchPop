@@ -92,6 +92,10 @@ export function createSound() {
       noise(0.09, 0.22);
       tone({ freq: 240, slideTo: 90, type: "square", gain: 0.1, duration: 0.14 });
     },
+    shatter() {
+      noise(0.35, 0.28);
+      tone({ freq: 880, slideTo: 110, type: "sawtooth", gain: 0.08, duration: 0.4 });
+    },
     pickup: () => tone({ freq: 660, duration: 0.06, gain: 0.1 }),
     snap() {
       tone({ freq: 880, type: "triangle", duration: 0.07 });

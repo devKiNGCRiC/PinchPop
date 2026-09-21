@@ -10,7 +10,7 @@ import { Stamp } from "@/components/Stamp";
 import { ART_LIST, getArt, isArtId } from "@/lib/art";
 import type { ArtId } from "@/lib/art";
 import { saveMemory, useMemories } from "@/lib/memories";
-import { formatTime, placedCount, scoreFor } from "@/lib/puzzle";
+import { formatAccuracy, formatTime, placedCount, scoreFor } from "@/lib/puzzle";
 import { usePuzzleGame } from "@/lib/usePuzzleGame";
 import type { PuzzleResult } from "@/lib/usePuzzleGame";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
     [artId, memories],
   );
 
-  const { order, moves, seconds, status, swap, shuffle } = usePuzzleGame(handleSolved);
+  const { order, moves, seconds, accuracy, status, swap, shuffle } = usePuzzleGame(handleSolved);
   const solved = status === "solved";
 
   function restart() {
@@ -137,7 +137,7 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
             {solved ? (
               <div className="flex flex-col gap-3">
                 <p className="font-display text-2xl leading-tight font-extrabold tracking-[-0.04em]">
-                  Nailed it. {scoreFor(moves, seconds)} pts
+                  Nailed it. {scoreFor(moves, seconds, accuracy)} pts
                 </p>
                 {newStamp ? (
                   <div className="flex items-center gap-3 rounded-2xl border-2 border-ink bg-marigold/40 p-3">
@@ -149,8 +149,8 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
                   </div>
                 ) : null}
                 <p className="text-base text-ink-soft">
-                  {art.name} solved in {moves} moves, {formatTime(seconds)}. It is pinned to your
-                  album.
+                  {art.name} solved in {moves} moves, {formatTime(seconds)},{" "}
+                  {formatAccuracy(accuracy)} accuracy. It is pinned to your album.
                 </p>
                 <div className="mt-1 flex flex-wrap gap-3">
                   <PopLink to={`/results?m=${savedId ?? ""}`} tone="saffron">

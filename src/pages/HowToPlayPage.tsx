@@ -82,7 +82,7 @@ const CONTROLS: Control[] = [
 
 const TIPS = [
   "The clock starts on your first swap, so study the picture before you begin.",
-  "Every swap costs 40 points. Look at where a tile belongs before you drop it.",
+  "Every move costs 40 points, and moves that miss lower your accuracy. Look at where a piece belongs before you drop it.",
   "Start with tiles that are easy to spot: a sun, a doorway, a flag, a corner.",
   "Peek is free. It does not stop the clock, but it costs no points.",
   "Try all four destinations to earn every stamp and the Grand tour milestone.",
@@ -213,12 +213,15 @@ export default function HowToPlayPage() {
         <div className="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_1.1fr]">
           <div className="sticker-lg rounded-3xl bg-cloud p-6">
             <p className="text-lg leading-relaxed">
-              You start at <strong className="font-semibold">2000</strong>. Every move costs{" "}
-              <strong className="font-semibold">40</strong> and every second costs{" "}
-              <strong className="font-semibold">8</strong>. The lowest score is 100.
+              Every run is a Speed Run. You start at <strong className="font-semibold">2000</strong>
+              . Every move costs <strong className="font-semibold">40</strong> and every second
+              costs <strong className="font-semibold">8</strong>, down to a minimum of 100. Then{" "}
+              <strong className="font-semibold">accuracy</strong>, the share of your moves that put
+              a piece in the right place, scales the result between 50% and 100%.
             </p>
             <p className="mt-4 rounded-2xl border-2 border-ink bg-marigold/40 p-4 text-base">
-              Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560.
+              Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560. At 100% accuracy that
+              scores 1560, at 60% accuracy 1248.
             </p>
           </div>
           <ul className="space-y-3">

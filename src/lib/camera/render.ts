@@ -32,6 +32,86 @@ const HAND_CONNECTIONS: [number, number][] = [
 ];
 
 const FLASH_MS = 380;
+/** How long the finished photo takes to burst apart when it is saved. */
+export const SHATTER_MS = 1100;
+const SHATTER_COLS = 8;
+const SHATTER_ROWS = 5;
+const GRAVITY = 900;
+
+interface Fragment {
+  /** Source rectangle in the colour photo. */
+  sx: number;
+  sy: number;
+  sw: number;
+  sh: number;
+  /** Size on the canvas. */
+  w: number;
+  h: number;
+  /** Starting centre, velocity (px per second) and spin (radians per second). */
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  spin: number;
+}
+
+/** The burst that plays when a solved photo is saved (GAME-05). */
+export interface Shatter {
+  startedAt: number;
+  source: HTMLCanvasElement;
+  fragments: Fragment[];
+}
+
+export function createShatter(box: Box, source: HTMLCanvasElement, now: number): Shatter {
+  const fw = box.width / SHATTER_COLS;
+  const fh = box.height / SHATTER_ROWS;
+  const scaleX = source.width / box.width;
+  const scaleY = source.height / box.height;
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  const fragments: Fragment[] = [];
+  for (let row = 0; row < SHATTER_ROWS; row++) {
+    for (let col = 0; col < SHATTER_COLS; col++) {
+      const x = box.x + col * fw + fw / 2;
+      const y = box.y + row * fh + fh / 2;
+      const dx = x - cx;
+      const dy = y - cy;
+      const distance = Math.hypot(dx, dy) || 1;
+      const speed = 220 + Math.random() * 420;
+      fragments.push({
+        sx: col * fw * scaleX,
+        sy: row * fh * scaleY,
+        sw: fw * scaleX,
+        sh: fh * scaleY,
+        w: fw,
+        h: fh,
+        x,
+        y,
+        vx: (dx / distance) * speed + (Math.random() - 0.5) * 120,
+        vy: (dy / distance) * speed - 120 * Math.random(),
+        spin: (Math.random() - 0.5) * 9,
+      });
+    }
+  }
+  return { startedAt: now, source, fragments };
+}
+
+function drawShatter(ctx: CanvasRenderingContext2D, shatter: Shatter, now: number) {
+  const t = (now - shatter.startedAt) / 1000;
+  const alpha = Math.max(0, 1 - Math.pow(t / (SHATTER_MS / 1000), 2));
+  if (alpha <= 0) return;
+  for (const f of shatter.fragments) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.translate(f.x + f.vx * t, f.y + f.vy * t + 0.5 * GRAVITY * t * t);
+    ctx.rotate(f.spin * t);
+    ctx.drawImage(shatter.source, f.sx, f.sy, f.sw, f.sh, -f.w / 2, -f.h / 2, f.w, f.h);
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "rgba(255,255,255,0.7)";
+    ctx.strokeRect(-f.w / 2, -f.h / 2, f.w, f.h);
+    ctx.restore();
+  }
+}
 export const REVEAL_MS = 700;
 
 export interface SceneAssets {
@@ -51,6 +131,8 @@ export interface SceneArgs {
   flashAt: number | null;
   /** When the puzzle was solved, for the colour reveal. */
   solvedAt: number | null;
+  /** The save animation, once the player has saved a solved photo. */
+  shatter: Shatter | null;
 }
 
 function drawMirroredVideo(ctx: CanvasRenderingContext2D, video: HTMLVideoElement): void {
@@ -229,6 +311,8 @@ export function renderScene(ctx: CanvasRenderingContext2D, args: SceneArgs): voi
     drawFramePreview(ctx, video, view.countdownBox);
     drawBrackets(ctx, view.countdownBox, SAFFRON, 7);
     if (view.countdown !== null) drawCountdown(ctx, view.countdownBox, view.countdown);
+  } else if (view.phase === "saving" && args.shatter) {
+    drawShatter(ctx, args.shatter, now);
   } else if (view.phase === "puzzle" || view.phase === "saving") {
     drawPuzzle(ctx, args);
     if (view.phase === "puzzle") hands.forEach((hand) => drawSkeleton(ctx, hand));

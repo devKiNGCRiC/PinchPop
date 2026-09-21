@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { EmptyState } from "@/components/EmptyState";
+import { PhotoStripCard } from "@/components/PhotoStripCard";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
 import { getArt, PLACE_LIST } from "@/lib/art";
@@ -85,6 +86,8 @@ export default function GalleryPage() {
           </div>
         ) : null}
       </div>
+
+      <PhotoStripCard memories={memories} />
 
       {memories.length > 0 ? (
         <div

@@ -261,4 +261,28 @@ describe("camera engine", () => {
     engine.beginPuzzle({ x: 0, y: 0, width: 300, height: 300 }, 0, rand);
     expect(engine.requestSave()).toBe(false);
   });
+
+  it("tracks accuracy: a drop that misses its cell counts as a move but not a clean one", () => {
+    const engine = createEngine();
+    const rand = seeded(9);
+    const box = { x: 100, y: 60, width: 450, height: 300 };
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    expect(engine.stats().accuracy).toBe(1);
+
+    const piece = puzzle.pieces.find((p) => !p.placed);
+    if (!piece) throw new Error("expected an unplaced piece");
+    // Drop it on a cell that is not its own: same row, next column over.
+    const wrongCol = (piece.col + 1) % 3;
+    const to = {
+      x: box.x + wrongCol * puzzle.tileW + piece.w / 2,
+      y: box.y + piece.row * puzzle.tileH + piece.h / 2,
+    };
+    engine.pointer(true, { x: piece.x + piece.w / 2, y: piece.y + piece.h / 2 }, 10, rand);
+    engine.pointer(true, to, 20, rand);
+    engine.pointer(false, to, 30, rand);
+
+    const stats = engine.stats();
+    expect(stats.moves).toBe(1);
+    expect(stats.accuracy).toBe(0);
+  });
 });

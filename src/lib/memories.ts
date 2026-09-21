@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from "react";
 
+import { announceBadges } from "@/lib/achievements";
 import { scoreFor } from "@/lib/puzzle";
+import { BADGES } from "@/lib/stats";
 
 /** One solved puzzle, kept as a polaroid on this device until accounts and storage exist. */
 export interface Memory {
@@ -10,6 +12,8 @@ export interface Memory {
   seconds: number;
   score: number;
   createdAt: number;
+  /** Share of moves that put a piece in its right place, from 0 to 1. Missing on older runs. */
+  accuracy?: number;
   /** A small JPEG data URL for photos taken in camera mode (artId "camera"). */
   photo?: string;
   /** Width divided by height of `photo`. */
@@ -41,6 +45,7 @@ function isMemory(value: unknown): value is Memory {
     typeof m.seconds === "number" &&
     typeof m.score === "number" &&
     typeof m.createdAt === "number" &&
+    (m.accuracy === undefined || typeof m.accuracy === "number") &&
     (m.photo === undefined || typeof m.photo === "string") &&
     (m.aspect === undefined || typeof m.aspect === "number")
   );
@@ -96,6 +101,7 @@ export function saveMemory(input: {
   artId: string;
   moves: number;
   seconds: number;
+  accuracy?: number;
   photo?: string;
   aspect?: number;
 }): Memory {
@@ -104,11 +110,17 @@ export function saveMemory(input: {
     artId: input.artId,
     moves: input.moves,
     seconds: input.seconds,
-    score: scoreFor(input.moves, input.seconds),
+    score: scoreFor(input.moves, input.seconds, input.accuracy),
     createdAt: Date.now(),
+    ...(input.accuracy !== undefined ? { accuracy: input.accuracy } : {}),
     ...(input.photo ? { photo: input.photo, aspect: input.aspect } : {}),
   };
-  write([memory, ...getSnapshot()]);
+  const previous = getSnapshot();
+  const updated = [memory, ...previous];
+  write(updated);
+  // Tell the player about any milestone this run just unlocked.
+  const alreadyEarned = new Set(BADGES.filter((b) => b.earned(previous)).map((b) => b.id));
+  announceBadges(BADGES.filter((b) => !alreadyEarned.has(b.id) && b.earned(updated)));
   return memory;
 }
 
