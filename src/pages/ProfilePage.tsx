@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import { Stamp } from "@/components/Stamp";
 import { ART_LIST } from "@/lib/art";
 import { useMemories } from "@/lib/memories";
@@ -35,7 +36,12 @@ export default function ProfilePage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Passport · PinchPop</title>
+      <Seo
+        title="Passport"
+        description="Your stats, Speed Run bests and unlocked milestones."
+        path="/profile"
+        noIndex
+      />
 
       <div className="grid items-center gap-10 lg:grid-cols-[320px_1fr]">
         {/* The passport cover: Ashoka blue, a gold wheel, the holder's name. */}

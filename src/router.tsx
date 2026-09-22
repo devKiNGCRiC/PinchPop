@@ -3,6 +3,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
 import { AppShell } from "@/components/AppShell";
 import { Chakra } from "@/components/Chakra";
+import AboutPage from "@/pages/AboutPage";
 import ErrorPage from "@/pages/ErrorPage";
 import GalleryPage from "@/pages/GalleryPage";
 import GamePage from "@/pages/GamePage";
@@ -10,6 +11,7 @@ import HomePage from "@/pages/HomePage";
 import HowToPlayPage from "@/pages/HowToPlayPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import PrivacyPage from "@/pages/PrivacyPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ResultsPage from "@/pages/ResultsPage";
 import SharePage from "@/pages/SharePage";
@@ -39,6 +41,8 @@ const router = createBrowserRouter([
       { path: "results", element: <ResultsPage /> },
       { path: "leaderboard", element: <LeaderboardPage /> },
       { path: "how-to-play", element: <HowToPlayPage /> },
+      { path: "about", element: <AboutPage /> },
+      { path: "privacy", element: <PrivacyPage /> },
       { path: "gallery", element: <GalleryPage /> },
       { path: "profile", element: <ProfilePage /> },
       { path: "share/:slug", element: <SharePage /> },

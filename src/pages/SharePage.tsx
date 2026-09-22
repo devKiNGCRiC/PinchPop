@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { PolaroidActions } from "@/components/PolaroidActions";
 import { PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import { Polaroid } from "@/components/Polaroid";
 import { getArt } from "@/lib/art";
 import { useMemories } from "@/lib/memories";
@@ -17,7 +18,12 @@ export default function SharePage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-32 pb-8 sm:px-6 sm:pt-40" data-share-slug={slug}>
-      <title>Shared polaroid · PinchPop</title>
+      <Seo
+        title="Shared polaroid"
+        description="A polaroid shared from PinchPop."
+        path="/share"
+        noIndex
+      />
       {memory && art ? (
         <div className="mx-auto flex max-w-100 flex-col items-center gap-8 text-center">
           <h1 className="sr-only">Shared polaroid</h1>

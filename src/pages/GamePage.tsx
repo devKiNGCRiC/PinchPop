@@ -6,6 +6,7 @@ import { Art } from "@/components/Art";
 import { Confetti } from "@/components/Confetti";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { PuzzleBoard } from "@/components/PuzzleBoard";
+import { Seo } from "@/components/Seo";
 import { Stamp } from "@/components/Stamp";
 import { ART_LIST, getArt, isArtId } from "@/lib/art";
 import type { ArtId } from "@/lib/art";
@@ -54,7 +55,11 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>{`${art.place} puzzle · PinchPop`}</title>
+      <Seo
+        title="Practice booth"
+        description={`Swap tiles with your mouse, finger or keyboard to solve the ${art.place} puzzle and earn its passport stamp. No camera needed.`}
+        path="/game"
+      />
       <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
         Practice booth
       </h1>
@@ -103,7 +108,7 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
             >
               Pick a destination
             </h2>
-            <ul className="mt-4 grid grid-cols-4 gap-2.5 lg:grid-cols-2">
+            <ul className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4 lg:grid-cols-2">
               {ART_LIST.map((option) => (
                 <li key={option.id}>
                   <button

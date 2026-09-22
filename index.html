@@ -3,13 +3,69 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#101d6b" />
+    <meta name="theme-color" content="#1c34a6" />
+    <meta name="color-scheme" content="light" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="PinchPop" />
+
+    <!--
+      Every tag below is the site-wide default. Real browsers and JS-executing crawlers (Google)
+      see each route replace these via src/components/Seo.tsx. Link-preview bots (Facebook, X,
+      Discord, WhatsApp, iMessage) only ever fetch this static file, so this is what they see for
+      every URL until a server/edge function can render per-route tags (see Seo.tsx's own note).
+    -->
+    <title>PinchPop — gesture-controlled photobooth</title>
     <meta
       name="description"
       content="PinchPop is a gesture-controlled photobooth game: frame a photo with your hands, pinch to capture it, then solve the puzzle to reveal your polaroid."
     />
-    <title>PinchPop</title>
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://pinchpop.vercel.app/" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PinchPop" />
+    <meta property="og:title" content="PinchPop — gesture-controlled photobooth" />
+    <meta
+      property="og:description"
+      content="Frame a photo with your hands, pinch to capture it, then solve the puzzle to reveal your polaroid — a free, gesture-controlled photobooth for the places you've been."
+    />
+    <meta property="og:url" content="https://pinchpop.vercel.app/" />
+    <meta property="og:image" content="https://pinchpop.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="en_US" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="PinchPop — gesture-controlled photobooth" />
+    <meta
+      name="twitter:description"
+      content="Frame a photo with your hands, pinch to capture it, then solve the puzzle to reveal your polaroid."
+    />
+    <meta name="twitter:image" content="https://pinchpop.vercel.app/og-image.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PinchPop",
+        "url": "https://pinchpop.vercel.app/",
+        "description": "A gesture-controlled photobooth game: frame a photo with your hands, pinch to capture it, then solve the puzzle to reveal your polaroid.",
+        "applicationCategory": "GameApplication",
+        "operatingSystem": "Any (runs in a web browser)",
+        "browserRequirements": "Requires a webcam for camera mode; the practice puzzle works without one.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

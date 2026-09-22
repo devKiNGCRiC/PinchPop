@@ -5,8 +5,9 @@ import { Link } from "react-router-dom";
 import { MemoryImage } from "@/components/MemoryImage";
 import { EmptyState } from "@/components/EmptyState";
 import { PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import { getArt, PLACE_LIST } from "@/lib/art";
-import { rankRuns, todayKey } from "@/lib/leaderboard";
+import { ownRank, rankRuns, todayKey } from "@/lib/leaderboard";
 import type { Period, PlaceFilter } from "@/lib/leaderboard";
 import { useMemories } from "@/lib/memories";
 import { formatTime } from "@/lib/puzzle";
@@ -37,10 +38,19 @@ export default function LeaderboardPage() {
     [memories, period, place, today],
   );
   const rest = runs.slice(3);
+  // Your rank among these filters, kept visible even once it scrolls off the podium/table (LEAD-03).
+  const mine = useMemo(
+    () => ownRank(memories, { period, place, today }),
+    [memories, period, place, today],
+  );
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Leaderboard · PinchPop</title>
+      <Seo
+        title="Leaderboard"
+        description="See your fastest, tidiest Speed Run solves ranked by score, with a full breakdown of how the scoring formula works."
+        path="/leaderboard"
+      />
       <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
         Leaderboard
       </h1>
@@ -97,6 +107,26 @@ export default function LeaderboardPage() {
         )}
       </div>
 
+      {mine ? (
+        <p className="sticker mt-6 inline-flex flex-wrap items-center gap-2 rounded-2xl bg-white px-4 py-3 text-base">
+          <span className="font-semibold">Your rank:</span>
+          <span className="font-display font-extrabold tabular-nums">
+            #{mine.rank} of {mine.total}
+          </span>
+          {mine.offScreen ? (
+            <>
+              <span className="text-ink-soft">— off the list above,</span>
+              <Link
+                to={`/results?m=${mine.memory.id}`}
+                className="font-semibold text-chakra underline underline-offset-4"
+              >
+                open that run
+              </Link>
+            </>
+          ) : null}
+        </p>
+      ) : null}
+
       {runs.length === 0 ? (
         <div className="mt-16">
           <EmptyState
@@ -139,8 +169,8 @@ export default function LeaderboardPage() {
           </ol>
 
           {rest.length > 0 ? (
-            <div className="sticker-lg mt-12 overflow-hidden rounded-3xl bg-white">
-              <table className="w-full text-left text-base">
+            <div className="sticker-lg mt-12 overflow-x-auto rounded-3xl bg-white">
+              <table className="w-full text-left text-base sm:min-w-105">
                 <caption className="sr-only">Ranked runs from fourth place</caption>
                 <thead className="bg-ivory text-sm text-ink-soft">
                   <tr>
@@ -159,7 +189,10 @@ export default function LeaderboardPage() {
                     >
                       Moves
                     </th>
-                    <th scope="col" className="px-2 py-3 text-right font-semibold">
+                    <th
+                      scope="col"
+                      className="hidden px-2 py-3 text-right font-semibold sm:table-cell"
+                    >
                       Time
                     </th>
                     <th
@@ -194,7 +227,7 @@ export default function LeaderboardPage() {
                         <td className="hidden px-2 py-3 text-right tabular-nums sm:table-cell">
                           {run.moves}
                         </td>
-                        <td className="px-2 py-3 text-right tabular-nums">
+                        <td className="hidden px-2 py-3 text-right tabular-nums sm:table-cell">
                           {formatTime(run.seconds)}
                         </td>
                         <td className="hidden px-4 py-3 text-right text-ink-soft sm:table-cell">

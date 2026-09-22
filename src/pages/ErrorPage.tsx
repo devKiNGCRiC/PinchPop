@@ -1,6 +1,7 @@
 import { useRouteError } from "react-router-dom";
 
 import { PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import { Wordmark } from "@/components/Wordmark";
 
 /** Last-resort screen for an unexpected render or loader error; rendered outside AppShell. */
@@ -10,7 +11,12 @@ export default function ErrorPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-8 bg-ivory px-5 text-center text-ink">
-      <title>Something went wrong · PinchPop</title>
+      <Seo
+        title="Something went wrong"
+        description="PinchPop hit an unexpected error."
+        path="/error"
+        noIndex
+      />
       <Wordmark />
       <div className="sticker-lg max-w-md rounded-3xl bg-cloud p-8">
         <h1 className="font-display text-3xl leading-tight font-extrabold tracking-[-0.04em] text-sindoor">

@@ -1,0 +1,7 @@
+# PinchPop is a client-only app: pages with a person's own saved data (Results, Album, Passport,
+# a Share link) carry a noindex meta tag instead of being disallowed here, so crawlers can still
+# read that tag rather than being blocked from the page outright.
+User-agent: *
+Allow: /
+
+Sitemap: https://pinchpop.vercel.app/sitemap.xml

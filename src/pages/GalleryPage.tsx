@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
 import { PhotoStripCard } from "@/components/PhotoStripCard";
 import { PopButton, PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import { Polaroid } from "@/components/Polaroid";
 import { getArt, PLACE_LIST } from "@/lib/art";
 import type { PlaceId } from "@/lib/art";
@@ -27,7 +28,12 @@ export default function GalleryPage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Album · PinchPop</title>
+      <Seo
+        title="Album"
+        description="Your saved polaroids and photo strip, kept on this device."
+        path="/gallery"
+        noIndex
+      />
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
           <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">

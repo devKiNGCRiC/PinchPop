@@ -1,11 +1,12 @@
 import { Compass } from "lucide-react";
 
 import { PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 
 export default function NotFoundPage() {
   return (
     <div className="mx-auto flex max-w-280 flex-col items-center px-5 pt-32 pb-8 text-center sm:px-6 sm:pt-40">
-      <title>Page not found · PinchPop</title>
+      <Seo title="Page not found" description="This page could not be found." path="/404" noIndex />
       <div className="relative">
         <p
           aria-hidden="true"

@@ -18,6 +18,7 @@ import { Link, useNavigate } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { PopButton, PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import type { Status } from "@/lib/camera/engine";
 import { cameraSupported } from "@/lib/camera/media";
 import { useCameraGame } from "@/lib/camera/useCameraGame";
@@ -96,7 +97,11 @@ export default function CameraPage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>Camera mode · PinchPop</title>
+      <Seo
+        title="Camera mode"
+        description="Frame with your hands, pinch to snap a photo, then solve it with hand gestures. Free, in-browser hand tracking — no app, no upload."
+        path="/camera"
+      />
       <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
         Camera mode
       </h1>
@@ -112,7 +117,9 @@ export default function CameraPage() {
           aria-hidden="true"
           className="pointer-events-none absolute size-px opacity-0"
         />
-        <div style={running ? undefined : { aspectRatio: "16 / 9" }}>
+        {/* min-h keeps the idle/error/starting overlay's own content from needing to scroll inside
+            this box on narrow phones, where a strict 16:9 height would be too short for it. */}
+        <div className={running ? undefined : "aspect-video min-h-140 sm:min-h-120 lg:min-h-0"}>
           <canvas
             ref={canvasRef}
             aria-label="Live camera view"

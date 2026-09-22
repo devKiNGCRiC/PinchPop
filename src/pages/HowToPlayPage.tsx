@@ -13,6 +13,7 @@ import {
 import type { LucideIcon } from "lucide-react";
 
 import { PopLink } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
 import { cn } from "@/lib/utils";
 
 interface Gesture {
@@ -126,7 +127,11 @@ const FAQ = [
 export default function HowToPlayPage() {
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>How to play · PinchPop</title>
+      <Seo
+        title="How to play"
+        description="Learn the camera gestures and mouse controls, how Speed Run scoring works, and answers to common questions about PinchPop."
+        path="/how-to-play"
+      />
       <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
         How to play
       </h1>

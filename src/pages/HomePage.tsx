@@ -8,6 +8,7 @@ import { HeroPuzzle } from "@/components/HeroPuzzle";
 import { Marquee } from "@/components/Marquee";
 import { PopLink } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
+import { Seo } from "@/components/Seo";
 import { ART_LIST, getArt } from "@/lib/art";
 import { useMemories } from "@/lib/memories";
 import { cn } from "@/lib/utils";
@@ -80,7 +81,11 @@ export default function HomePage() {
 
   return (
     <>
-      <title>PinchPop: capture, solve, remember your travels</title>
+      <Seo
+        title="Capture. Solve. Remember."
+        description="Frame a shot with your hands, pinch to snap it, then solve the puzzle to reveal your polaroid — a free, gesture-controlled photobooth for the places you've been."
+        path="/"
+      />
 
       <section className="relative overflow-hidden bg-chakra pt-32 pb-28 text-white sm:pt-36">
         <div

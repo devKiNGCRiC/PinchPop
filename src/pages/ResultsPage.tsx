@@ -7,6 +7,7 @@ import { PolaroidActions } from "@/components/PolaroidActions";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { ReplayDownload } from "@/components/ReplayDownload";
 import { Polaroid } from "@/components/Polaroid";
+import { Seo } from "@/components/Seo";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
 import { deleteMemory, useMemories } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
@@ -22,7 +23,12 @@ export default function ResultsPage() {
   if (!memory) {
     return (
       <div className="mx-auto max-w-280 px-5 pt-32 pb-8 sm:px-6 sm:pt-40">
-        <title>Results · PinchPop</title>
+        <Seo
+          title="Results"
+          description="Solve a puzzle on PinchPop to see your Speed Run score, moves, time and accuracy."
+          path="/results"
+          noIndex
+        />
         <h1 className="sr-only">Results</h1>
         <EmptyState
           title="No polaroid yet"
@@ -43,7 +49,12 @@ export default function ResultsPage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <title>{`${art.place} polaroid · PinchPop`}</title>
+      <Seo
+        title={`${art.place} polaroid`}
+        description={`Scored ${memory.score} pts in ${memory.moves} moves and ${formatTime(memory.seconds)} — your Speed Run result for ${art.place}.`}
+        path="/results"
+        noIndex
+      />
       <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="relative mx-auto w-full max-w-100 py-4">
           <Confetti key={memory.id} />
