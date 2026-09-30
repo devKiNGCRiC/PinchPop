@@ -46,7 +46,10 @@ export async function openCamera(): Promise<MediaStream> {
     });
   }
   return navigator.mediaDevices.getUserMedia({
-    video: { width: { ideal: 1280 }, height: { ideal: 720 }, facingMode: "user" },
+    // "ideal" is best-effort: browsers fall back to the webcam's actual max if it can't do 1080p.
+    // Requesting more than the 720p we used to ask for gives the hand-framed crop more real
+    // pixels to work with, since the frame you draw becomes the photo's resolution directly.
+    video: { width: { ideal: 1920 }, height: { ideal: 1080 }, facingMode: "user" },
     audio: false,
   });
 }

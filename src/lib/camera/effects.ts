@@ -3,9 +3,14 @@ import type { Puzzle } from "@/lib/camera/pieces";
 
 const CONTRAST = 1.3;
 const BRIGHTNESS = 10;
-const NOISE_STD = 15;
-/** Longest side of the photo kept in the album, in pixels. Keeps storage small. */
-const SAVED_MAX_SIDE = 720;
+// Subtle film grain, not visible noise — tuned low enough that it still reads as "instant film"
+// once printed, rather than looking like compression artefacts on a soft source photo.
+const NOISE_STD = 7;
+/** Longest side of the photo kept in the album, in pixels. Keeps storage small without capping
+ * resolution below what a well-framed shot actually captures (matches the 1080p camera request
+ * in media.ts, so a full-canvas frame is not downscaled and then upscaled again on export). */
+const SAVED_MAX_SIDE = 1080;
+const SAVED_JPEG_QUALITY = 0.9;
 
 function gaussianNoise(std: number): number {
   const u1 = Math.random() || 1e-6;
@@ -56,6 +61,18 @@ function makeCanvas(width: number, height: number): HTMLCanvasElement {
   return canvas;
 }
 
+/** A 2D context with the best resampling quality this browser has, for any scaled drawImage. */
+function highQualityContext(
+  canvas: HTMLCanvasElement,
+  options?: CanvasRenderingContext2DSettings,
+): CanvasRenderingContext2D {
+  const ctx = canvas.getContext("2d", options);
+  if (!ctx) throw new Error("Canvas is not available in this browser.");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  return ctx;
+}
+
 export interface CapturedPhoto {
   /** The finished colour photo, shown when the puzzle is solved and saved to the album. */
   color: HTMLCanvasElement;
@@ -66,21 +83,19 @@ export interface CapturedPhoto {
 /** Grabs the framed region of the (mirrored) video and prepares its colour and B&W versions. */
 export function capturePhoto(video: HTMLVideoElement, box: Box): CapturedPhoto {
   const frame = makeCanvas(video.videoWidth, video.videoHeight);
-  const frameCtx = frame.getContext("2d");
-  if (!frameCtx) throw new Error("Canvas is not available in this browser.");
+  const frameCtx = highQualityContext(frame);
   frameCtx.translate(frame.width, 0);
   frameCtx.scale(-1, 1);
   frameCtx.drawImage(video, 0, 0, frame.width, frame.height);
 
   const crop = makeCanvas(box.width, box.height);
-  const cropCtx = crop.getContext("2d", { willReadFrequently: true });
-  if (!cropCtx) throw new Error("Canvas is not available in this browser.");
+  const cropCtx = highQualityContext(crop, { willReadFrequently: true });
   cropCtx.drawImage(frame, box.x, box.y, box.width, box.height, 0, 0, crop.width, crop.height);
 
   const colorData = cropCtx.getImageData(0, 0, crop.width, crop.height);
   photobooth(colorData, false);
   const color = makeCanvas(crop.width, crop.height);
-  color.getContext("2d")?.putImageData(colorData, 0, 0);
+  highQualityContext(color).putImageData(colorData, 0, 0);
   vignette(color);
 
   const bwData = cropCtx.getImageData(0, 0, crop.width, crop.height);
@@ -95,19 +110,17 @@ export function capturePhoto(video: HTMLVideoElement, box: Box): CapturedPhoto {
 export function slicePieces(source: HTMLCanvasElement, puzzle: Puzzle): HTMLCanvasElement[] {
   return puzzle.pieces.map((piece) => {
     const canvas = makeCanvas(piece.w, piece.h);
-    canvas
-      .getContext("2d")
-      ?.drawImage(
-        source,
-        piece.col * puzzle.tileW,
-        piece.row * puzzle.tileH,
-        piece.w,
-        piece.h,
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
+    highQualityContext(canvas).drawImage(
+      source,
+      piece.col * puzzle.tileW,
+      piece.row * puzzle.tileH,
+      piece.w,
+      piece.h,
+      0,
+      0,
+      canvas.width,
+      canvas.height,
+    );
     return canvas;
   });
 }
@@ -118,10 +131,13 @@ export interface SavedPhoto {
   aspect: number;
 }
 
-/** A small JPEG of the finished colour photo, cheap enough to keep in local storage. */
+/** A JPEG of the finished colour photo, downsized only if it is larger than needed for the album. */
 export function toSavedPhoto(color: HTMLCanvasElement): SavedPhoto {
   const scale = Math.min(1, SAVED_MAX_SIDE / Math.max(color.width, color.height));
   const out = makeCanvas(color.width * scale, color.height * scale);
-  out.getContext("2d")?.drawImage(color, 0, 0, out.width, out.height);
-  return { dataUrl: out.toDataURL("image/jpeg", 0.82), aspect: out.width / out.height };
+  highQualityContext(out).drawImage(color, 0, 0, out.width, out.height);
+  return {
+    dataUrl: out.toDataURL("image/jpeg", SAVED_JPEG_QUALITY),
+    aspect: out.width / out.height,
+  };
 }

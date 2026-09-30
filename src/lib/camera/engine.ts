@@ -8,8 +8,13 @@ export const COUNTDOWN_SECONDS = 3;
 export const FIST_HOLD_FRAMES = 12;
 /** How long the last frame keeps showing after a hand briefly drops out of view. */
 export const FRAME_GRACE_MS = 450;
-/** Smallest frame (in canvas pixels) that can be captured. */
-export const MIN_FRAME_SIZE = 40;
+/**
+ * Smallest frame (in canvas pixels) that can be captured. Kept generous rather than a bare
+ * minimum: the frame you draw with your fingers becomes the photo's actual resolution (there is
+ * no upscaling at capture time), so a tiny frame produces a visibly low-quality photo once it is
+ * printed or downloaded at a fixed print size later.
+ */
+export const MIN_FRAME_SIZE = 260;
 /** Drag id used by the mouse or a finger on the canvas, as opposed to hands "A" and "B". */
 const POINTER_ID = "pointer";
 

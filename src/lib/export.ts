@@ -67,6 +67,11 @@ function makeCanvas(width: number, height: number): [HTMLCanvasElement, CanvasRe
   canvas.height = height;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not available in this browser.");
+  // The saved photo is often smaller than the fixed print size below, so this draw is usually an
+  // upscale — the default "low" smoothing browsers use for that looks noticeably blurrier/blockier
+  // than "high" does for the same source resolution.
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
   return [canvas, ctx];
 }
 

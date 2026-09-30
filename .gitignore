@@ -15,6 +15,9 @@ dist-ssr
 # GSD graphify local output
 graphify-out/
 
+# Local design exploration, not part of the shipped app
+design-exploration/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
