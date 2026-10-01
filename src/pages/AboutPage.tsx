@@ -4,6 +4,7 @@ import { Chakra } from "@/components/Chakra";
 import { PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
 import { SocialLinks } from "@/components/SocialLinks";
+import { ALL_SOCIAL_LINKS } from "@/lib/social";
 
 const POINTS = [
   {
@@ -74,6 +75,16 @@ export default function AboutPage() {
         </p>
       </section>
 
+      <section
+        aria-labelledby="connect-heading"
+        className="sticker-lg mt-12 rounded-3xl bg-white p-6 sm:p-8"
+      >
+        <h2 id="connect-heading" className="font-display text-2xl font-extrabold tracking-tight">
+          Built by devKiNGCRiC
+        </h2>
+        <SocialLinks links={ALL_SOCIAL_LINKS} showLabels className="mt-4" />
+      </section>
+
       <div className="mt-10 flex flex-wrap items-center gap-3">
         <PopLink to="/how-to-play" tone="saffron" size="lg">
           How to play
@@ -81,8 +92,6 @@ export default function AboutPage() {
         <PopLink to="/privacy" tone="white" size="lg">
           Privacy
         </PopLink>
-        <span className="mx-1 hidden h-8 w-px bg-ink/15 sm:block" aria-hidden="true" />
-        <SocialLinks className="text-ink-soft" />
       </div>
     </div>
   );
