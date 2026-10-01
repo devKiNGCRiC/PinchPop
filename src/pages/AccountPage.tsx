@@ -1,0 +1,211 @@
+import { useEffect, useState } from "react";
+import type { FormEvent } from "react";
+import { LoaderCircle, LogOut, Mail, User } from "lucide-react";
+
+import { Chakra } from "@/components/Chakra";
+import { PopButton } from "@/components/PopButton";
+import { Seo } from "@/components/Seo";
+import { signIn, signOut, signUp, useSession } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
+
+const inputClass =
+  "w-full rounded-2xl border-[2.5px] border-ink bg-white px-4 py-3 text-base outline-none focus:ring-4 focus:ring-marigold/50";
+
+type Mode = "signIn" | "signUp";
+
+function AuthForms() {
+  const [mode, setMode] = useState<Mode>("signIn");
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    const result =
+      mode === "signUp" ? await signUp(email, password, username) : await signIn(email, password);
+    setMessage(result.message);
+    setBusy(false);
+  }
+
+  return (
+    <div className="sticker-lg mx-auto max-w-md rounded-3xl bg-white p-6 sm:p-8">
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => {
+            setMode("signIn");
+            setMessage("");
+          }}
+          aria-pressed={mode === "signIn"}
+          className={`h-10 flex-1 rounded-full border-2 text-sm font-semibold transition-colors ${
+            mode === "signIn"
+              ? "border-ink bg-chakra text-white"
+              : "border-transparent text-ink-soft"
+          }`}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMode("signUp");
+            setMessage("");
+          }}
+          aria-pressed={mode === "signUp"}
+          className={`h-10 flex-1 rounded-full border-2 text-sm font-semibold transition-colors ${
+            mode === "signUp"
+              ? "border-ink bg-chakra text-white"
+              : "border-transparent text-ink-soft"
+          }`}
+        >
+          Create account
+        </button>
+      </div>
+
+      <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 flex flex-col gap-4">
+        {mode === "signUp" ? (
+          <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+            Username
+            <input
+              required
+              minLength={3}
+              maxLength={24}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className={inputClass}
+              placeholder="king_of_puzzles"
+            />
+          </label>
+        ) : null}
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+          Email
+          <input
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+          Password
+          <input
+            type="password"
+            required
+            minLength={6}
+            autoComplete={mode === "signUp" ? "new-password" : "current-password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={inputClass}
+          />
+        </label>
+
+        <PopButton type="submit" tone="saffron" size="lg" disabled={busy} className="mt-2">
+          {busy ? (
+            <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
+          ) : mode === "signUp" ? (
+            "Create account"
+          ) : (
+            "Sign in"
+          )}
+        </PopButton>
+      </form>
+
+      {message ? (
+        <p role="status" className="mt-4 text-base leading-snug text-ink-soft">
+          {message}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+function SignedIn({ email, userId }: { email: string; userId: string }) {
+  const [username, setUsername] = useState<string | null>(null);
+  const [signingOut, setSigningOut] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    supabase
+      .from("profiles")
+      .select("username")
+      .eq("id", userId)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (active) setUsername(data?.username ?? null);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  return (
+    <div className="sticker-lg mx-auto max-w-md rounded-3xl bg-white p-6 text-center sm:p-8">
+      <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border-[2.5px] border-ink bg-leaf text-white shadow-pop-sm">
+        <User className="size-7" aria-hidden="true" />
+      </span>
+      <h2 className="mt-4 font-display text-2xl font-extrabold tracking-tight">
+        {username ?? "Signed in"}
+      </h2>
+      <p className="mt-1 flex items-center justify-center gap-2 text-base text-ink-soft">
+        <Mail className="size-4" aria-hidden="true" />
+        {email}
+      </p>
+      <p className="mt-4 text-base leading-relaxed text-ink-soft">
+        Cloud sync for your runs and photos is coming next — for now your saved polaroids still live
+        in this browser's album.
+      </p>
+      <PopButton
+        tone="white"
+        size="lg"
+        className="mt-6"
+        disabled={signingOut}
+        onClick={() => {
+          setSigningOut(true);
+          void signOut();
+        }}
+      >
+        <LogOut className="size-5" aria-hidden="true" />
+        Sign out
+      </PopButton>
+    </div>
+  );
+}
+
+export default function AccountPage() {
+  const { session, loading } = useSession();
+
+  return (
+    <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
+      <Seo
+        title="Account"
+        description="Sign in to PinchPop to sync your runs and photos across devices."
+        path="/account"
+        noIndex
+      />
+      <h1 className="text-center font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-tighter">
+        Account
+      </h1>
+      <p className="mx-auto mt-4 max-w-md text-center text-lg leading-relaxed text-ink-soft">
+        Playing without an account works fully offline. Sign in to sync your runs across devices.
+      </p>
+
+      <div className="mt-10">
+        {loading ? (
+          <div className="flex justify-center">
+            <Chakra spokes={24} className="size-10 animate-spin text-chakra" />
+          </div>
+        ) : session ? (
+          <SignedIn email={session.user.email ?? ""} userId={session.user.id} />
+        ) : (
+          <AuthForms />
+        )}
+      </div>
+    </div>
+  );
+}

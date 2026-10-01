@@ -1,13 +1,16 @@
+import { User } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { MobileNavSheet } from "@/components/MobileNavSheet";
 import { PopLink } from "@/components/PopButton";
 import { NAV_LINKS } from "@/components/nav-links";
 import { Wordmark } from "@/components/Wordmark";
+import { useSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 export function NavBar() {
   const { pathname } = useLocation();
+  const { session } = useSession();
 
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-6">
@@ -47,6 +50,16 @@ export function NavBar() {
               Camera mode
             </PopLink>
           )}
+          <PopLink
+            to="/account"
+            tone={session ? "chakra" : "white"}
+            size="sm"
+            aria-label={session ? "Account" : "Sign in"}
+            className="hidden sm:inline-flex"
+          >
+            <User className="size-4" aria-hidden="true" />
+            {session ? "Account" : "Sign in"}
+          </PopLink>
           <div className="md:hidden">
             <MobileNavSheet />
           </div>

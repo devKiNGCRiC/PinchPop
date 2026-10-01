@@ -9,6 +9,7 @@ export const NAV_LINKS = [
 
 // Help pages that live in the footer and mobile menu rather than the top bar.
 export const EXTRA_LINKS = [
+  { to: "/account", label: "Account", end: false },
   { to: "/camera", label: "Camera mode", end: false },
   { to: "/how-to-play", label: "How to play", end: false },
   { to: "/about", label: "About", end: false },
