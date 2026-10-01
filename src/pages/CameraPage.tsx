@@ -169,7 +169,7 @@ export default function CameraPage() {
                     {ui.stage === "error" ? "Try again" : "Start camera"}
                   </PopButton>
                   <PopLink to="/game" tone="white" size="lg">
-                    Use mouse instead
+                    Play without camera
                   </PopLink>
                 </div>
               )}
@@ -235,6 +235,19 @@ export default function CameraPage() {
               </div>
             </div>
 
+            {ui.canSnap ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={snapNow}
+                  aria-label="Snap now"
+                  className="pop sticker pointer-events-auto flex size-18 items-center justify-center rounded-full border-[2.5px] border-ink bg-saffron text-ink shadow-pop"
+                >
+                  <Aperture className="size-8" aria-hidden="true" />
+                </button>
+              </div>
+            ) : null}
+
             {ui.fistProgress > 0 ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center px-4">
                 <div className="sticker w-full max-w-xs rounded-2xl bg-white p-3">
@@ -262,10 +275,6 @@ export default function CameraPage() {
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <PopButton onClick={snapNow} disabled={!running || !ui.canSnap} tone="saffron" size="md">
-          <Aperture className="size-5" aria-hidden="true" />
-          Snap now
-        </PopButton>
         <PopButton onClick={save} disabled={!running || !ui.canSave} tone="leaf" size="md">
           <Save className="size-5" aria-hidden="true" />
           Save polaroid

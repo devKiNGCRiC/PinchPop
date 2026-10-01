@@ -64,11 +64,10 @@ function fitBox(box: Box, width: number, height: number): Box {
   };
 }
 
-/** A centred frame for players who trigger the shutter with a button instead of their hands. */
+/** The full view, for players who trigger the shutter with a button instead of a hand frame —
+ * captures what they can actually see on screen, not a guessed crop. */
 function defaultFrame(width: number, height: number): Box {
-  const w = width * 0.56;
-  const h = height * 0.62;
-  return { x: (width - w) / 2, y: (height - h) / 2, width: w, height: h };
+  return { x: 0, y: 0, width, height };
 }
 
 /**
