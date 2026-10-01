@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 
 import { Art } from "@/components/Art";
 import { getArt } from "@/lib/art";
+import { avatarUrl } from "@/lib/avatar";
 import type { CloudRun } from "@/lib/cloudRuns";
 import { formatTime } from "@/lib/puzzle";
 import { cn } from "@/lib/utils";
@@ -77,6 +78,7 @@ export function WorldwideLeaderboard() {
         <ol className="mt-5 flex flex-col gap-2">
           {runs.map((run, i) => {
             const art = getArt(run.artId);
+            const avatar = avatarUrl(run.avatarPath);
             return (
               <li
                 key={run.id}
@@ -88,11 +90,19 @@ export function WorldwideLeaderboard() {
                 <span className="w-6 shrink-0 text-center font-display font-extrabold tabular-nums text-ink-soft">
                   {i + 1}
                 </span>
-                <Art
-                  artId={run.artId}
-                  decorative
-                  className="size-9 shrink-0 rounded-lg border-2 border-ink"
-                />
+                {avatar ? (
+                  <img
+                    src={avatar}
+                    alt=""
+                    className="size-9 shrink-0 rounded-lg border-2 border-ink object-cover"
+                  />
+                ) : (
+                  <Art
+                    artId={run.artId}
+                    decorative
+                    className="size-9 shrink-0 rounded-lg border-2 border-ink"
+                  />
+                )}
                 <span className="min-w-0 flex-1 truncate font-semibold">{run.username}</span>
                 <span className="hidden text-sm text-ink-soft sm:inline">{art.place}</span>
                 <span className="w-16 shrink-0 text-right text-sm text-ink-soft">

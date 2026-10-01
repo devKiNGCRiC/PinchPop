@@ -42,15 +42,24 @@ export function useSession(): AuthState {
 export interface ProfileState extends AuthState {
   /** The signed-in player's display name from public.profiles, or null while signed out/loading. */
   username: string | null;
+  /** The signed-in player's avatar storage path, or null without one. Pass to avatarUrl() to
+   * display it — see src/lib/avatar.ts. */
+  avatarPath: string | null;
 }
 
-/** The current session plus its profile username, for anywhere that shows "who is this player". */
+interface Fetched {
+  userId: string;
+  username: string | null;
+  avatarPath: string | null;
+}
+
+/** The current session plus its profile, for anywhere that shows "who is this player". */
 export function useProfile(): ProfileState {
   const { session, loading } = useSession();
   // Keyed to whichever user it was fetched for, so a stale value from a previous session can
   // never leak through — the ternary below masks it the instant `session` changes, with no need
   // to reset this state from inside the effect.
-  const [fetched, setFetched] = useState<{ userId: string; username: string | null } | null>(null);
+  const [fetched, setFetched] = useState<Fetched | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -59,11 +68,17 @@ export function useProfile(): ProfileState {
     import("@/lib/supabase").then(({ supabase }) => {
       supabase
         .from("profiles")
-        .select("username")
+        .select("username, avatar_path")
         .eq("id", userId)
         .maybeSingle()
         .then(({ data }) => {
-          if (active) setFetched({ userId, username: data?.username ?? null });
+          if (active) {
+            setFetched({
+              userId,
+              username: data?.username ?? null,
+              avatarPath: data?.avatar_path ?? null,
+            });
+          }
         });
     });
     return () => {
@@ -71,8 +86,13 @@ export function useProfile(): ProfileState {
     };
   }, [session]);
 
-  const username = session && fetched?.userId === session.user.id ? fetched.username : null;
-  return { session, loading, username };
+  const matches = session && fetched?.userId === session.user.id;
+  return {
+    session,
+    loading,
+    username: matches ? fetched.username : null,
+    avatarPath: matches ? fetched.avatarPath : null,
+  };
 }
 
 export interface AuthResult {

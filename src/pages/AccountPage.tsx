@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { BookMarked, LoaderCircle, LogOut, Mail, Pencil, Trash2, User } from "lucide-react";
+import { BookMarked, Camera, LoaderCircle, LogOut, Mail, Pencil, Trash2, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
 import { deleteAccount, signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
+import { avatarUrl, uploadAvatar } from "@/lib/avatar";
 import { useMemories } from "@/lib/memories";
 
 const inputClass =
@@ -122,6 +123,58 @@ function AuthForms() {
           {message}
         </p>
       ) : null}
+    </div>
+  );
+}
+
+function AvatarField({ userId, avatarPath }: { userId: string; avatarPath: string | null }) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const url = avatarUrl(avatarPath);
+
+  async function handleFile(file: File) {
+    setBusy(true);
+    setMessage("");
+    const result = await uploadAvatar(userId, file);
+    if (!result.ok) setMessage(result.message);
+    setBusy(false);
+  }
+
+  return (
+    <div className="mx-auto w-fit">
+      <button
+        type="button"
+        onClick={() => fileInputRef.current?.click()}
+        disabled={busy}
+        aria-label={url ? "Change avatar" : "Add an avatar"}
+        className="group relative mx-auto flex size-20 items-center justify-center overflow-hidden rounded-2xl border-[2.5px] border-ink bg-leaf text-white shadow-pop-sm"
+      >
+        {url ? (
+          <img src={url} alt="" className="size-full object-cover" />
+        ) : (
+          <User className="size-9" aria-hidden="true" />
+        )}
+        <span className="absolute inset-0 flex items-center justify-center bg-ink/0 opacity-0 transition-opacity group-hover:bg-ink/50 group-hover:opacity-100">
+          {busy ? (
+            <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
+          ) : (
+            <Camera className="size-5" aria-hidden="true" />
+          )}
+        </span>
+      </button>
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          event.target.value = "";
+          if (file) void handleFile(file);
+        }}
+      />
+      {message ? <p className="mt-2 max-w-48 text-sm text-sindoor">{message}</p> : null}
     </div>
   );
 }
@@ -312,18 +365,18 @@ function SignedIn({
   email,
   userId,
   username,
+  avatarPath,
 }: {
   email: string;
   userId: string;
   username: string | null;
+  avatarPath: string | null;
 }) {
   const [signingOut, setSigningOut] = useState(false);
 
   return (
     <div className="sticker-lg mx-auto max-w-md rounded-3xl bg-white p-6 text-center sm:p-8">
-      <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border-[2.5px] border-ink bg-leaf text-white shadow-pop-sm">
-        <User className="size-7" aria-hidden="true" />
-      </span>
+      <AvatarField userId={userId} avatarPath={avatarPath} />
       <UsernameField userId={userId} username={username} />
       <p className="mt-1 flex items-center justify-center gap-2 text-base text-ink-soft">
         <Mail className="size-4" aria-hidden="true" />
@@ -357,7 +410,7 @@ function SignedIn({
 }
 
 export default function AccountPage() {
-  const { session, loading, username } = useProfile();
+  const { session, loading, username, avatarPath } = useProfile();
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
@@ -380,7 +433,12 @@ export default function AccountPage() {
             <Chakra spokes={24} className="size-10 animate-spin text-chakra" />
           </div>
         ) : session ? (
-          <SignedIn email={session.user.email ?? ""} userId={session.user.id} username={username} />
+          <SignedIn
+            email={session.user.email ?? ""}
+            userId={session.user.id}
+            username={username}
+            avatarPath={avatarPath}
+          />
         ) : (
           <AuthForms />
         )}

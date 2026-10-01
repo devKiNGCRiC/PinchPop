@@ -105,12 +105,19 @@ export interface CloudRun {
   id: string;
   userId: string;
   username: string;
+  /** Storage path for the player's avatar, if they have one — pass to avatarUrl() to display it. */
+  avatarPath: string | null;
   artId: string;
   moves: number;
   seconds: number;
   score: number;
   accuracy: number | null;
   createdAt: number;
+}
+
+interface ProfileRef {
+  username: string;
+  avatar_path: string | null;
 }
 
 interface RunRow {
@@ -122,16 +129,19 @@ interface RunRow {
   score: number;
   accuracy: number | null;
   created_at: string;
-  profiles: { username: string } | { username: string }[] | null;
+  profiles: ProfileRef | ProfileRef[] | null;
 }
 
 /** The worldwide leaderboard: every signed-in player's runs, best score first. No photos — those
- * stay private to their owner; the destination's illustration stands in for everyone else's run. */
+ * stay private to their owner; an avatar (if set) or the destination's illustration stands in for
+ * everyone else's run. */
 export async function fetchWorldwideLeaderboard(limit = 50): Promise<CloudRun[]> {
   const { supabase } = await import("@/lib/supabase");
   const { data, error } = await supabase
     .from("runs")
-    .select("id, user_id, art_id, moves, seconds, score, accuracy, created_at, profiles(username)")
+    .select(
+      "id, user_id, art_id, moves, seconds, score, accuracy, created_at, profiles(username, avatar_path)",
+    )
     .order("score", { ascending: false })
     .order("seconds", { ascending: true })
     .limit(limit);
@@ -143,6 +153,7 @@ export async function fetchWorldwideLeaderboard(limit = 50): Promise<CloudRun[]>
       id: row.id,
       userId: row.user_id,
       username: profile?.username ?? "Player",
+      avatarPath: profile?.avatar_path ?? null,
       artId: row.art_id,
       moves: row.moves,
       seconds: row.seconds,

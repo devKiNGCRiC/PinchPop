@@ -7,6 +7,7 @@ import { Seo } from "@/components/Seo";
 import { Stamp } from "@/components/Stamp";
 import { ART_LIST } from "@/lib/art";
 import { useProfile } from "@/lib/auth";
+import { avatarUrl } from "@/lib/avatar";
 import { useMemories } from "@/lib/memories";
 import { formatTime } from "@/lib/puzzle";
 import { BADGES, computeStats, visitedPlaces } from "@/lib/stats";
@@ -19,7 +20,8 @@ export default function ProfilePage() {
   const memories = useMemories();
   const stats = computeStats(memories);
   const visited = visitedPlaces(memories);
-  const { session, username } = useProfile();
+  const { session, username, avatarPath } = useProfile();
+  const avatar = avatarUrl(avatarPath);
 
   const tiles = [
     { label: "Puzzles solved", value: String(stats.solved), color: "bg-marigold text-ink" },
@@ -51,7 +53,15 @@ export default function ProfilePage() {
           <p className="font-display text-sm font-extrabold tracking-widest text-marigold">
             PINCHPOP
           </p>
-          <Chakra spokes={24} className="mx-auto my-6 size-32 text-marigold" />
+          {avatar ? (
+            <img
+              src={avatar}
+              alt=""
+              className="pop sticker mx-auto my-6 size-32 rounded-full border-[2.5px] border-marigold object-cover"
+            />
+          ) : (
+            <Chakra spokes={24} className="mx-auto my-6 size-32 text-marigold" />
+          )}
           <p className="font-display text-lg font-extrabold tracking-tight">Travel passport</p>
           <p className="mt-6 rounded-xl border-2 border-marigold/60 px-3 py-2 text-base font-semibold">
             {session ? (username ?? "Signed in") : "Guest traveller"}
