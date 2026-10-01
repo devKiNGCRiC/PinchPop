@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { BookMarked, LoaderCircle, LogOut, Mail, Pencil, User } from "lucide-react";
+import { BookMarked, LoaderCircle, LogOut, Mail, Pencil, Trash2, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
-import { signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
+import { deleteAccount, signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
 import { useMemories } from "@/lib/memories";
 
 const inputClass =
@@ -266,6 +267,47 @@ function ImportLocalRuns({ userId }: { userId: string }) {
   );
 }
 
+function DeleteAccount({ userId }: { userId: string }) {
+  const navigate = useNavigate();
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function handleDelete() {
+    const confirmed = window.confirm(
+      "Permanently delete your account, cloud runs and photos? This cannot be undone. Polaroids already saved on this device are not affected.",
+    );
+    if (!confirmed) return;
+    setBusy(true);
+    setMessage("");
+    const result = await deleteAccount(userId);
+    if (result.ok) {
+      navigate("/");
+    } else {
+      setMessage(result.message);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-8 border-t-2 border-dashed border-ink/15 pt-6">
+      <button
+        type="button"
+        onClick={() => void handleDelete()}
+        disabled={busy}
+        className="inline-flex items-center gap-1.5 text-sm font-semibold text-sindoor hover:underline disabled:opacity-50"
+      >
+        {busy ? (
+          <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <Trash2 className="size-4" aria-hidden="true" />
+        )}
+        Delete account
+      </button>
+      {message ? <p className="mt-2 text-sm text-sindoor">{message}</p> : null}
+    </div>
+  );
+}
+
 function SignedIn({
   email,
   userId,
@@ -309,6 +351,7 @@ function SignedIn({
           Sign out
         </PopButton>
       </div>
+      <DeleteAccount userId={userId} />
     </div>
   );
 }

@@ -1,9 +1,10 @@
-import { Cookie, Database, Eye, ShieldCheck, Trash2 } from "lucide-react";
+import { Cloud, Cookie, Database, ShieldCheck, Trash2 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { PopButton } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
+import { useProfile } from "@/lib/auth";
 import { clearMemories, useMemories } from "@/lib/memories";
 import { formatDate } from "@/lib/stats";
 
@@ -25,9 +26,9 @@ const SECTIONS: Section[] = [
     Icon: Database,
   },
   {
-    title: "Everything stays on this device",
-    body: "Your album, passport stamps and leaderboard runs live only in this browser. They are not sent anywhere, and switching devices or browsers starts you fresh. Accounts and cross-device sync are planned but not built yet.",
-    Icon: Eye,
+    title: "Local by default, cloud only if you sign in",
+    body: "Without an account, your album, passport stamps and leaderboard runs live only in this browser and are never sent anywhere. Signing in is optional — it syncs your scores and camera photos to a private cloud so they follow you across devices.",
+    Icon: Cloud,
   },
   {
     title: "No cookies, no trackers, no ads",
@@ -38,6 +39,7 @@ const SECTIONS: Section[] = [
 
 export default function PrivacyPage() {
   const memories = useMemories();
+  const { session } = useProfile();
   const hasData = memories.length > 0;
   const oldestLabel = hasData ? formatDate(Math.min(...memories.map((m) => m.createdAt))) : "";
 
@@ -111,21 +113,42 @@ export default function PrivacyPage() {
               <Trash2 className="size-5" aria-hidden="true" />
               Clear all my data
             </PopButton>
+            {session ? (
+              <p className="mt-3 text-base text-ink-soft">
+                This only clears what's saved on this device — it does not touch your cloud account.
+                To delete your account and its cloud runs and photos, see the{" "}
+                <Link
+                  to="/account"
+                  className="font-semibold text-chakra underline underline-offset-4"
+                >
+                  Account
+                </Link>{" "}
+                page.
+              </p>
+            ) : null}
           </div>
         ) : null}
       </section>
 
-      <section aria-labelledby="future-heading" className="mt-10">
+      <section aria-labelledby="account-heading" className="mt-10">
         <h2
-          id="future-heading"
+          id="account-heading"
           className="font-display text-xl font-extrabold tracking-tight text-ink-soft"
         >
-          If accounts arrive later
+          If you create an account
         </h2>
         <p className="mt-3 max-w-2xl text-lg leading-relaxed text-ink-soft">
-          Signing in will move your saved runs to secure, private cloud storage so they follow you
-          across devices. This page will be updated to describe exactly what changes before that
-          ships — nothing about how your data is handled today will change without notice here.
+          Your email and password are handled by Supabase, a standard authentication provider —
+          PinchPop never sees or stores your password. Your camera photos are stored in a private
+          cloud folder only you can access through the app; other players never see them, even on
+          the worldwide leaderboard, which only ever shows your score, moves, time and destination,
+          never your photo. Your account data is hosted on Supabase's infrastructure, the same as
+          any app with sign-in. You can permanently delete your account, including every cloud run
+          and photo, at any time from the{" "}
+          <Link to="/account" className="font-semibold text-chakra underline underline-offset-4">
+            Account
+          </Link>{" "}
+          page.
         </p>
       </section>
     </div>

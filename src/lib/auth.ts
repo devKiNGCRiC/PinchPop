@@ -141,3 +141,34 @@ export async function updateUsername(userId: string, username: string): Promise<
   }
   return { ok: true, message: "Username updated." };
 }
+
+/**
+ * Permanently deletes the signed-in player's account: their photos, cloud runs, profile and
+ * login. Supabase refuses to delete a user that still owns Storage objects, so their photo
+ * folder is cleared first; the `runs` and `profiles` rows then cascade automatically from the
+ * `delete_own_account` database function (see the delete_account migration). Local on-device
+ * data in localStorage is untouched — this only removes what was synced to the cloud.
+ */
+export async function deleteAccount(userId: string): Promise<AuthResult> {
+  const { supabase } = await import("@/lib/supabase");
+  try {
+    const { data: files, error: listError } = await supabase.storage.from("photos").list(userId);
+    if (listError) return { ok: false, message: listError.message };
+    if (files && files.length > 0) {
+      const paths = files.map((file) => `${userId}/${file.name}`);
+      const { error: removeError } = await supabase.storage.from("photos").remove(paths);
+      if (removeError) return { ok: false, message: removeError.message };
+    }
+
+    const { error } = await supabase.rpc("delete_own_account");
+    if (error) return { ok: false, message: error.message };
+
+    await supabase.auth.signOut();
+    return { ok: true, message: "Account deleted." };
+  } catch (error) {
+    return {
+      ok: false,
+      message: error instanceof Error ? error.message : "Could not delete the account.",
+    };
+  }
+}
