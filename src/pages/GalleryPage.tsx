@@ -168,7 +168,7 @@ export default function GalleryPage() {
                     artId={memory.artId}
                     photo={memory.photo}
                     aspect={memory.aspect}
-                    caption={art.caption}
+                    caption={memory.caption ?? art.caption}
                     tilt={tiltFor(memory.id)}
                     tape={i % 3 === 0}
                   >

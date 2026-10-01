@@ -18,6 +18,8 @@ export interface Memory {
   photo?: string;
   /** Width divided by height of `photo`. */
   aspect?: number;
+  /** A player-written caption for a camera photo, replacing the default "your shot". */
+  caption?: string;
 }
 
 const STORAGE_KEY = "pinchpop.memories.v1";
@@ -47,7 +49,8 @@ function isMemory(value: unknown): value is Memory {
     typeof m.createdAt === "number" &&
     (m.accuracy === undefined || typeof m.accuracy === "number") &&
     (m.photo === undefined || typeof m.photo === "string") &&
-    (m.aspect === undefined || typeof m.aspect === "number")
+    (m.aspect === undefined || typeof m.aspect === "number") &&
+    (m.caption === undefined || typeof m.caption === "string")
   );
 }
 
@@ -135,6 +138,17 @@ export function saveMemory(input: {
 
 export function deleteMemory(id: string): void {
   write(getSnapshot().filter((memory) => memory.id !== id));
+}
+
+/** Renames a memory's caption. An empty/whitespace-only value reverts to the destination's
+ * default caption (e.g. "your shot" for camera photos) rather than storing a blank string. */
+export function updateMemoryCaption(id: string, caption: string): void {
+  const trimmed = caption.trim();
+  write(
+    getSnapshot().map((memory) =>
+      memory.id === id ? { ...memory, caption: trimmed || undefined } : memory,
+    ),
+  );
 }
 
 export function clearMemories(): void {

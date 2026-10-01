@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Confetti } from "@/components/Confetti";
@@ -12,7 +12,8 @@ import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
-import { deleteMemory, useMemories } from "@/lib/memories";
+import { deleteMemory, updateMemoryCaption, useMemories } from "@/lib/memories";
+import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
 
@@ -66,7 +67,7 @@ export default function ResultsPage() {
             artId={memory.artId}
             photo={memory.photo}
             aspect={memory.aspect}
-            caption={art.caption}
+            caption={memory.caption ?? art.caption}
             tilt={tiltFor(memory.id) || 3}
             tape
             develop
@@ -77,6 +78,7 @@ export default function ResultsPage() {
               {camera ? "Taken in camera mode" : `${art.name}, ${art.state}`}
             </span>
           </Polaroid>
+          {camera ? <CaptionEditor memory={memory} defaultCaption={art.caption} /> : null}
         </div>
 
         <div>
@@ -140,6 +142,65 @@ export default function ResultsPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Lets a camera photo's caption ("your shot" by default) be renamed, right under the polaroid
+ * it labels. Destination polaroids keep their fixed, place-tied caption. */
+function CaptionEditor({ memory, defaultCaption }: { memory: Memory; defaultCaption: string }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const shown = memory.caption ?? defaultCaption;
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setValue(memory.caption ?? "");
+          setEditing(true);
+        }}
+        className="mx-auto mt-3 flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-chakra"
+      >
+        <Pencil className="size-3.5" aria-hidden="true" />
+        Edit caption ("{shown}")
+      </button>
+    );
+  }
+
+  function save() {
+    setBusy(true);
+    updateMemoryCaption(memory.id, value);
+    setBusy(false);
+    setEditing(false);
+  }
+
+  return (
+    <div className="mx-auto mt-3 flex max-w-xs items-center gap-2">
+      <input
+        autoFocus
+        maxLength={40}
+        placeholder={defaultCaption}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && save()}
+        className="w-full rounded-full border-2 border-ink bg-white px-3 py-1.5 text-center font-hand text-lg outline-none focus:ring-4 focus:ring-marigold/50"
+      />
+      <button
+        type="button"
+        onClick={save}
+        disabled={busy}
+        className="pop sticker flex size-9 shrink-0 items-center justify-center rounded-full bg-leaf text-white"
+        aria-label="Save caption"
+      >
+        {busy ? (
+          <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+        ) : (
+          <Pencil className="size-4" aria-hidden="true" />
+        )}
+      </button>
     </div>
   );
 }

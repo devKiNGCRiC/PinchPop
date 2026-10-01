@@ -74,7 +74,7 @@ export default function HomePage() {
         artId: m.artId,
         photo: m.photo,
         aspect: m.aspect,
-        caption: getArt(m.artId).caption,
+        caption: m.caption ?? getArt(m.artId).caption,
         tilt: [-5, 3, -2][i],
       }))
     : SAMPLES;

@@ -36,7 +36,10 @@ export function MobileNavSheet() {
         <div className="px-5 pt-5" aria-hidden="true">
           <Wordmark />
         </div>
-        <nav aria-label="Primary" className="mt-2 flex flex-col gap-3 px-5">
+        <nav
+          aria-label="Primary"
+          className="mt-2 flex flex-1 flex-col gap-3 overflow-y-auto px-5 pb-6"
+        >
           {ALL_LINKS.map((link, i) => (
             <SheetClose asChild key={link.to}>
               <NavLink

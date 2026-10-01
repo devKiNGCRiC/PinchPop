@@ -145,7 +145,7 @@ export async function renderPolaroidBlob(memory: Memory, filterCss = "none"): Pr
   const cx = margin + cardW / 2;
   const captionY = margin + pad + photoH + 96;
   ctx.font = '700 84px "Caveat", cursive';
-  ctx.fillText(art.caption, cx, captionY);
+  ctx.fillText(memory.caption ?? art.caption, cx, captionY);
 
   const accuracy = memory.accuracy !== undefined ? ` · ${formatAccuracy(memory.accuracy)}` : "";
   ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
