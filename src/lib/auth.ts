@@ -39,6 +39,42 @@ export function useSession(): AuthState {
   return state;
 }
 
+export interface ProfileState extends AuthState {
+  /** The signed-in player's display name from public.profiles, or null while signed out/loading. */
+  username: string | null;
+}
+
+/** The current session plus its profile username, for anywhere that shows "who is this player". */
+export function useProfile(): ProfileState {
+  const { session, loading } = useSession();
+  // Keyed to whichever user it was fetched for, so a stale value from a previous session can
+  // never leak through — the ternary below masks it the instant `session` changes, with no need
+  // to reset this state from inside the effect.
+  const [fetched, setFetched] = useState<{ userId: string; username: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    const userId = session.user.id;
+    import("@/lib/supabase").then(({ supabase }) => {
+      supabase
+        .from("profiles")
+        .select("username")
+        .eq("id", userId)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (active) setFetched({ userId, username: data?.username ?? null });
+        });
+    });
+    return () => {
+      active = false;
+    };
+  }, [session]);
+
+  const username = session && fetched?.userId === session.user.id ? fetched.username : null;
+  return { session, loading, username };
+}
+
 export interface AuthResult {
   ok: boolean;
   message: string;
@@ -90,4 +126,18 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 export async function signOut(): Promise<void> {
   const { supabase } = await import("@/lib/supabase");
   await supabase.auth.signOut();
+}
+
+/** Renames the signed-in player's profile. Enforces the same 3–24 char rule as the DB check. */
+export async function updateUsername(userId: string, username: string): Promise<AuthResult> {
+  if (username.length < 3 || username.length > 24) {
+    return { ok: false, message: "Username must be 3–24 characters." };
+  }
+  const { supabase } = await import("@/lib/supabase");
+  const { error } = await supabase.from("profiles").update({ username }).eq("id", userId);
+  if (error) {
+    if (error.code === "23505") return { ok: false, message: "That username is taken." };
+    return { ok: false, message: error.message };
+  }
+  return { ok: true, message: "Username updated." };
 }

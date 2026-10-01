@@ -6,6 +6,7 @@ import { PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
 import { Stamp } from "@/components/Stamp";
 import { ART_LIST } from "@/lib/art";
+import { useProfile } from "@/lib/auth";
 import { useMemories } from "@/lib/memories";
 import { formatTime } from "@/lib/puzzle";
 import { BADGES, computeStats, visitedPlaces } from "@/lib/stats";
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const memories = useMemories();
   const stats = computeStats(memories);
   const visited = visitedPlaces(memories);
+  const { session, username } = useProfile();
 
   const tiles = [
     { label: "Puzzles solved", value: String(stats.solved), color: "bg-marigold text-ink" },
@@ -52,7 +54,7 @@ export default function ProfilePage() {
           <Chakra spokes={24} className="mx-auto my-6 size-32 text-marigold" />
           <p className="font-display text-lg font-extrabold tracking-tight">Travel passport</p>
           <p className="mt-6 rounded-xl border-2 border-marigold/60 px-3 py-2 text-base font-semibold">
-            Guest traveller
+            {session ? (username ?? "Signed in") : "Guest traveller"}
           </p>
         </div>
 
@@ -61,7 +63,20 @@ export default function ProfilePage() {
             Your passport
           </h1>
           <p className="mt-4 max-w-md text-lg leading-relaxed text-ink-soft">
-            Stamps and stats live on this device. Accounts and syncing come later.
+            {session ? (
+              "Stamps and stats below are still saved on this device — cloud sync is coming next."
+            ) : (
+              <>
+                Stamps and stats live on this device.{" "}
+                <Link
+                  to="/account"
+                  className="font-semibold text-chakra underline underline-offset-4"
+                >
+                  Sign in
+                </Link>{" "}
+                to put a name on this passport.
+              </>
+            )}
           </p>
           <dl className="mt-8 grid grid-cols-2 gap-4 sm:gap-5">
             {tiles.map((tile) => (

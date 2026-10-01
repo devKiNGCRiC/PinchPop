@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { FormEvent } from "react";
-import { LoaderCircle, LogOut, Mail, User } from "lucide-react";
+import { BookMarked, LoaderCircle, LogOut, Mail, Pencil, User } from "lucide-react";
 
 import { Chakra } from "@/components/Chakra";
-import { PopButton } from "@/components/PopButton";
+import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
-import { signIn, signOut, signUp, useSession } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
 
 const inputClass =
   "w-full rounded-2xl border-[2.5px] border-ink bg-white px-4 py-3 text-base outline-none focus:ring-4 focus:ring-marigold/50";
@@ -125,33 +124,90 @@ function AuthForms() {
   );
 }
 
-function SignedIn({ email, userId }: { email: string; userId: string }) {
-  const [username, setUsername] = useState<string | null>(null);
-  const [signingOut, setSigningOut] = useState(false);
+function UsernameField({ userId, username }: { userId: string; username: string | null }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
 
-  useEffect(() => {
-    let active = true;
-    supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", userId)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (active) setUsername(data?.username ?? null);
-      });
-    return () => {
-      active = false;
-    };
-  }, [userId]);
+  async function save() {
+    setBusy(true);
+    setMessage("");
+    const result = await updateUsername(userId, value.trim());
+    setMessage(result.ok ? "" : result.message);
+    setBusy(false);
+    if (result.ok) setEditing(false);
+  }
+
+  if (!editing) {
+    return (
+      <h2 className="mt-4 flex items-center justify-center gap-2 font-display text-2xl font-extrabold tracking-tight">
+        {username ?? "Signed in"}
+        <button
+          type="button"
+          onClick={() => {
+            // Start the field from the current username each time editing begins, rather than
+            // syncing `value` to it continuously — there is nothing to keep in sync while the
+            // field isn't shown.
+            setValue(username ?? "");
+            setEditing(true);
+          }}
+          aria-label="Edit username"
+          className="text-ink-soft hover:text-chakra"
+        >
+          <Pencil className="size-5" aria-hidden="true" />
+        </button>
+      </h2>
+    );
+  }
+
+  return (
+    <div className="mt-4">
+      <div className="flex items-center justify-center gap-2">
+        <input
+          autoFocus
+          minLength={3}
+          maxLength={24}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-44 rounded-full border-[2.5px] border-ink bg-white px-4 py-2 text-center text-lg font-extrabold outline-none focus:ring-4 focus:ring-marigold/50"
+        />
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={busy || value.trim().length < 3}
+          className="pop sticker flex size-10 items-center justify-center rounded-full bg-leaf text-white disabled:opacity-50"
+          aria-label="Save username"
+        >
+          {busy ? (
+            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Pencil className="size-4" aria-hidden="true" />
+          )}
+        </button>
+      </div>
+      {message ? <p className="mt-2 text-sm text-sindoor">{message}</p> : null}
+    </div>
+  );
+}
+
+function SignedIn({
+  email,
+  userId,
+  username,
+}: {
+  email: string;
+  userId: string;
+  username: string | null;
+}) {
+  const [signingOut, setSigningOut] = useState(false);
 
   return (
     <div className="sticker-lg mx-auto max-w-md rounded-3xl bg-white p-6 text-center sm:p-8">
       <span className="mx-auto flex size-14 items-center justify-center rounded-2xl border-[2.5px] border-ink bg-leaf text-white shadow-pop-sm">
         <User className="size-7" aria-hidden="true" />
       </span>
-      <h2 className="mt-4 font-display text-2xl font-extrabold tracking-tight">
-        {username ?? "Signed in"}
-      </h2>
+      <UsernameField userId={userId} username={username} />
       <p className="mt-1 flex items-center justify-center gap-2 text-base text-ink-soft">
         <Mail className="size-4" aria-hidden="true" />
         {email}
@@ -160,25 +216,30 @@ function SignedIn({ email, userId }: { email: string; userId: string }) {
         Cloud sync for your runs and photos is coming next — for now your saved polaroids still live
         in this browser's album.
       </p>
-      <PopButton
-        tone="white"
-        size="lg"
-        className="mt-6"
-        disabled={signingOut}
-        onClick={() => {
-          setSigningOut(true);
-          void signOut();
-        }}
-      >
-        <LogOut className="size-5" aria-hidden="true" />
-        Sign out
-      </PopButton>
+      <div className="mt-6 flex flex-wrap justify-center gap-3">
+        <PopLink to="/profile" tone="chakra" size="lg">
+          <BookMarked className="size-5" aria-hidden="true" />
+          View your passport
+        </PopLink>
+        <PopButton
+          tone="white"
+          size="lg"
+          disabled={signingOut}
+          onClick={() => {
+            setSigningOut(true);
+            void signOut();
+          }}
+        >
+          <LogOut className="size-5" aria-hidden="true" />
+          Sign out
+        </PopButton>
+      </div>
     </div>
   );
 }
 
 export default function AccountPage() {
-  const { session, loading } = useSession();
+  const { session, loading, username } = useProfile();
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
@@ -201,7 +262,7 @@ export default function AccountPage() {
             <Chakra spokes={24} className="size-10 animate-spin text-chakra" />
           </div>
         ) : session ? (
-          <SignedIn email={session.user.email ?? ""} userId={session.user.id} />
+          <SignedIn email={session.user.email ?? ""} userId={session.user.id} username={username} />
         ) : (
           <AuthForms />
         )}
