@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { ALL_LINKS } from "@/components/nav-links";
+import { SocialLinks } from "@/components/SocialLinks";
 import { Wordmark } from "@/components/Wordmark";
 import { ART_LIST } from "@/lib/art";
 
@@ -27,6 +28,7 @@ export function Footer() {
           <p className="mt-3 max-w-xs text-base leading-relaxed text-white/75">
             A gesture-controlled photobooth for the places you have been.
           </p>
+          <SocialLinks className="mt-5 -ml-1.5 text-white/70" />
         </div>
 
         <nav aria-labelledby="footer-explore">

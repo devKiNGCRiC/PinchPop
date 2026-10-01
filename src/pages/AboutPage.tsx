@@ -3,6 +3,7 @@ import { Aperture, Camera, HandHeart, Sparkles } from "lucide-react";
 import { Chakra } from "@/components/Chakra";
 import { PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
+import { SocialLinks } from "@/components/SocialLinks";
 
 const POINTS = [
   {
@@ -73,13 +74,15 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <div className="mt-10 flex flex-wrap gap-3">
+      <div className="mt-10 flex flex-wrap items-center gap-3">
         <PopLink to="/how-to-play" tone="saffron" size="lg">
           How to play
         </PopLink>
         <PopLink to="/privacy" tone="white" size="lg">
           Privacy
         </PopLink>
+        <span className="mx-1 hidden h-8 w-px bg-ink/15 sm:block" aria-hidden="true" />
+        <SocialLinks className="text-ink-soft" />
       </div>
     </div>
   );
