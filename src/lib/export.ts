@@ -108,15 +108,20 @@ function drawPhoto(
   y: number,
   w: number,
   h: number,
+  filterCss = "none",
 ) {
+  ctx.save();
+  ctx.filter = filterCss;
   drawCover(ctx, picture.image, x, y, w, h);
+  ctx.restore();
   ctx.lineWidth = 4;
   ctx.strokeStyle = INK;
   ctx.strokeRect(x, y, w, h);
 }
 
-/** Renders one polaroid, with its caption and score line, as a PNG. */
-export async function renderPolaroidBlob(memory: Memory): Promise<Blob> {
+/** Renders one polaroid, with its caption and score line, as a PNG. `filterCss` is baked into
+ * the photo only (frame, caption and postmark stay untouched), matching the live preview. */
+export async function renderPolaroidBlob(memory: Memory, filterCss = "none"): Promise<Blob> {
   const [picture] = await Promise.all([pictureOf(memory), ensureFonts()]);
   const art = getArt(memory.artId);
 
@@ -132,7 +137,7 @@ export async function renderPolaroidBlob(memory: Memory): Promise<Blob> {
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   drawFrame(ctx, margin, margin, cardW, cardH);
-  drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH);
+  drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
 
   ctx.fillStyle = INK;
   ctx.textAlign = "center";

@@ -3,6 +3,7 @@ import {
   Camera,
   CircleCheck,
   Hand,
+  ImagePlus,
   LoaderCircle,
   Puzzle,
   RotateCcw,
@@ -14,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
@@ -71,11 +73,13 @@ const STEPS = [
 
 export default function CameraPage() {
   const navigate = useNavigate();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const {
     videoRef,
     canvasRef,
     ui,
     start,
+    beginFromUpload,
     stop,
     snapNow,
     reset,
@@ -141,7 +145,7 @@ export default function CameraPage() {
               {ui.stage === "error" && ui.error ? (
                 <>
                   <h2 className="mt-5 font-display text-2xl leading-tight font-extrabold tracking-[-0.04em]">
-                    Camera mode could not start
+                    Couldn't get that started
                   </h2>
                   <p role="alert" className="mt-3 text-lg leading-relaxed text-white/85">
                     {ui.error.message}
@@ -160,19 +164,36 @@ export default function CameraPage() {
               )}
               {!secure || !cameraSupported() ? (
                 <p role="alert" className="mt-4 text-base text-marigold">
-                  Camera mode needs a secure connection (https) and a browser with camera access.
+                  Camera mode needs a secure connection (https) and a browser with camera access —
+                  you can still upload a photo or play without one.
                 </p>
-              ) : (
-                <div className="mt-6 flex flex-wrap justify-center gap-3">
+              ) : null}
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                {secure && cameraSupported() ? (
                   <PopButton onClick={() => void start()} tone="saffron" size="lg">
                     <Camera className="size-5" aria-hidden="true" />
                     {ui.stage === "error" ? "Try again" : "Start camera"}
                   </PopButton>
-                  <PopLink to="/game" tone="white" size="lg">
-                    Play without camera
-                  </PopLink>
-                </div>
-              )}
+                ) : null}
+                <PopButton onClick={() => fileInputRef.current?.click()} tone="coral" size="lg">
+                  <ImagePlus className="size-5" aria-hidden="true" />
+                  Upload a photo
+                </PopButton>
+                <PopLink to="/game" tone="white" size="lg">
+                  Play without camera
+                </PopLink>
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  event.target.value = "";
+                  if (file) void beginFromUpload(file);
+                }}
+              />
               <p className="mt-6 flex items-start justify-center gap-2 text-left text-sm leading-snug text-white/70">
                 <ShieldCheck
                   className="mt-0.5 size-5 shrink-0 text-leaf-light"

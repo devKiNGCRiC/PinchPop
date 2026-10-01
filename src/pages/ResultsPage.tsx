@@ -1,14 +1,17 @@
+import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Confetti } from "@/components/Confetti";
 import { EmptyState } from "@/components/EmptyState";
+import { FilterPicker } from "@/components/FilterPicker";
 import { PolaroidActions } from "@/components/PolaroidActions";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { ReplayDownload } from "@/components/ReplayDownload";
 import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
+import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
 import { deleteMemory, useMemories } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
@@ -17,6 +20,7 @@ export default function ResultsPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const memories = useMemories();
+  const [filterId, setFilterId] = useState(DEFAULT_FILTER_ID);
   const requested = params.get("m");
   const memory = memories.find((m) => m.id === requested) ?? memories[0];
 
@@ -67,6 +71,7 @@ export default function ResultsPage() {
             tape
             develop
             postmark={{ place: art.place, date: postmarkDate(memory.createdAt) }}
+            filter={filterCssFor(filterId)}
           >
             <span className="mt-1 text-sm font-semibold text-ink-soft">
               {camera ? "Taken in camera mode" : `${art.name}, ${art.state}`}
@@ -104,7 +109,10 @@ export default function ResultsPage() {
           </p>
 
           <div className="mt-8">
-            <PolaroidActions memory={memory} />
+            <FilterPicker value={filterId} onChange={setFilterId} />
+            <div className="mt-4">
+              <PolaroidActions memory={memory} filterId={filterId} />
+            </div>
             <ReplayDownload memoryId={memory.id} />
           </div>
 

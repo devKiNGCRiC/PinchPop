@@ -122,7 +122,9 @@ export interface SceneAssets {
 }
 
 export interface SceneArgs {
-  video: HTMLVideoElement;
+  /** The live webcam feed, or null for an uploaded photo (which has no tracking/countdown phase
+   * and so never reaches the branches below that need it). */
+  video: HTMLVideoElement | null;
   hands: Hand[];
   view: EngineView;
   assets: SceneAssets | null;
@@ -297,9 +299,9 @@ export function renderScene(ctx: CanvasRenderingContext2D, args: SceneArgs): voi
   const { video, hands, view, now, flashAt } = args;
   const { width, height } = ctx.canvas;
   ctx.clearRect(0, 0, width, height);
-  drawMirroredVideo(ctx, video);
+  if (video) drawMirroredVideo(ctx, video);
 
-  if (view.phase === "tracking") {
+  if (view.phase === "tracking" && video) {
     if (view.frameBox) {
       drawFramePreview(ctx, video, view.frameBox);
       drawBrackets(ctx, view.frameBox, view.armed ? SAFFRON : MARIGOLD, view.armed ? 7 : 5);
@@ -307,7 +309,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, args: SceneArgs): voi
     view.fingertips.forEach((tip, i) =>
       drawFingertip(ctx, tip.x, tip.y, hands[i] ? isPinching(hands[i]) : false),
     );
-  } else if (view.phase === "countdown" && view.countdownBox) {
+  } else if (view.phase === "countdown" && video && view.countdownBox) {
     drawFramePreview(ctx, video, view.countdownBox);
     drawBrackets(ctx, view.countdownBox, SAFFRON, 7);
     if (view.countdown !== null) drawCountdown(ctx, view.countdownBox, view.countdown);

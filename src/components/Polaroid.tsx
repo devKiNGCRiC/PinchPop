@@ -18,6 +18,8 @@ interface PolaroidProps {
   postmark?: { place: string; date: string };
   /** Slide in from above like a fresh print (plays once). */
   develop?: boolean;
+  /** A CSS filter() value applied to the photo/art only, not the frame or caption. */
+  filter?: string;
   className?: string;
   children?: ReactNode;
 }
@@ -32,6 +34,7 @@ export function Polaroid({
   tape = false,
   postmark,
   develop = false,
+  filter,
   className,
   children,
 }: PolaroidProps) {
@@ -57,10 +60,14 @@ export function Polaroid({
           src={photo}
           alt="Your photo from camera mode"
           className="block w-full border-2 border-ink bg-ink object-cover"
-          style={{ aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)) }}
+          style={{ aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)), filter }}
         />
       ) : (
-        <Art artId={artId} className="block aspect-square w-full border-2 border-ink" />
+        <Art
+          artId={artId}
+          className="block aspect-square w-full border-2 border-ink"
+          style={{ filter }}
+        />
       )}
       {postmark ? (
         <Postmark

@@ -11,6 +11,9 @@ const NOISE_STD = 7;
  * in media.ts, so a full-canvas frame is not downscaled and then upscaled again on export). */
 const SAVED_MAX_SIDE = 1080;
 const SAVED_JPEG_QUALITY = 0.9;
+/** Longest side of an uploaded photo's working canvas. Capped well above SAVED_MAX_SIDE so a
+ * phone photo stays smooth to drag and animate as puzzle pieces, not just small once saved. */
+const UPLOAD_MAX_SIDE = 1600;
 
 function gaussianNoise(std: number): number {
   const u1 = Math.random() || 1e-6;
@@ -80,14 +83,8 @@ export interface CapturedPhoto {
   blackAndWhite: HTMLCanvasElement;
 }
 
-/** Grabs the framed region of the (mirrored) video and prepares its colour and B&W versions. */
-export function capturePhoto(video: HTMLVideoElement, box: Box): CapturedPhoto {
-  const frame = makeCanvas(video.videoWidth, video.videoHeight);
-  const frameCtx = highQualityContext(frame);
-  frameCtx.translate(frame.width, 0);
-  frameCtx.scale(-1, 1);
-  frameCtx.drawImage(video, 0, 0, frame.width, frame.height);
-
+/** Crops a captured frame and prepares its colour and B&W photobooth versions. */
+function processFrame(frame: HTMLCanvasElement, box: Box): CapturedPhoto {
   const crop = makeCanvas(box.width, box.height);
   const cropCtx = highQualityContext(crop, { willReadFrequently: true });
   cropCtx.drawImage(frame, box.x, box.y, box.width, box.height, 0, 0, crop.width, crop.height);
@@ -104,6 +101,25 @@ export function capturePhoto(video: HTMLVideoElement, box: Box): CapturedPhoto {
   vignette(crop);
 
   return { color, blackAndWhite: crop };
+}
+
+/** Grabs the framed region of the (mirrored) video and prepares its colour and B&W versions. */
+export function capturePhoto(video: HTMLVideoElement, box: Box): CapturedPhoto {
+  const frame = makeCanvas(video.videoWidth, video.videoHeight);
+  const frameCtx = highQualityContext(frame);
+  frameCtx.translate(frame.width, 0);
+  frameCtx.scale(-1, 1);
+  frameCtx.drawImage(video, 0, 0, frame.width, frame.height);
+  return processFrame(frame, box);
+}
+
+/** Prepares an uploaded photo the same way as a camera capture, minus the mirroring (it is
+ * already right-way-round) and the hand-framing (the whole photo is the frame). */
+export function capturePhotoFromImage(image: HTMLImageElement): CapturedPhoto {
+  const scale = Math.min(1, UPLOAD_MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
+  const frame = makeCanvas(image.naturalWidth * scale, image.naturalHeight * scale);
+  highQualityContext(frame).drawImage(image, 0, 0, frame.width, frame.height);
+  return processFrame(frame, { x: 0, y: 0, width: frame.width, height: frame.height });
 }
 
 /** Cuts the black-and-white photo into one canvas per puzzle piece, indexed by piece id. */

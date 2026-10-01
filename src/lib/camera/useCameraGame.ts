@@ -4,7 +4,12 @@ import type { PointerEvent as ReactPointerEvent } from "react";
 import { CAMERA_ID } from "@/lib/art";
 import { createEngine } from "@/lib/camera/engine";
 import type { Engine, EngineEvent, Status } from "@/lib/camera/engine";
-import { capturePhoto, slicePieces, toSavedPhoto } from "@/lib/camera/effects";
+import {
+  capturePhoto,
+  capturePhotoFromImage,
+  slicePieces,
+  toSavedPhoto,
+} from "@/lib/camera/effects";
 import { describeCameraError, openCamera, stopStream } from "@/lib/camera/media";
 import type { CameraError } from "@/lib/camera/media";
 import { placedCount } from "@/lib/camera/pieces";
@@ -68,6 +73,25 @@ function fitBox(box: Box, width: number, height: number): Box {
  * captures what they can actually see on screen, not a guessed crop. */
 function defaultFrame(width: number, height: number): Box {
   return { x: 0, y: 0, width, height };
+}
+
+/** Generous but not unbounded, so one huge phone photo can't blow the localStorage quota. */
+const UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
+
+function loadImageFile(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read that image."));
+    };
+    image.src = url;
+  });
 }
 
 /**
@@ -327,6 +351,111 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
     }
   }, [engine, handleEvents, sound, syncUi, teardown]);
 
+  /** Starts straight on the puzzle from an uploaded photo instead of the webcam — no hand
+   * framing or countdown, since there is no live feed to frame. */
+  const beginFromUpload = useCallback(
+    async (file: File) => {
+      if (runningRef.current) return;
+      if (!file.type.startsWith("image/")) {
+        setUi((prev) => ({
+          ...prev,
+          stage: "error",
+          error: { kind: "unknown", message: "That file isn't a photo. Choose an image instead." },
+        }));
+        return;
+      }
+      if (file.size > UPLOAD_MAX_BYTES) {
+        setUi((prev) => ({
+          ...prev,
+          stage: "error",
+          error: {
+            kind: "unknown",
+            message: "That photo is too large (max 15 MB). Try a smaller one.",
+          },
+        }));
+        return;
+      }
+
+      runningRef.current = true;
+      sound.unlock();
+      setUi((prev) => ({
+        ...prev,
+        stage: "starting",
+        error: null,
+        loadingText: "Preparing your photo…",
+      }));
+
+      try {
+        const canvas = canvasRef.current;
+        if (!canvas) throw new Error("The camera view is not ready yet.");
+        const image = await loadImageFile(file);
+        if (!runningRef.current) return;
+        const photo = capturePhotoFromImage(image);
+        canvas.width = photo.color.width;
+        canvas.height = photo.color.height;
+
+        const now = performance.now();
+        engine.reset();
+        const puzzle = engine.beginPuzzle(
+          { x: 0, y: 0, width: canvas.width, height: canvas.height },
+          now,
+          Math.random,
+        );
+        recorderRef.current?.discard();
+        recorderRef.current = startCanvasRecording(canvas);
+        assetsRef.current = {
+          pieces: slicePieces(photo.blackAndWhite, puzzle),
+          color: photo.color,
+        };
+        flashAtRef.current = null;
+        solvedAtRef.current = puzzle.solved ? now : null;
+        uiKeyRef.current = "";
+        setUi((prev) => ({ ...prev, stage: "running", soundOn: sound.isEnabled() }));
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Canvas is not available in this browser.");
+
+        const tick = () => {
+          if (!runningRef.current) return;
+          const tickNow = performance.now();
+          // No camera and no hands in this mode: only tweens, drag reconciliation and the
+          // save/shatter animation need driving each frame.
+          const events = engine.update(
+            { hands: [], now: tickNow, width: canvas.width, height: canvas.height },
+            Math.random,
+          );
+          handleEvents(events, tickNow);
+          if (!runningRef.current) return;
+          renderScene(ctx, {
+            video: null,
+            hands: [],
+            view: engine.view(),
+            assets: assetsRef.current,
+            now: tickNow,
+            flashAt: flashAtRef.current,
+            solvedAt: solvedAtRef.current,
+            shatter: shatterRef.current,
+          });
+          syncUi();
+          frameRef.current = requestAnimationFrame(tick);
+        };
+        frameRef.current = requestAnimationFrame(tick);
+      } catch (error) {
+        console.warn("[PinchPop] Starting from an uploaded photo failed:", error);
+        teardown();
+        setUi((prev) => ({
+          ...prev,
+          stage: "error",
+          error: {
+            kind: "unknown",
+            message: error instanceof Error ? error.message : "Could not use that photo.",
+          },
+        }));
+      }
+    },
+    [engine, handleEvents, sound, syncUi, teardown],
+  );
+
   const stop = useCallback(() => {
     teardown();
     engine.reset();
@@ -395,6 +524,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
     canvasRef,
     ui,
     start,
+    beginFromUpload,
     stop,
     snapNow,
     reset,
