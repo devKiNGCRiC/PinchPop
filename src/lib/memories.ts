@@ -121,6 +121,15 @@ export function saveMemory(input: {
   // Tell the player about any milestone this run just unlocked.
   const alreadyEarned = new Set(BADGES.filter((b) => b.earned(previous)).map((b) => b.id));
   announceBadges(BADGES.filter((b) => !alreadyEarned.has(b.id) && b.earned(updated)));
+  // Best-effort, non-blocking: a signed-in player's run also goes to the cloud leaderboard. A
+  // dynamic import keeps @supabase/supabase-js out of every page that can ever save a memory
+  // (nearly all of them) — it only loads once a save actually happens.
+  void import("@/lib/cloudRuns")
+    .then(({ syncMemoryToCloud }) => syncMemoryToCloud(memory))
+    .then((result) => {
+      if (!result.ok) console.warn("[PinchPop] Cloud sync failed:", result.message);
+    })
+    .catch((error: unknown) => console.warn("[PinchPop] Cloud sync failed:", error));
   return memory;
 }
 

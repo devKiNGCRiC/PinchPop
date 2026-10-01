@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { Crown, Globe, Trophy } from "lucide-react";
+import { Crown, Trophy } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { MemoryImage } from "@/components/MemoryImage";
 import { EmptyState } from "@/components/EmptyState";
 import { PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
+import { WorldwideLeaderboard } from "@/components/WorldwideLeaderboard";
 import { getArt, PLACE_LIST } from "@/lib/art";
 import { ownRank, rankRuns, todayKey } from "@/lib/leaderboard";
 import type { Period, PlaceFilter } from "@/lib/leaderboard";
@@ -55,7 +56,8 @@ export default function LeaderboardPage() {
         Leaderboard
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
-        The fastest, tidiest solves. For now this board ranks your own runs on this device.
+        The fastest, tidiest solves. The board below ranks your own runs on this device; sign in to
+        also appear on the worldwide board further down.
       </p>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -243,51 +245,33 @@ export default function LeaderboardPage() {
         </>
       )}
 
-      <div className="mt-14 grid gap-6 lg:grid-cols-2">
-        <section aria-labelledby="scoring-heading" className="sticker-lg rounded-3xl bg-cloud p-6">
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-xl border-2 border-ink bg-marigold">
-              <Trophy className="size-6" aria-hidden="true" />
-            </span>
-            <h2
-              id="scoring-heading"
-              className="font-display text-xl font-extrabold tracking-[-0.03em]"
-            >
-              How scores work
-            </h2>
-          </div>
-          <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            Every run is a Speed Run. You start at 2000; every move costs 40 and every second costs
-            8, down to a minimum of 100. Accuracy, the share of your moves that put a piece in the
-            right place, then scales that between 50% and 100%.
-          </p>
-          <p className="mt-3 text-base text-ink-soft">
-            Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560. At 100% accuracy that scores
-            1560, at 60% accuracy 1248.
-          </p>
-        </section>
+      <section
+        aria-labelledby="scoring-heading"
+        className="sticker-lg mt-14 max-w-2xl rounded-3xl bg-cloud p-6"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex size-11 items-center justify-center rounded-xl border-2 border-ink bg-marigold">
+            <Trophy className="size-6" aria-hidden="true" />
+          </span>
+          <h2
+            id="scoring-heading"
+            className="font-display text-xl font-extrabold tracking-[-0.03em]"
+          >
+            How scores work
+          </h2>
+        </div>
+        <p className="mt-4 text-lg leading-relaxed text-ink-soft">
+          Every run is a Speed Run. You start at 2000; every move costs 40 and every second costs 8,
+          down to a minimum of 100. Accuracy, the share of your moves that put a piece in the right
+          place, then scales that between 50% and 100%.
+        </p>
+        <p className="mt-3 text-base text-ink-soft">
+          Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560. At 100% accuracy that scores
+          1560, at 60% accuracy 1248.
+        </p>
+      </section>
 
-        <section
-          aria-labelledby="online-heading"
-          className="rounded-3xl border-[2.5px] border-dashed border-ink bg-white/60 p-6"
-        >
-          <div className="flex items-center gap-3">
-            <span className="flex size-11 items-center justify-center rounded-xl border-2 border-ink bg-cloud">
-              <Globe className="size-6" aria-hidden="true" />
-            </span>
-            <h2
-              id="online-heading"
-              className="font-display text-xl font-extrabold tracking-[-0.03em]"
-            >
-              Online rankings are coming
-            </h2>
-          </div>
-          <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-            Worldwide all-time and daily boards arrive with accounts. Until then, the open podium
-            spots are waiting for you to fill them.
-          </p>
-        </section>
-      </div>
+      <WorldwideLeaderboard />
     </div>
   );
 }

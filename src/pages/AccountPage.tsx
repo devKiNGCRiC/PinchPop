@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { BookMarked, LoaderCircle, LogOut, Mail, Pencil, User } from "lucide-react";
 
@@ -6,6 +6,7 @@ import { Chakra } from "@/components/Chakra";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
 import { signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
+import { useMemories } from "@/lib/memories";
 
 const inputClass =
   "w-full rounded-2xl border-[2.5px] border-ink bg-white px-4 py-3 text-base outline-none focus:ring-4 focus:ring-marigold/50";
@@ -191,6 +192,80 @@ function UsernameField({ userId, username }: { userId: string; username: string 
   );
 }
 
+function ImportLocalRuns({ userId }: { userId: string }) {
+  const memories = useMemories();
+  const [checking, setChecking] = useState(true);
+  const [hasCloud, setHasCloud] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
+  const [result, setResult] = useState<{ synced: number; failed: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    import("@/lib/cloudRuns").then(({ hasCloudRuns }) =>
+      hasCloudRuns(userId).then((has) => {
+        if (active) {
+          setHasCloud(has);
+          setChecking(false);
+        }
+      }),
+    );
+    return () => {
+      active = false;
+    };
+  }, [userId]);
+
+  if (memories.length === 0 || checking) return null;
+
+  const count = memories.length;
+  const plural = count === 1 ? "run" : "runs";
+
+  if (result) {
+    return (
+      <p className="mt-6 text-base text-leaf">
+        Synced {result.synced} {result.synced === 1 ? "run" : "runs"} to your account
+        {result.failed > 0 ? ` (${result.failed} failed — try again later).` : "."}
+      </p>
+    );
+  }
+
+  async function runImport() {
+    setImporting(true);
+    const { importLocalRuns } = await import("@/lib/cloudRuns");
+    const outcome = await importLocalRuns(memories, (done, total) => setProgress({ done, total }));
+    setResult(outcome);
+    setImporting(false);
+  }
+
+  return (
+    <div className="mt-6 rounded-2xl border-2 border-dashed border-ink/40 p-4 text-left">
+      <p className="text-base text-ink-soft">
+        {hasCloud
+          ? `Sync ${count} ${plural} saved on this device to your account.`
+          : `You have ${count} ${plural} saved on this device — import them to your account?`}
+      </p>
+      <PopButton
+        tone={hasCloud ? "white" : "saffron"}
+        size="md"
+        className="mt-3"
+        disabled={importing}
+        onClick={() => void runImport()}
+      >
+        {importing ? (
+          <>
+            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+            Syncing {progress.done}/{progress.total}…
+          </>
+        ) : hasCloud ? (
+          "Sync local runs"
+        ) : (
+          `Import ${count} ${plural}`
+        )}
+      </PopButton>
+    </div>
+  );
+}
+
 function SignedIn({
   email,
   userId,
@@ -213,9 +288,9 @@ function SignedIn({
         {email}
       </p>
       <p className="mt-4 text-base leading-relaxed text-ink-soft">
-        Cloud sync for your runs and photos is coming next — for now your saved polaroids still live
-        in this browser's album.
+        Runs you solve from here on sync to your account automatically.
       </p>
+      <ImportLocalRuns userId={userId} />
       <div className="mt-6 flex flex-wrap justify-center gap-3">
         <PopLink to="/profile" tone="chakra" size="lg">
           <BookMarked className="size-5" aria-hidden="true" />
