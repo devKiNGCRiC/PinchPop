@@ -72,8 +72,8 @@ export default function AboutPage() {
           Camera mode, the practice booth, Speed Run scoring and achievements all work right now —
           with no account at all, everything saves to this device. Sign in and they also sync to the
           cloud: a worldwide leaderboard, an avatar and bio on a public player page, and your album
-          filling in with runs from your other devices. Letting you make one specific photo public
-          (rather than just the score) is next.
+          filling in with runs from your other devices. You can also make one camera photo at a time
+          public, getting a link anyone can open without signing in.
         </p>
       </section>
 

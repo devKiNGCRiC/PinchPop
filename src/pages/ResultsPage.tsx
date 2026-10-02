@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { LoaderCircle, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
@@ -12,6 +12,7 @@ import { ReplayDownload } from "@/components/ReplayDownload";
 import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
+import { useProfile } from "@/lib/auth";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
 import { deleteMemory, updateMemoryCaption, useMemories } from "@/lib/memories";
 import type { Memory } from "@/lib/memories";
@@ -169,6 +170,7 @@ export default function ResultsPage() {
               <PolaroidActions memory={memory} filterId={filterId} />
             </div>
             <ReplayDownload memoryId={memory.id} />
+            {camera && !isCloudOnly ? <PublicShareToggle memory={memory} /> : null}
           </div>
 
           <div className="mt-6 flex flex-wrap gap-3">
@@ -256,6 +258,102 @@ function CaptionEditor({ memory, defaultCaption }: { memory: Memory; defaultCapt
           <Pencil className="size-4" aria-hidden="true" />
         )}
       </button>
+    </div>
+  );
+}
+
+/** Lets a signed-in player opt one camera photo into a public, no-sign-in-required share link —
+ * off by default, toggled per-photo. Hidden while signed out (nothing to attach publicity to) or
+ * while the run hasn't finished syncing to the cloud yet (checked lazily, see getRunPublicStatus). */
+function PublicShareToggle({ memory }: { memory: Memory }) {
+  const { session, username } = useProfile();
+  const [isPublic, setIsPublic] = useState<boolean | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session) return;
+    let active = true;
+    import("@/lib/cloudRuns").then(({ getRunPublicStatus }) =>
+      getRunPublicStatus(session.user.id, memory.id).then((value) => {
+        if (active) setIsPublic(value);
+      }),
+    );
+    return () => {
+      active = false;
+    };
+  }, [session, memory.id]);
+
+  if (!session || isPublic === null) return null;
+
+  const shareUrl = username
+    ? `${window.location.origin}/share/${encodeURIComponent(username)}/${memory.id}`
+    : null;
+
+  async function toggle() {
+    if (!session) return;
+    setBusy(true);
+    setMessage(null);
+    const next = !isPublic;
+    const { setRunPublic } = await import("@/lib/cloudRuns");
+    const result = await setRunPublic(session.user.id, memory.id, next);
+    if (result.ok) {
+      setIsPublic(next);
+    } else {
+      setMessage(result.message ?? "Something went wrong.");
+    }
+    setBusy(false);
+  }
+
+  async function copyLink() {
+    if (!shareUrl) return;
+    await navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border-2 border-dashed border-ink/25 p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="font-semibold">
+            {isPublic ? "This photo is public" : "Make this photo public"}
+          </p>
+          <p className="text-sm text-ink-soft">
+            {isPublic
+              ? "Anyone with the link can view it, no sign-in needed."
+              : "Get a link anyone can open, without signing in."}
+          </p>
+        </div>
+        <PopButton
+          tone={isPublic ? "chakra" : "white"}
+          size="sm"
+          onClick={() => void toggle()}
+          disabled={busy}
+        >
+          {busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
+          {isPublic ? "Make private" : "Make public"}
+        </PopButton>
+      </div>
+      {isPublic && shareUrl ? (
+        <div className="mt-3 flex items-center gap-2">
+          <input
+            readOnly
+            value={shareUrl}
+            onFocus={(e) => e.currentTarget.select()}
+            className="w-full rounded-full border-2 border-ink bg-white px-3 py-1.5 text-sm outline-none"
+          />
+          <PopButton tone="white" size="sm" onClick={() => void copyLink()}>
+            {copied ? (
+              <Check className="size-4 text-leaf" aria-hidden="true" />
+            ) : (
+              <Copy className="size-4" aria-hidden="true" />
+            )}
+          </PopButton>
+        </div>
+      ) : null}
+      {message ? <p className="mt-2 text-sm text-sindoor">{message}</p> : null}
     </div>
   );
 }

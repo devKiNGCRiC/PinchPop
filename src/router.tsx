@@ -14,7 +14,6 @@ import NotFoundPage from "@/pages/NotFoundPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ResultsPage from "@/pages/ResultsPage";
-import SharePage from "@/pages/SharePage";
 
 // Shown while a lazily loaded route (such as camera mode) downloads on a direct page load.
 function BootFallback() {
@@ -50,7 +49,11 @@ const router = createBrowserRouter([
         // Loaded on demand so @supabase/supabase-js only downloads when someone opens this page.
         lazy: async () => ({ Component: (await import("@/pages/AccountPage")).default }),
       },
-      { path: "share/:slug", element: <SharePage /> },
+      {
+        path: "share/:username/:localId",
+        // Loaded on demand so @supabase/supabase-js only downloads when someone opens a share link.
+        lazy: async () => ({ Component: (await import("@/pages/SharePage")).default }),
+      },
       {
         path: "players/:username",
         // Loaded on demand so @supabase/supabase-js only downloads when someone opens this page.

@@ -208,6 +208,80 @@ export async function fetchCloudRunAsMemory(runId: string): Promise<Memory | nul
   };
 }
 
+/** Whether a local memory's synced cloud run has been made public. False (not an error) if the
+ * run hasn't finished syncing yet. */
+export async function getRunPublicStatus(userId: string, localId: string): Promise<boolean> {
+  const { supabase } = await import("@/lib/supabase");
+  const { data } = await supabase
+    .from("runs")
+    .select("is_public")
+    .eq("user_id", userId)
+    .eq("local_id", localId)
+    .maybeSingle();
+  return data?.is_public ?? false;
+}
+
+/** Toggles a local memory's synced cloud run between public and private. Fails with a friendly
+ * message if the run hasn't finished syncing to the cloud yet (nothing to toggle). */
+export async function setRunPublic(
+  userId: string,
+  localId: string,
+  isPublic: boolean,
+): Promise<{ ok: boolean; message?: string }> {
+  const { supabase } = await import("@/lib/supabase");
+  const { data, error } = await supabase
+    .from("runs")
+    .update({ is_public: isPublic })
+    .eq("user_id", userId)
+    .eq("local_id", localId)
+    .select("id");
+  if (error) return { ok: false, message: error.message };
+  if (!data || data.length === 0) {
+    return {
+      ok: false,
+      message: "This photo hasn't finished syncing to your account yet — try again shortly.",
+    };
+  }
+  return { ok: true };
+}
+
+/** The public share page's lookup: a player's public run by their username and the run's local
+ * id, as a Memory-shaped object. Resolves to null for a private run or an unknown username/id,
+ * even though the run's stats are already visible on the worldwide leaderboard regardless — a
+ * share link is a stronger, deliberate signal than appearing anonymously on a leaderboard, so it
+ * only ever resolves for a run the player explicitly made public. */
+export async function fetchPublicRun(username: string, localId: string): Promise<Memory | null> {
+  const { supabase } = await import("@/lib/supabase");
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("username", username)
+    .maybeSingle();
+  if (!profile) return null;
+
+  const { data, error } = await supabase
+    .from("runs")
+    .select("art_id, moves, seconds, score, accuracy, created_at, photo_path, aspect")
+    .eq("user_id", profile.id)
+    .eq("local_id", localId)
+    .eq("is_public", true)
+    .maybeSingle();
+  if (error || !data) return null;
+
+  const row = data as Omit<MyRunRow, "id" | "local_id">;
+  const photo = row.photo_path ? await signedPhotoUrl(row.photo_path) : null;
+  return {
+    id: localId,
+    artId: row.art_id,
+    moves: row.moves,
+    seconds: row.seconds,
+    score: row.score,
+    createdAt: new Date(row.created_at).getTime(),
+    ...(row.accuracy !== null ? { accuracy: row.accuracy } : {}),
+    ...(photo ? { photo, aspect: row.aspect ?? undefined } : {}),
+  };
+}
+
 export interface CloudRun {
   id: string;
   userId: string;
