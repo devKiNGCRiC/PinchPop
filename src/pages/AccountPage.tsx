@@ -1,12 +1,30 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { BookMarked, Camera, LoaderCircle, LogOut, Mail, Pencil, Trash2, User } from "lucide-react";
+import {
+  BookMarked,
+  Camera,
+  LoaderCircle,
+  LogOut,
+  Mail,
+  Pencil,
+  Trash2,
+  User,
+  UserCircle,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
-import { deleteAccount, signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
+import {
+  deleteAccount,
+  signIn,
+  signOut,
+  signUp,
+  updateBio,
+  updateUsername,
+  useProfile,
+} from "@/lib/auth";
 import { avatarUrl, uploadAvatar } from "@/lib/avatar";
 import { useGuestMemories } from "@/lib/memories";
 
@@ -246,6 +264,69 @@ function UsernameField({ userId, username }: { userId: string; username: string 
   );
 }
 
+function BioField({ userId, bio }: { userId: string; bio: string | null }) {
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function save() {
+    setBusy(true);
+    setMessage("");
+    const result = await updateBio(userId, value);
+    setMessage(result.ok ? "" : result.message);
+    setBusy(false);
+    if (result.ok) setEditing(false);
+  }
+
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        onClick={() => {
+          setValue(bio ?? "");
+          setEditing(true);
+        }}
+        className="mx-auto mt-3 flex max-w-sm items-center gap-1.5 text-center text-base text-ink-soft hover:text-chakra"
+      >
+        <Pencil className="size-3.5 shrink-0" aria-hidden="true" />
+        {bio ?? "Add a bio — shown on your public player page"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="mx-auto mt-3 max-w-sm">
+      <textarea
+        autoFocus
+        maxLength={160}
+        rows={2}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="Puzzle speedrunner. Taj Mahal personal best: 9 moves."
+        className="w-full resize-none rounded-2xl border-[2.5px] border-ink bg-white px-4 py-3 text-center text-base outline-none focus:ring-4 focus:ring-marigold/50"
+      />
+      <div className="mt-2 flex items-center justify-center gap-3">
+        <span className="text-sm text-ink-soft">{value.trim().length}/160</span>
+        <button
+          type="button"
+          onClick={() => void save()}
+          disabled={busy || value.trim().length > 160}
+          className="pop sticker flex size-9 items-center justify-center rounded-full bg-leaf text-white disabled:opacity-50"
+          aria-label="Save bio"
+        >
+          {busy ? (
+            <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Pencil className="size-4" aria-hidden="true" />
+          )}
+        </button>
+      </div>
+      {message ? <p className="mt-2 text-sm text-sindoor">{message}</p> : null}
+    </div>
+  );
+}
+
 function ImportLocalRuns({ userId }: { userId: string }) {
   // Anonymous plays only — never another signed-in account's local memories on this device.
   const memories = useGuestMemories();
@@ -369,11 +450,13 @@ function SignedIn({
   userId,
   username,
   avatarPath,
+  bio,
 }: {
   email: string;
   userId: string;
   username: string | null;
   avatarPath: string | null;
+  bio: string | null;
 }) {
   const [signingOut, setSigningOut] = useState(false);
 
@@ -381,7 +464,8 @@ function SignedIn({
     <div className="sticker-lg mx-auto max-w-md rounded-3xl bg-white p-6 text-center sm:p-8">
       <AvatarField userId={userId} avatarPath={avatarPath} />
       <UsernameField userId={userId} username={username} />
-      <p className="mt-1 flex items-center justify-center gap-2 text-base text-ink-soft">
+      <BioField userId={userId} bio={bio} />
+      <p className="mt-3 flex items-center justify-center gap-2 text-base text-ink-soft">
         <Mail className="size-4" aria-hidden="true" />
         {email}
       </p>
@@ -394,6 +478,12 @@ function SignedIn({
           <BookMarked className="size-5" aria-hidden="true" />
           View your passport
         </PopLink>
+        {username ? (
+          <PopLink to={`/players/${encodeURIComponent(username)}`} tone="marigold" size="lg">
+            <UserCircle className="size-5" aria-hidden="true" />
+            View public profile
+          </PopLink>
+        ) : null}
         <PopButton
           tone="white"
           size="lg"
@@ -413,7 +503,7 @@ function SignedIn({
 }
 
 export default function AccountPage() {
-  const { session, loading, username, avatarPath } = useProfile();
+  const { session, loading, username, avatarPath, bio } = useProfile();
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
@@ -441,6 +531,7 @@ export default function AccountPage() {
             userId={session.user.id}
             username={username}
             avatarPath={avatarPath}
+            bio={bio}
           />
         ) : (
           <AuthForms />

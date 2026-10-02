@@ -80,37 +80,40 @@ export function WorldwideLeaderboard() {
             const art = getArt(run.artId);
             const avatar = avatarUrl(run.avatarPath);
             return (
-              <li
-                key={run.id}
-                className={cn(
-                  "flex items-center gap-3 rounded-2xl px-3 py-2.5",
-                  i < 3 ? "bg-marigold/25" : "bg-ivory",
-                )}
-              >
-                <span className="w-6 shrink-0 text-center font-display font-extrabold tabular-nums text-ink-soft">
-                  {i + 1}
-                </span>
-                {avatar ? (
-                  <img
-                    src={avatar}
-                    alt=""
-                    className="size-9 shrink-0 rounded-lg border-2 border-ink object-cover"
-                  />
-                ) : (
-                  <Art
-                    artId={run.artId}
-                    decorative
-                    className="size-9 shrink-0 rounded-lg border-2 border-ink"
-                  />
-                )}
-                <span className="min-w-0 flex-1 truncate font-semibold">{run.username}</span>
-                <span className="hidden text-sm text-ink-soft sm:inline">{art.place}</span>
-                <span className="w-16 shrink-0 text-right text-sm text-ink-soft">
-                  {run.moves}mv · {formatTime(run.seconds)}
-                </span>
-                <span className="w-14 shrink-0 text-right font-display font-extrabold tabular-nums">
-                  {run.score}
-                </span>
+              <li key={run.id}>
+                <Link
+                  to={`/players/${encodeURIComponent(run.username)}`}
+                  aria-label={`${run.username}'s public profile`}
+                  className={cn(
+                    "flex items-center gap-3 rounded-2xl px-3 py-2.5 transition-colors hover:bg-marigold/40",
+                    i < 3 ? "bg-marigold/25" : "bg-ivory",
+                  )}
+                >
+                  <span className="w-6 shrink-0 text-center font-display font-extrabold tabular-nums text-ink-soft">
+                    {i + 1}
+                  </span>
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt=""
+                      className="size-9 shrink-0 rounded-lg border-2 border-ink object-cover"
+                    />
+                  ) : (
+                    <Art
+                      artId={run.artId}
+                      decorative
+                      className="size-9 shrink-0 rounded-lg border-2 border-ink"
+                    />
+                  )}
+                  <span className="min-w-0 flex-1 truncate font-semibold">{run.username}</span>
+                  <span className="hidden text-sm text-ink-soft sm:inline">{art.place}</span>
+                  <span className="w-16 shrink-0 text-right text-sm text-ink-soft">
+                    {run.moves}mv · {formatTime(run.seconds)}
+                  </span>
+                  <span className="w-14 shrink-0 text-right font-display font-extrabold tabular-nums">
+                    {run.score}
+                  </span>
+                </Link>
               </li>
             );
           })}

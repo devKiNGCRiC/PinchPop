@@ -59,12 +59,15 @@ export interface ProfileState extends AuthState {
   /** The signed-in player's avatar storage path, or null without one. Pass to avatarUrl() to
    * display it — see src/lib/avatar.ts. */
   avatarPath: string | null;
+  /** The signed-in player's public bio, or null without one. */
+  bio: string | null;
 }
 
 interface Fetched {
   userId: string;
   username: string | null;
   avatarPath: string | null;
+  bio: string | null;
 }
 
 /** The current session plus its profile, for anywhere that shows "who is this player". */
@@ -82,7 +85,7 @@ export function useProfile(): ProfileState {
     import("@/lib/supabase").then(({ supabase }) => {
       supabase
         .from("profiles")
-        .select("username, avatar_path")
+        .select("username, avatar_path, bio")
         .eq("id", userId)
         .maybeSingle()
         .then(({ data }) => {
@@ -91,6 +94,7 @@ export function useProfile(): ProfileState {
               userId,
               username: data?.username ?? null,
               avatarPath: data?.avatar_path ?? null,
+              bio: data?.bio ?? null,
             });
           }
         });
@@ -106,6 +110,7 @@ export function useProfile(): ProfileState {
     loading,
     username: matches ? fetched.username : null,
     avatarPath: matches ? fetched.avatarPath : null,
+    bio: matches ? fetched.bio : null,
   };
 }
 
@@ -174,6 +179,22 @@ export async function updateUsername(userId: string, username: string): Promise<
     return { ok: false, message: error.message };
   }
   return { ok: true, message: "Username updated." };
+}
+
+/** Updates the signed-in player's public bio. An empty/whitespace-only value clears it. Enforces
+ * the same 160-char rule as the DB check. */
+export async function updateBio(userId: string, bio: string): Promise<AuthResult> {
+  const trimmed = bio.trim();
+  if (trimmed.length > 160) {
+    return { ok: false, message: "Bio must be 160 characters or fewer." };
+  }
+  const { supabase } = await import("@/lib/supabase");
+  const { error } = await supabase
+    .from("profiles")
+    .update({ bio: trimmed || null })
+    .eq("id", userId);
+  if (error) return { ok: false, message: error.message };
+  return { ok: true, message: "Bio updated." };
 }
 
 /**

@@ -20,7 +20,7 @@ export default function ProfilePage() {
   const memories = useMemories();
   const stats = computeStats(memories);
   const visited = visitedPlaces(memories);
-  const { session, username, avatarPath } = useProfile();
+  const { session, username, avatarPath, bio } = useProfile();
   const avatar = avatarUrl(avatarPath);
 
   const tiles = [
@@ -66,6 +66,7 @@ export default function ProfilePage() {
           <p className="mt-6 rounded-xl border-2 border-marigold/60 px-3 py-2 text-base font-semibold">
             {session ? (username ?? "Signed in") : "Guest traveller"}
           </p>
+          {session && bio ? <p className="mt-3 text-sm leading-snug text-white/80">{bio}</p> : null}
         </div>
 
         <div>

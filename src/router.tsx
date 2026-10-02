@@ -51,6 +51,11 @@ const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import("@/pages/AccountPage")).default }),
       },
       { path: "share/:slug", element: <SharePage /> },
+      {
+        path: "players/:username",
+        // Loaded on demand so @supabase/supabase-js only downloads when someone opens this page.
+        lazy: async () => ({ Component: (await import("@/pages/PlayerPage")).default }),
+      },
       { path: "*", element: <NotFoundPage /> },
     ],
   },
