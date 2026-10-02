@@ -6,6 +6,7 @@ import { getArt } from "@/lib/art";
 import { downloadBlob, renderPolaroidBlob, shareOrDownload } from "@/lib/export";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
 import type { Memory } from "@/lib/memories";
+import { INSTAGRAM_LINK } from "@/lib/social";
 
 interface PolaroidActionsProps {
   memory: Memory;
@@ -58,7 +59,14 @@ export function PolaroidActions({ memory, filterId = DEFAULT_FILTER_ID }: Polaro
           {busy === "share" ? "Opening…" : "Share"}
         </PopButton>
       </div>
-      <p aria-live="polite" className="mt-3 min-h-6 text-base text-ink-soft">
+      <p className="mt-3 flex items-center gap-1.5 text-sm text-ink-soft">
+        <svg viewBox="0 0 24 24" className="size-4 shrink-0" fill="currentColor" aria-hidden="true">
+          <path d={INSTAGRAM_LINK.path} />
+        </svg>
+        On your phone, "Share" opens your photo app picker — pick Instagram, WhatsApp or any app you
+        have installed and post it from there.
+      </p>
+      <p aria-live="polite" className="mt-2 min-h-6 text-base text-ink-soft">
         {message}
       </p>
     </div>

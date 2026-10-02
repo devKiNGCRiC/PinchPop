@@ -110,6 +110,104 @@ export async function importLocalRuns(
   return { synced, failed };
 }
 
+/** A signed, time-limited URL for a private photo in the "photos" bucket. Resolves only for the
+ * path's own owner — the bucket's RLS is folder-scoped by auth.uid(), so this comes back null for
+ * anyone else's photo regardless of how public the owning `runs` row itself is. `size` requests a
+ * resized thumbnail (cheaper to load in a grid) rather than the full photo. */
+export async function signedPhotoUrl(
+  path: string,
+  size?: { width: number; height: number },
+): Promise<string | null> {
+  const { supabase } = await import("@/lib/supabase");
+  const { data, error } = await supabase.storage
+    .from("photos")
+    .createSignedUrl(path, 3600, size ? { transform: size } : undefined);
+  if (error || !data) return null;
+  return data.signedUrl;
+}
+
+export interface MyCloudRun {
+  /** The cloud row's own id — distinct from, and never confused with, a local 8-char memory id. */
+  id: string;
+  /** The local memory this was synced from, if it was synced from *this* device. */
+  localId: string | null;
+  artId: string;
+  moves: number;
+  seconds: number;
+  score: number;
+  accuracy: number | null;
+  createdAt: number;
+  photoPath: string | null;
+  aspect: number | null;
+}
+
+interface MyRunRow {
+  id: string;
+  local_id: string | null;
+  art_id: string;
+  moves: number;
+  seconds: number;
+  score: number;
+  accuracy: number | null;
+  created_at: string;
+  photo_path: string | null;
+  aspect: number | null;
+}
+
+/** All of the signed-in player's own cloud runs — the private shape (includes local_id and
+ * photo_path), unlike the public leaderboard's. Used to fill the Album with runs that exist in
+ * the cloud but not on this device (solved elsewhere), and to resolve a single run for the
+ * Results page when it isn't found locally — see fetchCloudRunAsMemory(). */
+export async function fetchMyCloudRuns(userId: string): Promise<MyCloudRun[]> {
+  const { supabase } = await import("@/lib/supabase");
+  const { data, error } = await supabase
+    .from("runs")
+    .select("id, local_id, art_id, moves, seconds, score, accuracy, created_at, photo_path, aspect")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  return ((data ?? []) as MyRunRow[]).map((row) => ({
+    id: row.id,
+    localId: row.local_id,
+    artId: row.art_id,
+    moves: row.moves,
+    seconds: row.seconds,
+    score: row.score,
+    accuracy: row.accuracy,
+    createdAt: new Date(row.created_at).getTime(),
+    photoPath: row.photo_path,
+    aspect: row.aspect,
+  }));
+}
+
+/** One specific cloud run by its own id, as a Memory-shaped object the existing Results/Polaroid
+ * UI can render unchanged — used when a requested memory isn't on this device (e.g. it was
+ * solved on a different one). The photo resolves to a signed URL only for its owner; anyone else
+ * (or anonymous) gets null, same privacy boundary as everywhere else a photo could be shown. */
+export async function fetchCloudRunAsMemory(runId: string): Promise<Memory | null> {
+  const { supabase } = await import("@/lib/supabase");
+  const { data, error } = await supabase
+    .from("runs")
+    .select("id, art_id, moves, seconds, score, accuracy, created_at, photo_path, aspect")
+    .eq("id", runId)
+    .maybeSingle();
+  if (error || !data) return null;
+
+  const row = data as MyRunRow;
+  const photo = row.photo_path ? await signedPhotoUrl(row.photo_path) : null;
+  return {
+    id: row.id,
+    artId: row.art_id,
+    moves: row.moves,
+    seconds: row.seconds,
+    score: row.score,
+    createdAt: new Date(row.created_at).getTime(),
+    ...(row.accuracy !== null ? { accuracy: row.accuracy } : {}),
+    ...(photo ? { photo, aspect: row.aspect ?? undefined } : {}),
+  };
+}
+
 export interface CloudRun {
   id: string;
   userId: string;

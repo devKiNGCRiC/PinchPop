@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Cloud, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { EmptyState } from "@/components/EmptyState";
@@ -9,6 +9,8 @@ import { Seo } from "@/components/Seo";
 import { Polaroid } from "@/components/Polaroid";
 import { getArt, PLACE_LIST } from "@/lib/art";
 import type { PlaceId } from "@/lib/art";
+import { useProfile } from "@/lib/auth";
+import type { Memory } from "@/lib/memories";
 import { clearMemories, deleteMemory, useMemories } from "@/lib/memories";
 import { formatDate, tiltFor } from "@/lib/stats";
 import { cn } from "@/lib/utils";
@@ -16,14 +18,74 @@ import { cn } from "@/lib/utils";
 type Sort = "newest" | "best";
 type Filter = "all" | PlaceId;
 
+/** Runs that exist in the cloud but not on this device — solved on a different one, or re-synced
+ * after this device's local copy was cleared. Resolved as Memory-shaped objects (photo becomes a
+ * signed thumbnail URL) so they render through the exact same grid as local ones. */
+function useCloudOnlyMemories(localMemories: Memory[]): Memory[] {
+  const { session } = useProfile();
+  const userId = session?.user.id ?? null;
+  // Keyed to whichever user it was fetched for, so a stale result from a previous identity can
+  // never leak through — the ternary below masks it the instant `userId` changes, with no need
+  // to reset this state from inside the effect (same pattern as useProfile() in auth.ts).
+  const [fetched, setFetched] = useState<{ userId: string; memories: Memory[] } | null>(null);
+
+  useEffect(() => {
+    if (!userId) return;
+    let active = true;
+    const localIds = new Set(localMemories.map((m) => m.id));
+
+    import("@/lib/cloudRuns").then(async ({ fetchMyCloudRuns, signedPhotoUrl }) => {
+      const runs = await fetchMyCloudRuns(userId).catch((error: unknown) => {
+        console.warn("[PinchPop] Could not load cloud runs for the album:", error);
+        return [];
+      });
+      if (!active) return;
+
+      const missing = runs.filter((run) => !run.localId || !localIds.has(run.localId));
+      const resolved = await Promise.all(
+        missing.map(async (run) => {
+          const photo = run.photoPath
+            ? await signedPhotoUrl(run.photoPath, { width: 400, height: 400 })
+            : null;
+          const memory: Memory = {
+            id: run.id,
+            artId: run.artId,
+            moves: run.moves,
+            seconds: run.seconds,
+            score: run.score,
+            createdAt: run.createdAt,
+            ...(run.accuracy !== null ? { accuracy: run.accuracy } : {}),
+            ...(photo ? { photo, aspect: run.aspect ?? undefined } : {}),
+          };
+          return memory;
+        }),
+      );
+      if (active) setFetched({ userId, memories: resolved });
+    });
+
+    return () => {
+      active = false;
+    };
+    // localMemories is intentionally not in the dependency array: it changes on every local
+    // write (including ones this hook itself doesn't care about, like caption edits), and this
+    // only needs to re-run when the signed-in identity changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  return userId && fetched?.userId === userId ? fetched.memories : [];
+}
+
 export default function GalleryPage() {
   const memories = useMemories();
+  const cloudOnly = useCloudOnlyMemories(memories);
+  const allMemories = [...memories, ...cloudOnly].sort((a, b) => b.createdAt - a.createdAt);
+  const cloudIds = new Set(cloudOnly.map((m) => m.id));
   const [sort, setSort] = useState<Sort>("newest");
   const [filter, setFilter] = useState<Filter>("all");
   const [confirmClear, setConfirmClear] = useState(false);
 
   const filtered =
-    filter === "all" ? memories : memories.filter((m) => getArt(m.artId).id === filter);
+    filter === "all" ? allMemories : allMemories.filter((m) => getArt(m.artId).id === filter);
   const shown = sort === "best" ? [...filtered].sort((a, b) => b.score - a.score) : filtered;
 
   return (
@@ -40,13 +102,28 @@ export default function GalleryPage() {
             Your album
           </h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
-            {memories.length === 0
-              ? "Nothing pinned yet."
-              : `${memories.length} polaroid${memories.length === 1 ? "" : "s"}, saved on this device.`}
+            {allMemories.length === 0 ? (
+              "Nothing pinned yet."
+            ) : (
+              <>
+                {allMemories.length} polaroid{allMemories.length === 1 ? "" : "s"}
+                {cloudOnly.length > 0 ? (
+                  <>
+                    {" "}
+                    <span className="inline-flex items-center gap-1 align-middle text-chakra">
+                      <Cloud className="size-4" aria-hidden="true" />
+                      {cloudOnly.length} from other devices
+                    </span>
+                  </>
+                ) : (
+                  ", saved on this device."
+                )}
+              </>
+            )}
           </p>
         </div>
 
-        {memories.length > 0 ? (
+        {allMemories.length > 0 ? (
           <div className="flex flex-wrap items-center gap-3">
             <div
               role="group"
@@ -78,7 +155,7 @@ export default function GalleryPage() {
                     setConfirmClear(false);
                   }}
                 >
-                  Yes, clear all
+                  Yes, clear this device's
                 </PopButton>
                 <PopButton tone="white" size="sm" onClick={() => setConfirmClear(false)}>
                   Keep them
@@ -93,9 +170,9 @@ export default function GalleryPage() {
         ) : null}
       </div>
 
-      <PhotoStripCard memories={memories} />
+      <PhotoStripCard memories={allMemories} />
 
-      {memories.length > 0 ? (
+      {allMemories.length > 0 ? (
         <div
           role="group"
           aria-label="Filter by destination"
@@ -105,8 +182,8 @@ export default function GalleryPage() {
             (option) => {
               const count =
                 option.id === "all"
-                  ? memories.length
-                  : memories.filter((m) => getArt(m.artId).id === option.id).length;
+                  ? allMemories.length
+                  : allMemories.filter((m) => getArt(m.artId).id === option.id).length;
               return (
                 <button
                   key={option.id}
@@ -131,7 +208,7 @@ export default function GalleryPage() {
         </div>
       ) : null}
 
-      {memories.length === 0 ? (
+      {allMemories.length === 0 ? (
         <div className="mt-16">
           <EmptyState
             title="Your album is empty"
@@ -157,6 +234,7 @@ export default function GalleryPage() {
         <ul className="mt-14 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
           {shown.map((memory, i) => {
             const art = getArt(memory.artId);
+            const isCloudOnly = cloudIds.has(memory.id);
             return (
               <li key={memory.id} className="relative mx-auto w-full max-w-85">
                 <Link
@@ -177,14 +255,24 @@ export default function GalleryPage() {
                     </span>
                   </Polaroid>
                 </Link>
-                <button
-                  type="button"
-                  aria-label={`Delete ${art.name} polaroid`}
-                  onClick={() => deleteMemory(memory.id)}
-                  className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-cloud"
-                >
-                  <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
-                </button>
+                {isCloudOnly ? (
+                  <span
+                    aria-label="Synced from another device"
+                    title="Synced from another device"
+                    className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-chakra text-white"
+                  >
+                    <Cloud className="size-5" aria-hidden="true" />
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    aria-label={`Delete ${art.name} polaroid`}
+                    onClick={() => deleteMemory(memory.id)}
+                    className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-cloud"
+                  >
+                    <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
+                  </button>
+                )}
               </li>
             );
           })}

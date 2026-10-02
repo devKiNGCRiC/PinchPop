@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LoaderCircle, Pencil, Trash2 } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
+import { Chakra } from "@/components/Chakra";
 import { Confetti } from "@/components/Confetti";
 import { EmptyState } from "@/components/EmptyState";
 import { FilterPicker } from "@/components/FilterPicker";
@@ -17,15 +18,62 @@ import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
 
+/** A requested id that isn't on this device at all is most likely a cloud run solved on a
+ * different one (e.g. a link opened from the Album's "synced from another device" tiles) — this
+ * fetches it from the cloud instead of falling through to "no polaroid yet". Returns null while
+ * there's nothing to fetch (no id requested, or it was already found locally). */
+function useCloudFallback(requestedId: string | null, foundLocally: boolean) {
+  const [loaded, setLoaded] = useState<{ id: string; memory: Memory | null } | null>(null);
+
+  useEffect(() => {
+    if (!requestedId || foundLocally) return;
+    let active = true;
+    import("@/lib/cloudRuns").then(({ fetchCloudRunAsMemory }) =>
+      fetchCloudRunAsMemory(requestedId)
+        .then((memory) => {
+          if (active) setLoaded({ id: requestedId, memory });
+        })
+        .catch((error: unknown) => {
+          console.warn("[PinchPop] Could not load that run from the cloud:", error);
+          if (active) setLoaded({ id: requestedId, memory: null });
+        }),
+    );
+    return () => {
+      active = false;
+    };
+  }, [requestedId, foundLocally]);
+
+  if (!requestedId || foundLocally) return { memory: null, loading: false };
+  const current = loaded?.id === requestedId ? loaded : null;
+  return { memory: current?.memory ?? null, loading: !current };
+}
+
 export default function ResultsPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const memories = useMemories();
   const [filterId, setFilterId] = useState(DEFAULT_FILTER_ID);
   const requested = params.get("m");
-  const memory = memories.find((m) => m.id === requested) ?? memories[0];
+  const localMemory = requested ? memories.find((m) => m.id === requested) : undefined;
+  const cloudFallback = useCloudFallback(requested, !!localMemory);
+  const isCloudOnly = !localMemory && !!cloudFallback.memory;
+  const memory = localMemory ?? cloudFallback.memory ?? (requested ? undefined : memories[0]);
 
   if (!memory) {
+    if (requested && cloudFallback.loading) {
+      return (
+        <div className="mx-auto max-w-280 px-5 pt-32 pb-8 text-center sm:px-6 sm:pt-40">
+          <Seo
+            title="Results"
+            description="Solve a puzzle on PinchPop to see your Speed Run score, moves, time and accuracy."
+            path="/results"
+            noIndex
+          />
+          <h1 className="sr-only">Loading</h1>
+          <Chakra spokes={24} className="mx-auto size-12 animate-spin text-chakra" />
+        </div>
+      );
+    }
     return (
       <div className="mx-auto max-w-280 px-5 pt-32 pb-8 sm:px-6 sm:pt-40">
         <Seo
@@ -78,7 +126,12 @@ export default function ResultsPage() {
               {camera ? "Taken in camera mode" : `${art.name}, ${art.state}`}
             </span>
           </Polaroid>
-          {camera ? <CaptionEditor memory={memory} defaultCaption={art.caption} /> : null}
+          {camera && !isCloudOnly ? (
+            <CaptionEditor memory={memory} defaultCaption={art.caption} />
+          ) : null}
+          {isCloudOnly ? (
+            <p className="mt-3 text-center text-sm text-ink-soft">Synced from another device</p>
+          ) : null}
         </div>
 
         <div>
@@ -128,17 +181,19 @@ export default function ResultsPage() {
             <PopLink to="/gallery" tone="white" size="lg">
               Open album
             </PopLink>
-            <PopButton
-              tone="white"
-              size="lg"
-              onClick={() => {
-                deleteMemory(memory.id);
-                navigate("/gallery");
-              }}
-            >
-              <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
-              Delete
-            </PopButton>
+            {isCloudOnly ? null : (
+              <PopButton
+                tone="white"
+                size="lg"
+                onClick={() => {
+                  deleteMemory(memory.id);
+                  navigate("/gallery");
+                }}
+              >
+                <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
+                Delete
+              </PopButton>
+            )}
           </div>
         </div>
       </div>
