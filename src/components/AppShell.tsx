@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/react";
 import { Outlet, ScrollRestoration } from "react-router-dom";
 
 import { AchievementToaster } from "@/components/AchievementToaster";
@@ -24,6 +25,10 @@ export function AppShell() {
       <Footer />
       <AchievementToaster />
       <ScrollRestoration />
+      {/* Cookieless pageview counts only (Vercel Web Analytics) — no conflict with the "no
+          tracking cookies" promise on the Privacy page. Silently inert on any deploy other than
+          Vercel's, including local dev. */}
+      <Analytics />
     </div>
   );
 }
