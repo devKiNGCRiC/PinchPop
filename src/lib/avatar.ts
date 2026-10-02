@@ -1,6 +1,17 @@
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const AVATAR_MAX_BYTES = 5 * 1024 * 1024;
 
+// An explicit allowlist, not just a `startsWith("image/")` prefix check — that prefix also
+// admits "image/svg+xml", and an uploaded SVG is stored (and served, since "avatars" is a public
+// bucket) with whatever Content-Type the uploader claims. A script embedded in that SVG would run
+// if anyone opened the file's URL directly rather than through an <img> tag. Restricting to
+// genuine raster formats makes that impossible regardless of what a file claims to be.
+const AVATAR_TYPES: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 export interface AvatarResult {
   ok: boolean;
   message: string;
@@ -17,17 +28,20 @@ export function avatarUrl(path: string | null | undefined): string | null {
 /** Uploads a user-picked image as their avatar, replacing any existing one, and saves its storage
  * path on their profile. */
 export async function uploadAvatar(userId: string, file: File): Promise<AvatarResult> {
-  if (!file.type.startsWith("image/")) {
-    return { ok: false, message: "That file isn't a photo. Choose an image instead." };
+  const extension = AVATAR_TYPES[file.type];
+  if (!extension) {
+    return { ok: false, message: "Choose a JPEG, PNG or WEBP photo." };
   }
   if (file.size > AVATAR_MAX_BYTES) {
     return { ok: false, message: "That photo is too large (max 5 MB). Try a smaller one." };
   }
 
   const { supabase } = await import("@/lib/supabase");
-  const extension = file.type === "image/png" ? "png" : "jpg";
   const path = `${userId}/avatar.${extension}`;
 
+  // file.type is safe to use as the stored Content-Type here: it matched a key in AVATAR_TYPES
+  // above, so it can only be one of the three allowlisted raster types, never anything
+  // script-capable.
   const { error: uploadError } = await supabase.storage
     .from("avatars")
     .upload(path, file, { contentType: file.type, upsert: true });

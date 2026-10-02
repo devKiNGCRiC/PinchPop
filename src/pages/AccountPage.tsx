@@ -184,7 +184,7 @@ function AvatarField({ userId, avatarPath }: { userId: string; avatarPath: strin
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp"
         className="sr-only"
         onChange={(event) => {
           const file = event.target.files?.[0];

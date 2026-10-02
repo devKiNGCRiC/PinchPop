@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { Session } from "@supabase/supabase-js";
+import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
 import { setActiveUser } from "@/lib/memories";
 
@@ -197,22 +197,35 @@ export async function updateBio(userId: string, bio: string): Promise<AuthResult
   return { ok: true, message: "Bio updated." };
 }
 
+/** Empties a user's folder in one Storage bucket. Supabase refuses to delete a user that still
+ * owns any Storage object in any bucket, so every bucket a player can upload to — "photos" and
+ * "avatars" — must be cleared, not just the one most runs use. */
+async function clearStorageFolder(
+  supabase: SupabaseClient,
+  bucket: string,
+  userId: string,
+): Promise<string | null> {
+  const { data: files, error: listError } = await supabase.storage.from(bucket).list(userId);
+  if (listError) return listError.message;
+  if (!files || files.length === 0) return null;
+  const paths = files.map((file) => `${userId}/${file.name}`);
+  const { error: removeError } = await supabase.storage.from(bucket).remove(paths);
+  return removeError?.message ?? null;
+}
+
 /**
- * Permanently deletes the signed-in player's account: their photos, cloud runs, profile and
- * login. Supabase refuses to delete a user that still owns Storage objects, so their photo
- * folder is cleared first; the `runs` and `profiles` rows then cascade automatically from the
- * `delete_own_account` database function (see the delete_account migration). Local on-device
- * data in localStorage is untouched — this only removes what was synced to the cloud.
+ * Permanently deletes the signed-in player's account: their photos, avatar, cloud runs, profile
+ * and login. Supabase refuses to delete a user that still owns Storage objects, so every bucket
+ * they can upload to is cleared first; the `runs` and `profiles` rows then cascade automatically
+ * from the `delete_own_account` database function (see the delete_account migration). Local
+ * on-device data in localStorage is untouched — this only removes what was synced to the cloud.
  */
 export async function deleteAccount(userId: string): Promise<AuthResult> {
   const { supabase } = await import("@/lib/supabase");
   try {
-    const { data: files, error: listError } = await supabase.storage.from("photos").list(userId);
-    if (listError) return { ok: false, message: listError.message };
-    if (files && files.length > 0) {
-      const paths = files.map((file) => `${userId}/${file.name}`);
-      const { error: removeError } = await supabase.storage.from("photos").remove(paths);
-      if (removeError) return { ok: false, message: removeError.message };
+    for (const bucket of ["photos", "avatars"]) {
+      const message = await clearStorageFolder(supabase, bucket, userId);
+      if (message) return { ok: false, message };
     }
 
     const { error } = await supabase.rpc("delete_own_account");
