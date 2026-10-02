@@ -69,9 +69,11 @@ export default function AboutPage() {
           Where PinchPop is today
         </h2>
         <p className="mt-3 max-w-2xl text-lg leading-relaxed text-ink-soft">
-          Camera mode, the practice booth, Speed Run scoring, achievements, your album and your
-          passport all work right now, saved on this device. Accounts, a cloud gallery and a shared
-          online leaderboard are being built next.
+          Camera mode, the practice booth, Speed Run scoring and achievements all work right now —
+          with no account at all, everything saves to this device. Sign in and they also sync to the
+          cloud: a worldwide leaderboard, an avatar and bio on a public player page, and your album
+          filling in with runs from your other devices. Letting you make one specific photo public
+          (rather than just the score) is next.
         </p>
       </section>
 
