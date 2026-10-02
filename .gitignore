@@ -18,6 +18,11 @@ graphify-out/
 # Local design exploration, not part of the shipped app
 design-exploration/
 
+# Local state for AI coding tools (worktrees, session/agent state) — machine-local, not shared
+.claude/
+.kilo/
+.kilocode/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
