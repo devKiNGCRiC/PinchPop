@@ -3,8 +3,12 @@ import { Outlet, ScrollRestoration } from "react-router-dom";
 import { AchievementToaster } from "@/components/AchievementToaster";
 import { Footer } from "@/components/Footer";
 import { NavBar } from "@/components/NavBar";
+import { useMemoriesAuthBridge } from "@/lib/auth";
 
 export function AppShell() {
+  // Keeps the local gallery scoped to whoever is actually signed in — see the hook's own comment.
+  useMemoriesAuthBridge();
+
   return (
     <div className="flex min-h-screen flex-col overflow-x-clip bg-ivory text-ink">
       <a

@@ -8,7 +8,7 @@ import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
 import { deleteAccount, signIn, signOut, signUp, updateUsername, useProfile } from "@/lib/auth";
 import { avatarUrl, uploadAvatar } from "@/lib/avatar";
-import { useMemories } from "@/lib/memories";
+import { useGuestMemories } from "@/lib/memories";
 
 const inputClass =
   "w-full rounded-2xl border-[2.5px] border-ink bg-white px-4 py-3 text-base outline-none focus:ring-4 focus:ring-marigold/50";
@@ -247,7 +247,8 @@ function UsernameField({ userId, username }: { userId: string; username: string 
 }
 
 function ImportLocalRuns({ userId }: { userId: string }) {
-  const memories = useMemories();
+  // Anonymous plays only — never another signed-in account's local memories on this device.
+  const memories = useGuestMemories();
   const [checking, setChecking] = useState(true);
   const [hasCloud, setHasCloud] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -286,7 +287,9 @@ function ImportLocalRuns({ userId }: { userId: string }) {
   async function runImport() {
     setImporting(true);
     const { importLocalRuns } = await import("@/lib/cloudRuns");
-    const outcome = await importLocalRuns(memories, (done, total) => setProgress({ done, total }));
+    const outcome = await importLocalRuns(userId, memories, (done, total) =>
+      setProgress({ done, total }),
+    );
     setResult(outcome);
     setImporting(false);
   }

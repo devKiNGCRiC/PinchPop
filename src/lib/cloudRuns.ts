@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { claimMemory } from "@/lib/memories";
 import type { Memory } from "@/lib/memories";
 
 /** Converts the saved JPEG data URL to a Blob and uploads it to the player's own photo folder. */
@@ -84,8 +85,12 @@ export async function hasCloudRuns(userId: string): Promise<boolean> {
 }
 
 /** Syncs every local memory, oldest first, reporting progress as it goes. Safe to call even if
- * some (or all) were already synced — each is independently idempotent. */
+ * some (or all) were already synced — each is independently idempotent. Successfully-synced
+ * memories are also claimed locally for `userId` (see claimMemory()), so they stop being
+ * anonymous and show up in this account's own local gallery from now on, instead of being
+ * re-offered for import every time. */
 export async function importLocalRuns(
+  userId: string,
   memories: Memory[],
   onProgress?: (done: number, total: number) => void,
 ): Promise<{ synced: number; failed: number }> {
@@ -94,8 +99,12 @@ export async function importLocalRuns(
   let failed = 0;
   for (let i = 0; i < ordered.length; i++) {
     const result = await syncMemoryToCloud(ordered[i]);
-    if (result.ok) synced += result.skipped ? 0 : 1;
-    else failed += 1;
+    if (result.ok) {
+      synced += result.skipped ? 0 : 1;
+      claimMemory(ordered[i].id, userId);
+    } else {
+      failed += 1;
+    }
     onProgress?.(i + 1, ordered.length);
   }
   return { synced, failed };

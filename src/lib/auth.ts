@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 
+import { setActiveUser } from "@/lib/memories";
+
 export interface AuthState {
   session: Session | null;
   /** True only until the first session check resolves, so callers can avoid a sign-in flash. */
@@ -37,6 +39,18 @@ export function useSession(): AuthState {
   }, []);
 
   return state;
+}
+
+/**
+ * Keeps memories.ts's "whose local data is this" (setActiveUser) in sync with the real session,
+ * so switching accounts on a shared device never mixes one signed-in player's local gallery with
+ * another's (or with anonymous play). Call this once, high in the tree — see AppShell.
+ */
+export function useMemoriesAuthBridge(): void {
+  const { session } = useSession();
+  useEffect(() => {
+    setActiveUser(session?.user.id ?? null);
+  }, [session]);
 }
 
 export interface ProfileState extends AuthState {
