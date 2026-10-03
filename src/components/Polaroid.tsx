@@ -14,6 +14,7 @@ import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
 import { lighten } from "@/lib/color";
 import { tapeStripDataUri } from "@/lib/tapeArt";
+import { tornEdgeClipPath, tornEdgeSvgPoints } from "@/lib/tornEdge";
 import type { PlacedSticker } from "@/lib/stickers";
 import { cn } from "@/lib/utils";
 
@@ -133,8 +134,15 @@ export function Polaroid({
           <img
             src={photo}
             alt="Your photo from camera mode"
-            className="block w-full border-2 border-ink bg-ink object-cover"
-            style={{ aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)), filter }}
+            className={cn(
+              "block w-full bg-ink object-cover",
+              frame.tornEdge ? undefined : "border-2 border-ink",
+            )}
+            style={{
+              aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)),
+              filter,
+              clipPath: frame.tornEdge ? tornEdgeClipPath() : undefined,
+            }}
           />
         ) : (
           <Art
@@ -143,6 +151,22 @@ export function Polaroid({
             style={{ filter }}
           />
         )}
+        {frame.tornEdge ? (
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 100 100"
+            preserveAspectRatio="none"
+            className="pointer-events-none absolute inset-0 size-full"
+          >
+            <polygon
+              points={tornEdgeSvgPoints()}
+              fill="none"
+              stroke={frame.borderColor}
+              strokeWidth="2.5"
+              vectorEffect="non-scaling-stroke"
+            />
+          </svg>
+        ) : null}
         {stickers && stickers.length > 0 ? (
           <StickerLayer
             stickers={stickers}

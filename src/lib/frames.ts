@@ -11,8 +11,8 @@ const SINDOOR = "#d7263d";
 const CORAL = "#ff6b5b";
 const LEAF = "#138808";
 const SAFFRON = "#ff9933";
-const MAROON = "#5c1620";
-const PAPER = "#f6e9d8";
+const MAROON = "#7a1626";
+const PAPER = "#ece3d2";
 
 export interface DefaultSticker {
   iconId: string;
@@ -37,6 +37,9 @@ export interface FramePreset {
   tapeColor: string | null;
   /** A hand-drawn squiggle doodle near the bottom of the photo. */
   swirlColor?: string;
+  /** Gives the photo a ragged, hand-torn-paper edge instead of a straight rectangle (see
+   * src/lib/tornEdge.ts), for frames modeled on scrapbook/collage reference photos. */
+  tornEdge?: boolean;
   /** Placed automatically the first time this frame is picked on a photo with no stickers yet —
    * never overwrites stickers someone has already placed. */
   defaultStickers?: DefaultSticker[];
@@ -245,9 +248,9 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: INK,
     tapeColor: CLOUD,
     defaultStickers: [
-      { iconId: "flower", x: 0.93, y: 0.04, size: 0.4 },
-      { iconId: "flower", x: 0.04, y: 0.96, size: 0.38 },
-      { iconId: "leaf", x: 0.84, y: 0.22, size: 0.11 },
+      { iconId: "hibiscus", x: 0.92, y: 0.05, size: 0.42 },
+      { iconId: "hibiscus", x: 0.05, y: 0.95, size: 0.4 },
+      { iconId: "leaf", x: 0.83, y: 0.23, size: 0.1 },
     ],
   },
   {
@@ -257,7 +260,8 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: IVORY,
     captionColor: IVORY,
     tapeColor: null,
-    defaultStickers: [{ iconId: "bow", x: 0.5, y: 0.05, size: 0.2 }],
+    tornEdge: true,
+    defaultStickers: [{ iconId: "satin-bow", x: 0.5, y: 0.045, size: 0.26 }],
   },
   {
     id: "noir",

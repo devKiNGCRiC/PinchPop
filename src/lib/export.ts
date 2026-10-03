@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/stats";
 import { stickerIconDataUri } from "@/lib/stickerIcons";
 import type { PlacedSticker } from "@/lib/stickers";
 import { drawTapeStrip } from "@/lib/tapeArt";
+import { traceTornEdge } from "@/lib/tornEdge";
 
 const INK = "#111426";
 const IVORY = "#fff6e6";
@@ -217,6 +218,8 @@ function drawStickerIcons(
   });
 }
 
+/** `tornBorderColor`, when set, clips the photo to the same ragged outline the live preview uses
+ * (see src/lib/tornEdge.ts) and strokes that outline instead of a plain rectangle. */
 function drawPhoto(
   ctx: CanvasRenderingContext2D,
   picture: Picture,
@@ -225,7 +228,21 @@ function drawPhoto(
   w: number,
   h: number,
   filterCss = "none",
+  tornBorderColor?: string,
 ) {
+  if (tornBorderColor) {
+    ctx.save();
+    traceTornEdge(ctx, x, y, w, h);
+    ctx.clip();
+    ctx.filter = filterCss;
+    drawCover(ctx, picture.image, x, y, w, h);
+    ctx.restore();
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = tornBorderColor;
+    traceTornEdge(ctx, x, y, w, h);
+    ctx.stroke();
+    return;
+  }
   ctx.save();
   ctx.filter = filterCss;
   drawCover(ctx, picture.image, x, y, w, h);
@@ -335,7 +352,16 @@ export async function renderQuickPolaroidBlob(
     ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
     : frame.frameBg;
   drawFrame(ctx, margin, margin, cardW, cardH, bg, frame.borderColor, pattern ?? undefined);
-  drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
+  drawPhoto(
+    ctx,
+    picture,
+    margin + pad,
+    margin + pad,
+    photoW,
+    photoH,
+    filterCss,
+    frame.tornEdge ? frame.borderColor : undefined,
+  );
   if (stickers.length > 0) {
     drawStickerIcons(ctx, stickers, stickerIcons, margin + pad, margin + pad, photoW, photoH);
   }
