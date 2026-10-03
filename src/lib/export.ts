@@ -2,6 +2,8 @@ import { createElement } from "react";
 
 import { Art } from "@/components/Art";
 import { getArt } from "@/lib/art";
+import { drawBannerOnCanvas } from "@/lib/bannerArt";
+import { lighten } from "@/lib/color";
 import type { FramePreset } from "@/lib/frames";
 import { patternDataUri } from "@/lib/framePatterns";
 import type { Memory } from "@/lib/memories";
@@ -9,6 +11,7 @@ import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { formatDate } from "@/lib/stats";
 import { stickerIconDataUri } from "@/lib/stickerIcons";
 import type { PlacedSticker } from "@/lib/stickers";
+import { drawTapeStrip } from "@/lib/tapeArt";
 
 const INK = "#111426";
 const IVORY = "#fff6e6";
@@ -188,21 +191,29 @@ function drawSwirl(
 
 /** Draws each placed sticker over the photo at its relative position/size — matches the live
  * preview's StickerLayer geometry (coordinates and size are both fractions of the photo itself).
- * `icons` must be pre-loaded, one per entry in `stickers`, in the same order. */
+ * `icons` must be pre-loaded, one per entry in `stickers`, in the same order — `null` for a
+ * "banner" sticker, which has no fixed icon image and is drawn directly with its own text instead. */
 function drawStickerIcons(
   ctx: CanvasRenderingContext2D,
   stickers: PlacedSticker[],
-  icons: HTMLImageElement[],
+  icons: (HTMLImageElement | null)[],
   x: number,
   y: number,
   w: number,
   h: number,
 ) {
   stickers.forEach((sticker, i) => {
+    const dw = sticker.size * w;
+    const dh = dw / (sticker.aspect ?? 1);
+    const cx = x + sticker.x * w;
+    const cy = y + sticker.y * h;
+    if (sticker.iconId === "banner") {
+      drawBannerOnCanvas(ctx, sticker.text ?? "", cx, cy, dw, dh);
+      return;
+    }
     const icon = icons[i];
     if (!icon) return;
-    const size = sticker.size * w;
-    ctx.drawImage(icon, x + sticker.x * w - size / 2, y + sticker.y * h - size / 2, size, size);
+    ctx.drawImage(icon, cx - dw / 2, cy - dh / 2, dw, dh);
   });
 }
 
@@ -302,7 +313,9 @@ export async function renderQuickPolaroidBlob(
       image,
       aspect: Math.min(1.4, Math.max(0.75, input.aspect)),
     })),
-    Promise.all(stickers.map((s) => loadImage(stickerIconDataUri(s.iconId)))),
+    Promise.all(
+      stickers.map((s) => (s.iconId === "banner" ? null : loadImage(stickerIconDataUri(s.iconId)))),
+    ),
     patternFor(frame),
     ensureFonts(),
   ]);
@@ -347,12 +360,17 @@ export async function renderQuickPolaroidBlob(
       const padY = size * 0.22;
       const rectW = textWidth + padX * 2;
       const rectH = size * 0.78 + padY * 2;
-      ctx.save();
-      ctx.translate(cx, captionY - size * 0.3);
-      ctx.rotate(-0.025);
-      ctx.fillStyle = `${input.captionBgColor ?? "#ffc61a"}cc`;
-      ctx.fillRect(-rectW / 2, -rectH / 2, rectW, rectH);
-      ctx.restore();
+      const color = input.captionBgColor ?? "#ffc61a";
+      drawTapeStrip(
+        ctx,
+        cx,
+        captionY - size * 0.3,
+        rectW,
+        rectH,
+        lighten(color, 0.15),
+        color,
+        -0.025,
+      );
     }
 
     ctx.fillStyle = captionColor;

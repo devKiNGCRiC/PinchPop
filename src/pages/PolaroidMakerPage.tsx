@@ -29,7 +29,7 @@ import { downloadBlob, renderQuickPolaroidBlob, shareOrDownload } from "@/lib/ex
 import { DEFAULT_FILTER_ID, filterCssFor, FILTER_PRESETS } from "@/lib/filters";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { formatDate } from "@/lib/stats";
-import { createSticker } from "@/lib/stickers";
+import { createBanner, createSticker } from "@/lib/stickers";
 import type { PlacedSticker } from "@/lib/stickers";
 
 interface LoadedPhoto {
@@ -71,9 +71,13 @@ export default function PolaroidMakerPage() {
   function handleFrameChange(id: string) {
     setFrameId(id);
     const preset = frameFor(id);
-    if (preset.defaultStickers && stickers.length === 0) {
-      setStickers(preset.defaultStickers.map((s) => ({ ...s, id: crypto.randomUUID() })));
-    }
+    // Switching frames always starts fresh with that frame's own stickers (if any) — carrying
+    // over a different frame's decorations tends to clash rather than complement the new look.
+    setStickers(
+      preset.defaultStickers
+        ? preset.defaultStickers.map((s) => ({ ...s, id: crypto.randomUUID() }))
+        : [],
+    );
   }
 
   async function handleFile(file: File) {
@@ -292,6 +296,7 @@ export default function PolaroidMakerPage() {
                 >
                   <StickerPicker
                     onAdd={(iconId) => setStickers((prev) => [...prev, createSticker(iconId)])}
+                    onAddBanner={(text) => setStickers((prev) => [...prev, createBanner(text)])}
                     onClear={stickers.length > 0 ? () => setStickers([]) : undefined}
                   />
                 </CollapsibleSection>
@@ -317,7 +322,7 @@ export default function PolaroidMakerPage() {
             </>
           ) : (
             <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — 17 frames, 12 filters, 21 stickers, custom type
+              Pick a photo on the left to start — 20 frames, 12 filters, 24 stickers, custom type
               and a caption turn it into an instant print you can download or share.
             </p>
           )}

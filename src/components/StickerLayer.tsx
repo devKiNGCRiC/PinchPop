@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { X } from "lucide-react";
 
+import { bannerDataUri } from "@/lib/bannerArt";
 import { stickerIconDataUri } from "@/lib/stickerIcons";
 import type { PlacedSticker } from "@/lib/stickers";
 
@@ -89,20 +90,28 @@ export function StickerLayer({ stickers, editable = false, onChange }: StickerLa
               left: `${sticker.x * 100}%`,
               top: `${sticker.y * 100}%`,
               width: `${sticker.size * 100}%`,
-              aspectRatio: "1",
+              aspectRatio: sticker.aspect ?? 1,
               transform: "translate(-50%, -50%)",
             }}
           >
             <div
               role={editable ? "button" : undefined}
               tabIndex={editable ? 0 : undefined}
-              aria-label={editable ? `${sticker.iconId} sticker — drag to move` : undefined}
+              aria-label={
+                editable
+                  ? `${sticker.iconId === "banner" ? "banner" : sticker.iconId} sticker — drag to move`
+                  : undefined
+              }
               onPointerDown={(e) => handlePointerDown(sticker.id, "move", e)}
               className="flex size-full touch-none items-center justify-center leading-none select-none"
               style={{ cursor: editable ? "grab" : undefined }}
             >
               <img
-                src={stickerIconDataUri(sticker.iconId)}
+                src={
+                  sticker.iconId === "banner"
+                    ? bannerDataUri(sticker.text ?? "")
+                    : stickerIconDataUri(sticker.iconId)
+                }
                 alt=""
                 draggable={false}
                 className="size-full"

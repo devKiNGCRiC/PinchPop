@@ -12,6 +12,8 @@ import {
 import type { CaptionBackground } from "@/lib/captionFonts";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
+import { lighten } from "@/lib/color";
+import { tapeStripDataUri } from "@/lib/tapeArt";
 import type { PlacedSticker } from "@/lib/stickers";
 import { cn } from "@/lib/utils";
 
@@ -176,14 +178,17 @@ export function Polaroid({
           <span
             className={cn(
               "leading-none font-bold",
-              captionBackground === "tape" && "-rotate-1 rounded-sm px-3 py-1",
+              captionBackground === "tape" && "-rotate-1 px-4 py-2",
             )}
             style={{
               color: captionColor ?? frame.captionColor,
               fontFamily: font.family,
               fontSize: `${captionSize}px`,
-              background:
-                captionBackground === "tape" ? `${captionBgColor ?? "#ffc61a"}cc` : undefined,
+              backgroundImage:
+                captionBackground === "tape"
+                  ? `url("${tapeStripDataUri(300, 90, lighten(captionBgColor ?? "#ffc61a", 0.15), captionBgColor ?? "#ffc61a")}")`
+                  : undefined,
+              backgroundSize: captionBackground === "tape" ? "100% 100%" : undefined,
             }}
           >
             {caption}
