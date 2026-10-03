@@ -11,6 +11,8 @@ const SINDOOR = "#d7263d";
 const CORAL = "#ff6b5b";
 const LEAF = "#138808";
 const SAFFRON = "#ff9933";
+const MAROON = "#5c1620";
+const PAPER = "#f6e9d8";
 
 export interface DefaultSticker {
   iconId: string;
@@ -233,6 +235,29 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: "#ffffff",
     tapeColor: CLOUD,
+  },
+  {
+    id: "paper-bloom",
+    label: "Paper Bloom",
+    frameBg: IVORY,
+    gradient: [IVORY, PAPER],
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: CLOUD,
+    defaultStickers: [
+      { iconId: "flower", x: 0.93, y: 0.04, size: 0.4 },
+      { iconId: "flower", x: 0.04, y: 0.96, size: 0.38 },
+      { iconId: "leaf", x: 0.84, y: 0.22, size: 0.11 },
+    ],
+  },
+  {
+    id: "scarlet-ribbon",
+    label: "Scarlet Ribbon",
+    frameBg: MAROON,
+    borderColor: IVORY,
+    captionColor: IVORY,
+    tapeColor: null,
+    defaultStickers: [{ iconId: "bow", x: 0.5, y: 0.05, size: 0.2 }],
   },
   {
     id: "noir",

@@ -322,7 +322,7 @@ export default function PolaroidMakerPage() {
             </>
           ) : (
             <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — 20 frames, 12 filters, 24 stickers, custom type
+              Pick a photo on the left to start — 22 frames, 12 filters, 24 stickers, custom type
               and a caption turn it into an instant print you can download or share.
             </p>
           )}
