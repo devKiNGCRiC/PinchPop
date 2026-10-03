@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, LoaderCircle, Pencil, Trash2 } from "lucide-react";
+import { Check, Copy, LoaderCircle, Pencil, Trash2, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
@@ -12,7 +12,7 @@ import { ReplayDownload } from "@/components/ReplayDownload";
 import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
-import { useProfile } from "@/lib/auth";
+import { useProfile, useSession } from "@/lib/auth";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
 import { deleteMemory, updateMemoryCaption, useMemories } from "@/lib/memories";
 import type { Memory } from "@/lib/memories";
@@ -103,6 +103,7 @@ export default function ResultsPage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
+      {isCloudOnly ? null : <LoginNudge />}
       <Seo
         title={`${art.place} polaroid`}
         description={`Scored ${memory.score} pts in ${memory.moves} moves and ${formatTime(memory.seconds)} — your Speed Run result for ${art.place}.`}
@@ -199,6 +200,63 @@ export default function ResultsPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+const LOGIN_NUDGE_KEY = "pinchpop.loginNudgeShown.v1";
+
+/** A one-time, dismissible nudge toward signing in, shown the first time someone views their own
+ * result while signed out — the moment they have something worth keeping. Never shows again after
+ * that first time, whether it was dismissed or just ignored, so it never nags on later visits. */
+function LoginNudge() {
+  const { session, loading } = useSession();
+  const [dismissed, setDismissed] = useState(false);
+  // Read once at mount, before this run has a chance to mark itself as shown below — this is
+  // "was it already shown before now", not "has it been shown this render".
+  const [alreadyShown] = useState(() => {
+    try {
+      return localStorage.getItem(LOGIN_NUDGE_KEY) === "1";
+    } catch {
+      return true;
+    }
+  });
+
+  useEffect(() => {
+    if (loading || session || alreadyShown) return;
+    try {
+      localStorage.setItem(LOGIN_NUDGE_KEY, "1");
+    } catch {
+      // Nothing to persist to — the nudge still shows this once, just not reliably skipped later.
+    }
+  }, [loading, session, alreadyShown]);
+
+  if (loading || session || alreadyShown || dismissed) return null;
+
+  return (
+    <div
+      role="status"
+      className="sticker-lg fixed right-3 bottom-3 z-50 flex w-[min(22rem,calc(100vw-1.5rem))] items-start gap-3 rounded-2xl bg-chakra p-4 text-white animate-in fade-in slide-in-from-bottom-4 motion-reduce:animate-none sm:right-6 sm:bottom-6"
+    >
+      <div className="min-w-0 flex-1">
+        <p className="font-display text-lg leading-tight font-extrabold tracking-[-0.03em]">
+          Keep this one?
+        </p>
+        <p className="mt-1 text-sm leading-snug">
+          Sign in to sync your photos across devices and join the worldwide leaderboard.
+        </p>
+        <PopLink to="/account" tone="marigold" size="sm" className="mt-3">
+          Sign in
+        </PopLink>
+      </div>
+      <button
+        type="button"
+        onClick={() => setDismissed(true)}
+        aria-label="Dismiss"
+        className="flex size-9 shrink-0 items-center justify-center rounded-full hover:bg-white/10"
+      >
+        <X className="size-5" aria-hidden="true" />
+      </button>
     </div>
   );
 }
