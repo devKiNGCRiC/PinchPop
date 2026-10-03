@@ -7,42 +7,42 @@
 -->
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://pinchpop.vercel.app/</loc>
+    <loc>https://pinchpop.pages.dev/</loc>
     <changefreq>monthly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/game</loc>
+    <loc>https://pinchpop.pages.dev/game</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/camera</loc>
+    <loc>https://pinchpop.pages.dev/camera</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/polaroid</loc>
+    <loc>https://pinchpop.pages.dev/polaroid</loc>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/leaderboard</loc>
+    <loc>https://pinchpop.pages.dev/leaderboard</loc>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/how-to-play</loc>
+    <loc>https://pinchpop.pages.dev/how-to-play</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/about</loc>
+    <loc>https://pinchpop.pages.dev/about</loc>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
-    <loc>https://pinchpop.vercel.app/privacy</loc>
+    <loc>https://pinchpop.pages.dev/privacy</loc>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>

@@ -4,4 +4,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://pinchpop.vercel.app/sitemap.xml
+Sitemap: https://pinchpop.pages.dev/sitemap.xml

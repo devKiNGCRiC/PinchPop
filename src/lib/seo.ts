@@ -7,7 +7,7 @@ export const DEFAULT_DESCRIPTION =
  * domain (see .env.example) — until then this placeholder keeps canonical/OG URLs well-formed.
  */
 export const SITE_URL: string = (
-  (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://pinchpop.vercel.app"
+  (import.meta.env.VITE_SITE_URL as string | undefined) ?? "https://pinchpop.pages.dev"
 ).replace(/\/+$/, "");
 
 export function absoluteUrl(path: string): string {

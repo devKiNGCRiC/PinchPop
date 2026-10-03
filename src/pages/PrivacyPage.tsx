@@ -32,7 +32,7 @@ const SECTIONS: Section[] = [
   },
   {
     title: "No cookies, no trackers, no ads",
-    body: "PinchPop uses Vercel's cookieless Web Analytics to see aggregate visit counts — it cannot identify you or track you across sites, and sets no cookies. There is no advertising or tracking cookies of any kind. The one thing kept in storage is your own game data, described above.",
+    body: "PinchPop does not use advertising or tracking cookies of any kind. The one thing kept in storage is your own game data, described above.",
     Icon: Cookie,
   },
 ];
