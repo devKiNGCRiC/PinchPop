@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { Art } from "@/components/Art";
 import { getArt } from "@/lib/art";
 import type { FramePreset } from "@/lib/frames";
+import { patternDataUri } from "@/lib/framePatterns";
 import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { formatDate } from "@/lib/stats";
@@ -113,15 +114,16 @@ function diagonalGradient(
   return gradient;
 }
 
-/** A sticker-style print: hard shadow, a colored (flat or gradient) frame, outlined border. The
- * shadow stays ink regardless of the frame's own colors, matching every sticker in the app. */
+/** A sticker-style print: hard shadow, a colored (flat, gradient or patterned) frame, outlined
+ * border. The shadow stays ink regardless of the frame's own colors, matching every sticker in
+ * the app. */
 function drawFrame(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   w: number,
   h: number,
-  bg: string | CanvasGradient = "#ffffff",
+  bg: string | CanvasGradient | CanvasPattern = "#ffffff",
   border = INK,
 ) {
   ctx.fillStyle = INK;
@@ -131,6 +133,49 @@ function drawFrame(
   ctx.lineWidth = 6;
   ctx.strokeStyle = border;
   ctx.strokeRect(x, y, w, h);
+}
+
+/** Loads a frame's tiled pattern (see src/lib/framePatterns.ts) as a repeating CanvasPattern, or
+ * null for a frame with a flat/gradient fill instead. */
+async function patternFor(frame: FramePreset): Promise<CanvasPattern | null> {
+  if (!frame.pattern) return null;
+  const image = await loadImage(
+    patternDataUri(frame.pattern, frame.frameBg, frame.patternColor ?? frame.frameBg),
+  );
+  return document.createElement("canvas").getContext("2d")?.createPattern(image, "repeat") ?? null;
+}
+
+/** A hand-drawn squiggle doodle near the bottom of the photo — matches the live preview's SVG
+ * wave path, scaled to the photo's own width/height. */
+function drawSwirl(
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  const vbW = 200;
+  const vbH = 40;
+  const scale = (w * 0.7) / vbW;
+  const originX = x + w * 0.15;
+  const originY = y + h * 0.94 - vbH * scale;
+  const p = (vx: number, vy: number): [number, number] => [
+    originX + vx * scale,
+    originY + vy * scale,
+  ];
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 7 * scale;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(...p(5, 20));
+  ctx.quadraticCurveTo(...p(30, 2), ...p(55, 20));
+  ctx.quadraticCurveTo(...p(80, 38), ...p(105, 20));
+  ctx.quadraticCurveTo(...p(130, 2), ...p(155, 20));
+  ctx.quadraticCurveTo(...p(180, 38), ...p(195, 20));
+  ctx.stroke();
+  ctx.restore();
 }
 
 /** Draws each placed sticker over the photo at its relative position/size — matches the live
@@ -241,12 +286,13 @@ export async function renderQuickPolaroidBlob(
   frame: FramePreset,
 ): Promise<Blob> {
   const stickers = input.stickers ?? [];
-  const [picture, stickerIcons] = await Promise.all([
+  const [picture, stickerIcons, pattern] = await Promise.all([
     loadImage(input.photo).then((image) => ({
       image,
       aspect: Math.min(1.4, Math.max(0.75, input.aspect)),
     })),
     Promise.all(stickers.map((s) => loadImage(stickerIconDataUri(s.iconId)))),
+    patternFor(frame),
     ensureFonts(),
   ]);
 
@@ -261,13 +307,18 @@ export async function renderQuickPolaroidBlob(
 
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const bg = frame.gradient
-    ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
-    : frame.frameBg;
+  const bg =
+    pattern ??
+    (frame.gradient
+      ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
+      : frame.frameBg);
   drawFrame(ctx, margin, margin, cardW, cardH, bg, frame.borderColor);
   drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
   if (stickers.length > 0) {
     drawStickerIcons(ctx, stickers, stickerIcons, margin + pad, margin + pad, photoW, photoH);
+  }
+  if (frame.swirlColor) {
+    drawSwirl(ctx, frame.swirlColor, margin + pad, margin + pad, photoW, photoH);
   }
 
   const cx = margin + cardW / 2;

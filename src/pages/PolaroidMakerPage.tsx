@@ -61,6 +61,14 @@ export default function PolaroidMakerPage() {
   const frame = frameFor(frameId);
   const captionColor = captionColorOverride ?? frame.captionColor;
 
+  function handleFrameChange(id: string) {
+    setFrameId(id);
+    const preset = frameFor(id);
+    if (preset.defaultStickers && stickers.length === 0) {
+      setStickers(preset.defaultStickers.map((s) => ({ ...s, id: crypto.randomUUID() })));
+    }
+  }
+
   async function handleFile(file: File) {
     setError("");
     setMessage("");
@@ -239,7 +247,7 @@ export default function PolaroidMakerPage() {
 
               <div className="mt-6 flex flex-col gap-3">
                 <CollapsibleSection title="Frame" summary={frame.label} defaultOpen>
-                  <FramePicker value={frameId} onChange={setFrameId} />
+                  <FramePicker value={frameId} onChange={handleFrameChange} />
                 </CollapsibleSection>
 
                 <CollapsibleSection
@@ -294,8 +302,8 @@ export default function PolaroidMakerPage() {
             </>
           ) : (
             <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — 10 frames, 12 filters, stickers, custom type and a
-              caption turn it into an instant print you can download or share.
+              Pick a photo on the left to start — 17 frames, 12 filters, 16 stickers, custom type
+              and a caption turn it into an instant print you can download or share.
             </p>
           )}
         </div>

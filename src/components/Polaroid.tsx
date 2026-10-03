@@ -5,6 +5,7 @@ import { StickerLayer } from "@/components/StickerLayer";
 import { Postmark } from "@/components/Stamp";
 import { captionFontFor, DEFAULT_CAPTION_FONT_ID, DEFAULT_CAPTION_SIZE } from "@/lib/captionFonts";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
+import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
 import type { PlacedSticker } from "@/lib/stickers";
 import { cn } from "@/lib/utils";
 
@@ -69,9 +70,15 @@ export function Polaroid({
   const frame = frameFor(frameId);
   const showTape = tape && frame.tapeColor !== null;
   const font = captionFontFor(captionFontId);
-  const frameStyle: CSSProperties = frame.gradient
-    ? { backgroundImage: `linear-gradient(135deg, ${frame.gradient[0]}, ${frame.gradient[1]})` }
-    : { background: frame.frameBg };
+  const frameStyle: CSSProperties = frame.pattern
+    ? {
+        backgroundImage: `url("${patternDataUri(frame.pattern, frame.frameBg, frame.patternColor ?? frame.frameBg)}")`,
+        backgroundSize: `${PATTERN_TILE_SIZE}px ${PATTERN_TILE_SIZE}px`,
+        backgroundRepeat: "repeat",
+      }
+    : frame.gradient
+      ? { backgroundImage: `linear-gradient(135deg, ${frame.gradient[0]}, ${frame.gradient[1]})` }
+      : { background: frame.frameBg };
 
   return (
     <figure
@@ -110,6 +117,21 @@ export function Polaroid({
             editable={editableStickers}
             onChange={onStickersChange}
           />
+        ) : null}
+        {frame.swirlColor ? (
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 200 40"
+            className="pointer-events-none absolute bottom-[6%] left-[15%] w-[70%]"
+          >
+            <path
+              d="M5,20 Q30,2 55,20 T105,20 T155,20 T195,20"
+              fill="none"
+              stroke={frame.swirlColor}
+              strokeWidth="7"
+              strokeLinecap="round"
+            />
+          </svg>
         ) : null}
       </div>
       {postmark ? (

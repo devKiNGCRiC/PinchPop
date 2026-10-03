@@ -1,3 +1,5 @@
+import type { PatternKind } from "@/lib/framePatterns";
+
 // Hex values here mirror the design tokens in src/index.css (--color-*) rather than inventing new
 // colors, so every frame stays visually consistent with the rest of the app.
 const INK = "#111426";
@@ -10,17 +12,32 @@ const CORAL = "#ff6b5b";
 const LEAF = "#138808";
 const SAFFRON = "#ff9933";
 
+export interface DefaultSticker {
+  iconId: string;
+  x: number;
+  y: number;
+  size: number;
+}
+
 export interface FramePreset {
   id: string;
   label: string;
-  /** A flat color, used as-is when `gradient` is absent. */
+  /** A flat color, used as-is when neither `gradient` nor `pattern` is present. */
   frameBg: string;
-  /** A two-color diagonal gradient — the frame's primary look when present. */
+  /** A two-color diagonal gradient. */
   gradient?: [string, string];
+  /** A tiled two-tone pattern (see src/lib/framePatterns.ts) — takes priority over `gradient`. */
+  pattern?: PatternKind;
+  patternColor?: string;
   borderColor: string;
   captionColor: string;
   /** Tape color, or null for frames that skip the tape strip entirely. */
   tapeColor: string | null;
+  /** A hand-drawn squiggle doodle near the bottom of the photo. */
+  swirlColor?: string;
+  /** Placed automatically the first time this frame is picked on a photo with no stickers yet —
+   * never overwrites stickers someone has already placed. */
+  defaultStickers?: DefaultSticker[];
 }
 
 export const DEFAULT_FRAME_ID = "classic";
@@ -93,6 +110,94 @@ export const FRAME_PRESETS: FramePreset[] = [
     label: "Mint",
     frameBg: LEAF,
     gradient: [LEAF, CLOUD],
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: MARIGOLD,
+  },
+  {
+    id: "lagoon",
+    label: "Lagoon",
+    frameBg: CHAKRA,
+    gradient: [CHAKRA, LEAF],
+    borderColor: CLOUD,
+    captionColor: "#ffffff",
+    tapeColor: CLOUD,
+  },
+  {
+    id: "rosewood",
+    label: "Rosewood",
+    frameBg: SINDOOR,
+    gradient: [SINDOOR, IVORY],
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: MARIGOLD,
+  },
+  {
+    id: "candy-stripe",
+    label: "Candy Stripe",
+    frameBg: "#ffffff",
+    pattern: "diagonal-stripes",
+    patternColor: CHAKRA,
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: CORAL,
+    defaultStickers: [
+      { iconId: "star", x: 0.15, y: 0.88, size: 0.14 },
+      { iconId: "star", x: 0.32, y: 0.92, size: 0.1 },
+      { iconId: "star", x: 0.85, y: 0.9, size: 0.11 },
+    ],
+  },
+  {
+    id: "polka-dot",
+    label: "Polka Dot",
+    frameBg: CORAL,
+    pattern: "dots",
+    patternColor: MARIGOLD,
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: CLOUD,
+    swirlColor: LEAF,
+    defaultStickers: [
+      { iconId: "heart", x: 0.13, y: 0.12, size: 0.14 },
+      { iconId: "heart", x: 0.87, y: 0.87, size: 0.19 },
+    ],
+  },
+  {
+    id: "daisy-chain",
+    label: "Daisy Chain",
+    frameBg: IVORY,
+    pattern: "stripes",
+    patternColor: CORAL,
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: CLOUD,
+    defaultStickers: [
+      { iconId: "flower", x: 0.86, y: 0.11, size: 0.15 },
+      { iconId: "flower", x: 0.13, y: 0.14, size: 0.12 },
+      { iconId: "flower", x: 0.14, y: 0.88, size: 0.14 },
+      { iconId: "leaf", x: 0.32, y: 0.92, size: 0.1 },
+    ],
+  },
+  {
+    id: "bow-stripe",
+    label: "Bow",
+    frameBg: MARIGOLD,
+    pattern: "stripes",
+    patternColor: CLOUD,
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: null,
+    defaultStickers: [
+      { iconId: "bow", x: 0.5, y: 0.07, size: 0.17 },
+      { iconId: "star", x: 0.85, y: 0.88, size: 0.11 },
+    ],
+  },
+  {
+    id: "gingham",
+    label: "Gingham",
+    frameBg: "#ffffff",
+    pattern: "gingham",
+    patternColor: CORAL,
     borderColor: INK,
     captionColor: INK,
     tapeColor: MARIGOLD,
