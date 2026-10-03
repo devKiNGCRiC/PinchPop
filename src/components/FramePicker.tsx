@@ -15,14 +15,24 @@ export function FramePicker({ value, onChange }: FramePickerProps) {
     <div>
       <div className="flex flex-wrap gap-2">
         {FRAME_PRESETS.map((preset) => {
-          const swatchStyle: CSSProperties = preset.pattern
-            ? {
-                backgroundImage: `url("${patternDataUri(preset.pattern, preset.frameBg, preset.patternColor ?? preset.frameBg)}")`,
-                backgroundSize: `${PATTERN_TILE_SIZE / 2}px ${PATTERN_TILE_SIZE / 2}px`,
-              }
-            : preset.gradient
+          const images: string[] = [];
+          const sizes: string[] = [];
+          if (preset.pattern) {
+            images.push(
+              `url("${patternDataUri(preset.pattern, preset.patternColor ?? preset.borderColor)}")`,
+            );
+            sizes.push(`${PATTERN_TILE_SIZE / 2}px ${PATTERN_TILE_SIZE / 2}px`);
+          }
+          if (preset.gradient) {
+            images.push(`linear-gradient(135deg, ${preset.gradient[0]}, ${preset.gradient[1]})`);
+            sizes.push("100% 100%");
+          }
+          const swatchStyle: CSSProperties =
+            images.length > 0
               ? {
-                  backgroundImage: `linear-gradient(135deg, ${preset.gradient[0]}, ${preset.gradient[1]})`,
+                  backgroundColor: preset.gradient ? undefined : preset.frameBg,
+                  backgroundImage: images.join(", "),
+                  backgroundSize: sizes.join(", "),
                 }
               : { background: preset.frameBg };
           return (

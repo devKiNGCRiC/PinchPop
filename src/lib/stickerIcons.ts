@@ -136,6 +136,41 @@ export const STICKER_ICONS: StickerIconDef[] = [
       `<ellipse cx="50" cy="68" rx="26" ry="20" fill="#dcc6a8" stroke="${OUTLINE}" stroke-width="2.5"/><ellipse cx="22" cy="40" rx="11" ry="14" fill="#dcc6a8" stroke="${OUTLINE}" stroke-width="2.5"/><ellipse cx="42" cy="20" rx="11" ry="14" fill="#dcc6a8" stroke="${OUTLINE}" stroke-width="2.5"/><ellipse cx="64" cy="20" rx="11" ry="14" fill="#dcc6a8" stroke="${OUTLINE}" stroke-width="2.5"/><ellipse cx="82" cy="42" rx="10" ry="13" fill="#dcc6a8" stroke="${OUTLINE}" stroke-width="2.5"/>`,
     ),
   },
+  {
+    id: "line-straight",
+    label: "Line",
+    svg: svg(
+      `<line x1="8" y1="88" x2="92" y2="12" stroke="${OUTLINE}" stroke-width="5" stroke-linecap="round"/>`,
+    ),
+  },
+  {
+    id: "line-wavy",
+    label: "Wavy line",
+    svg: svg(
+      `<path d="M5,50 Q27,20 50,50 T95,50" fill="none" stroke="#9db4d8" stroke-width="7" stroke-linecap="round"/>`,
+    ),
+  },
+  {
+    id: "line-zigzag",
+    label: "Zigzag",
+    svg: svg(
+      `<path d="M5,30 L30,70 L50,30 L70,70 L95,30" fill="none" stroke="#e3b4bb" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>`,
+    ),
+  },
+  {
+    id: "line-dotted",
+    label: "Dotted line",
+    svg: svg(
+      `<line x1="8" y1="50" x2="92" y2="50" stroke="${OUTLINE}" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 14"/>`,
+    ),
+  },
+  {
+    id: "arrow",
+    label: "Arrow",
+    svg: svg(
+      `<line x1="10" y1="80" x2="80" y2="20" stroke="${OUTLINE}" stroke-width="5" stroke-linecap="round"/><polygon points="80,20 62,24 76,38" fill="${OUTLINE}"/>`,
+    ),
+  },
 ];
 
 function svgDataUri(markup: string): string {

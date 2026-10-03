@@ -3,7 +3,13 @@ import type { CSSProperties, ReactNode } from "react";
 import { Art } from "@/components/Art";
 import { StickerLayer } from "@/components/StickerLayer";
 import { Postmark } from "@/components/Stamp";
-import { captionFontFor, DEFAULT_CAPTION_FONT_ID, DEFAULT_CAPTION_SIZE } from "@/lib/captionFonts";
+import {
+  captionFontFor,
+  DEFAULT_CAPTION_BACKGROUND,
+  DEFAULT_CAPTION_FONT_ID,
+  DEFAULT_CAPTION_SIZE,
+} from "@/lib/captionFonts";
+import type { CaptionBackground } from "@/lib/captionFonts";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
 import type { PlacedSticker } from "@/lib/stickers";
@@ -35,6 +41,11 @@ interface PolaroidProps {
   captionSize?: number;
   /** Overrides the frame's own caption color when set. */
   captionColor?: string;
+  /** "tape" sits the caption on a rotated colored strip, like a hand-placed label. Defaults to
+   * "plain" (no background). */
+  captionBackground?: CaptionBackground;
+  /** The tape color when `captionBackground` is "tape". */
+  captionBgColor?: string;
   /** Decorative stickers placed over the photo. */
   stickers?: PlacedSticker[];
   /** When true, stickers can be dragged, resized and removed. Every caller that leaves this unset
@@ -60,6 +71,8 @@ export function Polaroid({
   captionFontId = DEFAULT_CAPTION_FONT_ID,
   captionSize = DEFAULT_CAPTION_SIZE,
   captionColor,
+  captionBackground = DEFAULT_CAPTION_BACKGROUND,
+  captionBgColor,
   stickers,
   editableStickers = false,
   onStickersChange,
@@ -70,14 +83,31 @@ export function Polaroid({
   const frame = frameFor(frameId);
   const showTape = tape && frame.tapeColor !== null;
   const font = captionFontFor(captionFontId);
-  const frameStyle: CSSProperties = frame.pattern
-    ? {
-        backgroundImage: `url("${patternDataUri(frame.pattern, frame.frameBg, frame.patternColor ?? frame.frameBg)}")`,
-        backgroundSize: `${PATTERN_TILE_SIZE}px ${PATTERN_TILE_SIZE}px`,
-        backgroundRepeat: "repeat",
-      }
-    : frame.gradient
-      ? { backgroundImage: `linear-gradient(135deg, ${frame.gradient[0]}, ${frame.gradient[1]})` }
+
+  // Layered so a frame can be both patterned AND a gradient at once — the pattern tile has a
+  // transparent background and only draws its semi-opaque foreground shape, so the gradient (or
+  // flat color) underneath shows through between the pattern's own marks.
+  const images: string[] = [];
+  const sizes: string[] = [];
+  const repeats: string[] = [];
+  if (frame.pattern) {
+    images.push(`url("${patternDataUri(frame.pattern, frame.patternColor ?? frame.borderColor)}")`);
+    sizes.push(`${PATTERN_TILE_SIZE}px ${PATTERN_TILE_SIZE}px`);
+    repeats.push("repeat");
+  }
+  if (frame.gradient) {
+    images.push(`linear-gradient(135deg, ${frame.gradient[0]}, ${frame.gradient[1]})`);
+    sizes.push("100% 100%");
+    repeats.push("no-repeat");
+  }
+  const frameStyle: CSSProperties =
+    images.length > 0
+      ? {
+          backgroundColor: frame.gradient ? undefined : frame.frameBg,
+          backgroundImage: images.join(", "),
+          backgroundSize: sizes.join(", "),
+          backgroundRepeat: repeats.join(", "),
+        }
       : { background: frame.frameBg };
 
   return (
@@ -144,11 +174,16 @@ export function Polaroid({
       <figcaption className="mt-2 flex min-h-12 flex-col items-center justify-center text-center">
         {caption ? (
           <span
-            className="leading-none font-bold"
+            className={cn(
+              "leading-none font-bold",
+              captionBackground === "tape" && "-rotate-1 rounded-sm px-3 py-1",
+            )}
             style={{
               color: captionColor ?? frame.captionColor,
               fontFamily: font.family,
               fontSize: `${captionSize}px`,
+              background:
+                captionBackground === "tape" ? `${captionBgColor ?? "#ffc61a"}cc` : undefined,
             }}
           >
             {caption}

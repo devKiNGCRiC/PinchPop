@@ -123,24 +123,32 @@ function drawFrame(
   y: number,
   w: number,
   h: number,
-  bg: string | CanvasGradient | CanvasPattern = "#ffffff",
+  bg: string | CanvasGradient = "#ffffff",
   border = INK,
+  patternOverlay?: CanvasPattern,
 ) {
   ctx.fillStyle = INK;
   ctx.fillRect(x + 12, y + 12, w, h);
   ctx.fillStyle = bg;
   ctx.fillRect(x, y, w, h);
+  // The pattern tile has a transparent background and only an opaque foreground shape (see
+  // src/lib/framePatterns.ts), so layering it on top of the gradient/flat fill above lets a frame
+  // be both patterned and a gradient at once, matching the live preview's layered CSS backgrounds.
+  if (patternOverlay) {
+    ctx.fillStyle = patternOverlay;
+    ctx.fillRect(x, y, w, h);
+  }
   ctx.lineWidth = 6;
   ctx.strokeStyle = border;
   ctx.strokeRect(x, y, w, h);
 }
 
 /** Loads a frame's tiled pattern (see src/lib/framePatterns.ts) as a repeating CanvasPattern, or
- * null for a frame with a flat/gradient fill instead. */
+ * null for a frame with no pattern. */
 async function patternFor(frame: FramePreset): Promise<CanvasPattern | null> {
   if (!frame.pattern) return null;
   const image = await loadImage(
-    patternDataUri(frame.pattern, frame.frameBg, frame.patternColor ?? frame.frameBg),
+    patternDataUri(frame.pattern, frame.patternColor ?? frame.borderColor),
   );
   return document.createElement("canvas").getContext("2d")?.createPattern(image, "repeat") ?? null;
 }
@@ -275,6 +283,9 @@ export interface QuickPolaroid {
   captionSize?: number;
   /** Overrides the frame's own caption color when set. */
   captionColor?: string;
+  /** "tape" sits the caption on a rotated colored strip, like a hand-placed label. */
+  captionBackground?: "plain" | "tape";
+  captionBgColor?: string;
 }
 
 /** Renders a polaroid from any photo — no score/moves line, since there is no puzzle behind it —
@@ -307,12 +318,10 @@ export async function renderQuickPolaroidBlob(
 
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const bg =
-    pattern ??
-    (frame.gradient
-      ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
-      : frame.frameBg);
-  drawFrame(ctx, margin, margin, cardW, cardH, bg, frame.borderColor);
+  const bg = frame.gradient
+    ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
+    : frame.frameBg;
+  drawFrame(ctx, margin, margin, cardW, cardH, bg, frame.borderColor, pattern ?? undefined);
   drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
   if (stickers.length > 0) {
     drawStickerIcons(ctx, stickers, stickerIcons, margin + pad, margin + pad, photoW, photoH);
@@ -327,11 +336,26 @@ export async function renderQuickPolaroidBlob(
   const hasCaption = input.caption.length > 0;
 
   if (hasCaption) {
-    ctx.fillStyle = captionColor;
+    const size = Math.round((input.captionSize ?? 26) * CAPTION_SCALE);
     ctx.textAlign = "center";
     ctx.textBaseline = "alphabetic";
-    const size = Math.round((input.captionSize ?? 26) * CAPTION_SCALE);
     ctx.font = `700 ${size}px ${input.captionFontFamily ?? '"Caveat", cursive'}`;
+
+    if (input.captionBackground === "tape") {
+      const textWidth = ctx.measureText(input.caption).width;
+      const padX = size * 0.35;
+      const padY = size * 0.22;
+      const rectW = textWidth + padX * 2;
+      const rectH = size * 0.78 + padY * 2;
+      ctx.save();
+      ctx.translate(cx, captionY - size * 0.3);
+      ctx.rotate(-0.025);
+      ctx.fillStyle = `${input.captionBgColor ?? "#ffc61a"}cc`;
+      ctx.fillRect(-rectW / 2, -rectH / 2, rectW, rectH);
+      ctx.restore();
+    }
+
+    ctx.fillStyle = captionColor;
     ctx.fillText(input.caption, cx, captionY);
   }
 

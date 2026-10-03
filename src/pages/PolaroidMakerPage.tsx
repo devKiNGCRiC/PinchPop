@@ -19,9 +19,12 @@ import {
 import {
   CAPTION_FONTS,
   captionFontFor,
+  DEFAULT_CAPTION_BACKGROUND,
+  DEFAULT_CAPTION_BG_COLOR,
   DEFAULT_CAPTION_FONT_ID,
   DEFAULT_CAPTION_SIZE,
 } from "@/lib/captionFonts";
+import type { CaptionBackground } from "@/lib/captionFonts";
 import { downloadBlob, renderQuickPolaroidBlob, shareOrDownload } from "@/lib/export";
 import { DEFAULT_FILTER_ID, filterCssFor, FILTER_PRESETS } from "@/lib/filters";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
@@ -51,6 +54,10 @@ export default function PolaroidMakerPage() {
   const [captionSize, setCaptionSize] = useState(DEFAULT_CAPTION_SIZE);
   // null means "use the frame's own caption color" — only set once the player picks one explicitly.
   const [captionColorOverride, setCaptionColorOverride] = useState<string | null>(null);
+  const [captionBackground, setCaptionBackground] = useState<CaptionBackground>(
+    DEFAULT_CAPTION_BACKGROUND,
+  );
+  const [captionBgColor, setCaptionBgColor] = useState(DEFAULT_CAPTION_BG_COLOR);
   // Computed once — "today" for the life of this page view, not re-read on every render.
   const [today] = useState(() => formatDate(Date.now()));
   const [busy, setBusy] = useState<Busy>(null);
@@ -106,6 +113,8 @@ export default function PolaroidMakerPage() {
           captionFontFamily: captionFontFor(captionFontId).family,
           captionSize,
           captionColor,
+          captionBackground,
+          captionBgColor,
         },
         filterCssFor(filterId),
         frame,
@@ -163,6 +172,8 @@ export default function PolaroidMakerPage() {
               captionFontId={captionFontId}
               captionSize={captionSize}
               captionColor={captionColorOverride ?? undefined}
+              captionBackground={captionBackground}
+              captionBgColor={captionBgColor}
               stickers={stickers}
               editableStickers
               onStickersChange={setStickers}
@@ -268,6 +279,10 @@ export default function PolaroidMakerPage() {
                     onSizeChange={setCaptionSize}
                     color={captionColor}
                     onColorChange={setCaptionColorOverride}
+                    background={captionBackground}
+                    onBackgroundChange={setCaptionBackground}
+                    bgColor={captionBgColor}
+                    onBgColorChange={setCaptionBgColor}
                   />
                 </CollapsibleSection>
 
@@ -302,7 +317,7 @@ export default function PolaroidMakerPage() {
             </>
           ) : (
             <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — 17 frames, 12 filters, 16 stickers, custom type
+              Pick a photo on the left to start — 17 frames, 12 filters, 21 stickers, custom type
               and a caption turn it into an instant print you can download or share.
             </p>
           )}

@@ -24,3 +24,10 @@ export function captionFontFor(id: string): CaptionFont {
 export const DEFAULT_CAPTION_SIZE = 26;
 export const MIN_CAPTION_SIZE = 16;
 export const MAX_CAPTION_SIZE = 40;
+
+/** "plain" is the caption on its own, no background. "tape" sits it on a rotated strip, like a
+ * hand-placed label — the color is a separate, freely chosen setting (see CaptionStylePicker). */
+export type CaptionBackground = "plain" | "tape";
+
+export const DEFAULT_CAPTION_BACKGROUND: CaptionBackground = "plain";
+export const DEFAULT_CAPTION_BG_COLOR = "#ffc61a";
