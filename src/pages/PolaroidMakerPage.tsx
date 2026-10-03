@@ -3,9 +3,11 @@ import { Download, ImagePlus, Share2 } from "lucide-react";
 
 import { Chakra } from "@/components/Chakra";
 import { FilterPicker } from "@/components/FilterPicker";
+import { FramePicker } from "@/components/FramePicker";
 import { PopButton } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
+import { StickerPicker } from "@/components/StickerPicker";
 import {
   loadImageFile,
   preparePlainPhoto,
@@ -14,7 +16,10 @@ import {
 } from "@/lib/camera/effects";
 import { downloadBlob, renderQuickPolaroidBlob, shareOrDownload } from "@/lib/export";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
+import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { formatDate } from "@/lib/stats";
+import { createSticker } from "@/lib/stickers";
+import type { PlacedSticker } from "@/lib/stickers";
 
 interface LoadedPhoto {
   dataUrl: string;
@@ -30,8 +35,10 @@ export default function PolaroidMakerPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [photo, setPhoto] = useState<LoadedPhoto | null>(null);
   const [filterId, setFilterId] = useState(DEFAULT_FILTER_ID);
+  const [frameId, setFrameId] = useState(DEFAULT_FRAME_ID);
   const [caption, setCaption] = useState("");
   const [showDate, setShowDate] = useState(false);
+  const [stickers, setStickers] = useState<PlacedSticker[]>([]);
   // Computed once — "today" for the life of this page view, not re-read on every render.
   const [today] = useState(() => formatDate(Date.now()));
   const [busy, setBusy] = useState<Busy>(null);
@@ -71,8 +78,10 @@ export default function PolaroidMakerPage() {
           aspect: photo.aspect,
           caption: caption.trim() || "your moment",
           timestamp: showDate ? today : undefined,
+          stickers,
         },
         filterCssFor(filterId),
+        frameFor(frameId),
       );
       if (kind === "download") {
         downloadBlob(blob, "pinchpop-polaroid.png");
@@ -108,7 +117,8 @@ export default function PolaroidMakerPage() {
         Make a polaroid
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
-        Upload any photo, pick a filter, write a caption — no puzzle, no camera, no account.
+        Upload any photo, pick a frame and filter, add stickers and a caption — no puzzle, no
+        camera, no account.
       </p>
 
       <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
@@ -122,9 +132,18 @@ export default function PolaroidMakerPage() {
               tilt={-2}
               tape
               filter={filterCssFor(filterId)}
+              frameId={frameId}
+              stickers={stickers}
+              editableStickers
+              onStickersChange={setStickers}
             >
               {showDate ? (
-                <span className="mt-1 text-sm font-semibold text-ink-soft">{today}</span>
+                <span
+                  className="mt-1 text-sm font-semibold opacity-75"
+                  style={{ color: frameFor(frameId).captionColor }}
+                >
+                  {today}
+                </span>
               ) : null}
             </Polaroid>
           ) : (
@@ -156,6 +175,11 @@ export default function PolaroidMakerPage() {
             }}
           />
           {error ? <p className="mt-3 text-center text-base text-sindoor">{error}</p> : null}
+          {stickers.length > 0 ? (
+            <p className="mt-3 text-center text-sm text-ink-soft">
+              Drag a sticker to move it, tap it for a resize handle and remove button.
+            </p>
+          ) : null}
         </div>
 
         <div>
@@ -192,7 +216,18 @@ export default function PolaroidMakerPage() {
               </label>
 
               <div className="mt-6">
+                <FramePicker value={frameId} onChange={setFrameId} />
+              </div>
+
+              <div className="mt-6">
                 <FilterPicker value={filterId} onChange={setFilterId} />
+              </div>
+
+              <div className="mt-6">
+                <StickerPicker
+                  onAdd={(emoji) => setStickers((prev) => [...prev, createSticker(emoji)])}
+                  onClear={stickers.length > 0 ? () => setStickers([]) : undefined}
+                />
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
@@ -215,8 +250,8 @@ export default function PolaroidMakerPage() {
             </>
           ) : (
             <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — your pick of 11 filters and a caption turn it into
-              an instant print you can download or share.
+              Pick a photo on the left to start — 10 frames, 12 filters, stickers and a caption turn
+              it into an instant print you can download or share.
             </p>
           )}
         </div>

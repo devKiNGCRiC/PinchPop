@@ -2,9 +2,11 @@ import { createElement } from "react";
 
 import { Art } from "@/components/Art";
 import { getArt } from "@/lib/art";
+import type { FramePreset } from "@/lib/frames";
 import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { formatDate } from "@/lib/stats";
+import type { PlacedSticker } from "@/lib/stickers";
 
 const INK = "#111426";
 const IVORY = "#fff6e6";
@@ -90,15 +92,56 @@ function drawCover(
   ctx.drawImage(image, (image.width - sw) / 2, (image.height - sh) / 2, sw, sh, x, y, w, h);
 }
 
-/** A sticker-style print: hard shadow, white frame, ink outlines. */
-function drawFrame(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number) {
+/** A sticker-style print: hard shadow, a colored frame, outlined border. The shadow stays ink
+ * regardless of the frame's own colors, matching the drop-shadow every sticker in the app uses. */
+function drawFrame(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  bg = "#ffffff",
+  border = INK,
+) {
   ctx.fillStyle = INK;
   ctx.fillRect(x + 12, y + 12, w, h);
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = bg;
   ctx.fillRect(x, y, w, h);
   ctx.lineWidth = 6;
-  ctx.strokeStyle = INK;
+  ctx.strokeStyle = border;
   ctx.strokeRect(x, y, w, h);
+}
+
+/** The thin saffron/white/leaf accent bar for the "tiranga" frame, echoing the footer's flag stripe. */
+function drawFlagStripe(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
+  const stripeH = 10;
+  const third = w / 3;
+  ctx.fillStyle = "#ff9933";
+  ctx.fillRect(x, y, third, stripeH);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x + third, y, third, stripeH);
+  ctx.fillStyle = "#138808";
+  ctx.fillRect(x + third * 2, y, w - third * 2, stripeH);
+}
+
+/** Draws each placed sticker over the photo at its relative position/size — matches the live
+ * preview's StickerLayer geometry (coordinates and size are both fractions of the photo itself). */
+function drawStickers(
+  ctx: CanvasRenderingContext2D,
+  stickers: PlacedSticker[],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  for (const sticker of stickers) {
+    ctx.font = `${Math.round(sticker.size * w)}px sans-serif`;
+    ctx.fillText(sticker.emoji, x + sticker.x * w, y + sticker.y * h);
+  }
+  ctx.restore();
 }
 
 function drawPhoto(
@@ -170,13 +213,16 @@ export interface QuickPolaroid {
   caption: string;
   /** Already formatted (e.g. "Oct 3"); omit to leave the date off the print entirely. */
   timestamp?: string;
+  stickers?: PlacedSticker[];
 }
 
 /** Renders a polaroid from any photo — no score/moves line, since there is no puzzle behind it —
- * for the no-game "make a polaroid" tool. Caption and optional date only, plus the PinchPop mark. */
+ * for the no-game "make a polaroid" tool. Caption and optional date only, plus the PinchPop mark.
+ * `frame` (see src/lib/frames.ts) controls the frame's own color, border, and caption color. */
 export async function renderQuickPolaroidBlob(
   input: QuickPolaroid,
-  filterCss = "none",
+  filterCss: string,
+  frame: FramePreset,
 ): Promise<Blob> {
   const [picture] = await Promise.all([
     loadImage(input.photo).then((image) => ({
@@ -197,10 +243,14 @@ export async function renderQuickPolaroidBlob(
 
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawFrame(ctx, margin, margin, cardW, cardH);
+  drawFrame(ctx, margin, margin, cardW, cardH, frame.frameBg, frame.borderColor);
+  if (frame.stripe) drawFlagStripe(ctx, margin, margin, cardW);
   drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
+  if (input.stickers && input.stickers.length > 0) {
+    drawStickers(ctx, input.stickers, margin + pad, margin + pad, photoW, photoH);
+  }
 
-  ctx.fillStyle = INK;
+  ctx.fillStyle = frame.captionColor;
   ctx.textAlign = "center";
   ctx.textBaseline = "alphabetic";
   const cx = margin + cardW / 2;
@@ -210,13 +260,13 @@ export async function renderQuickPolaroidBlob(
 
   if (input.timestamp) {
     ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
-    ctx.fillStyle = "#4a4f6e";
+    ctx.fillStyle = frame.captionColor;
     ctx.fillText(input.timestamp, cx, captionY + 62);
   }
 
   ctx.textAlign = "right";
   ctx.font = '800 30px "Unbounded", system-ui, sans-serif';
-  ctx.fillStyle = INK;
+  ctx.fillStyle = frame.captionColor;
   ctx.fillText("PinchPop", margin + cardW - pad, margin + cardH - 34);
   return toBlob(canvas);
 }

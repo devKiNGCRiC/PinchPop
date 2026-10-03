@@ -1,7 +1,10 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import { Art } from "@/components/Art";
+import { StickerLayer } from "@/components/StickerLayer";
 import { Postmark } from "@/components/Stamp";
+import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
+import type { PlacedSticker } from "@/lib/stickers";
 import { cn } from "@/lib/utils";
 
 interface PolaroidProps {
@@ -20,6 +23,15 @@ interface PolaroidProps {
   develop?: boolean;
   /** A CSS filter() value applied to the photo/art only, not the frame or caption. */
   filter?: string;
+  /** One of FRAME_PRESETS' ids (see src/lib/frames.ts) — controls frame color, border, tape and
+   * caption color. Defaults to the original white-and-ink look. */
+  frameId?: string;
+  /** Decorative stickers placed over the photo. */
+  stickers?: PlacedSticker[];
+  /** When true, stickers can be dragged, resized and removed. Every caller that leaves this unset
+   * gets plain, static sticker rendering — only an active editor opts in. */
+  editableStickers?: boolean;
+  onStickersChange?: (next: PlacedSticker[]) => void;
   className?: string;
   children?: ReactNode;
 }
@@ -35,40 +47,66 @@ export function Polaroid({
   postmark,
   develop = false,
   filter,
+  frameId = DEFAULT_FRAME_ID,
+  stickers,
+  editableStickers = false,
+  onStickersChange,
   className,
   children,
 }: PolaroidProps) {
   const style = (develop ? { "--tilt": `${tilt}deg` } : { rotate: `${tilt}deg` }) as CSSProperties;
+  const frame = frameFor(frameId);
+  const showTape = tape && frame.tapeColor !== null;
 
   return (
     <figure
       className={cn(
-        "sticker relative w-full rounded-md bg-white p-2.5 pb-3 sm:p-3 sm:pb-4",
+        "sticker relative w-full rounded-md p-2.5 pb-3 sm:p-3 sm:pb-4",
         develop && "animate-print-in",
         className,
       )}
-      style={style}
+      style={{ ...style, background: frame.frameBg, borderColor: frame.borderColor }}
     >
-      {tape ? (
+      {frame.stripe ? (
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 grid h-1.5 grid-cols-3 overflow-hidden rounded-t-[inherit]"
+        >
+          <span style={{ background: "#ff9933" }} />
+          <span style={{ background: "#ffffff" }} />
+          <span style={{ background: "#138808" }} />
+        </div>
+      ) : null}
+      {showTape ? (
         <span
           aria-hidden="true"
-          className="absolute -top-3 left-1/2 z-10 h-6 w-20 -translate-x-1/2 -rotate-3 border-2 border-ink/70 bg-marigold/90"
+          className="absolute -top-3 left-1/2 z-10 h-6 w-20 -translate-x-1/2 -rotate-3 border-2 border-ink/70"
+          style={{ background: `${frame.tapeColor}e6` }}
         />
       ) : null}
-      {photo ? (
-        <img
-          src={photo}
-          alt="Your photo from camera mode"
-          className="block w-full border-2 border-ink bg-ink object-cover"
-          style={{ aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)), filter }}
-        />
-      ) : (
-        <Art
-          artId={artId}
-          className="block aspect-square w-full border-2 border-ink"
-          style={{ filter }}
-        />
-      )}
+      <div className="relative">
+        {photo ? (
+          <img
+            src={photo}
+            alt="Your photo from camera mode"
+            className="block w-full border-2 border-ink bg-ink object-cover"
+            style={{ aspectRatio: Math.min(1.4, Math.max(0.75, aspect ?? 1)), filter }}
+          />
+        ) : (
+          <Art
+            artId={artId}
+            className="block aspect-square w-full border-2 border-ink"
+            style={{ filter }}
+          />
+        )}
+        {stickers && stickers.length > 0 ? (
+          <StickerLayer
+            stickers={stickers}
+            editable={editableStickers}
+            onChange={onStickersChange}
+          />
+        ) : null}
+      </div>
       {postmark ? (
         <Postmark
           place={postmark.place}
@@ -77,7 +115,12 @@ export function Polaroid({
         />
       ) : null}
       <figcaption className="mt-2 flex min-h-12 flex-col items-center justify-center text-center">
-        <span className="font-hand text-[26px] leading-none font-bold text-ink">{caption}</span>
+        <span
+          className="font-hand text-[26px] leading-none font-bold"
+          style={{ color: frame.captionColor }}
+        >
+          {caption}
+        </span>
         {children}
       </figcaption>
     </figure>
