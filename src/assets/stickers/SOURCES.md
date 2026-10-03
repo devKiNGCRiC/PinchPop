@@ -6,3 +6,5 @@ attribution required. They were recolored to this app's own palette; nothing els
 
 - `hibiscus.svg` — from https://openclipart.org/detail/226922/hibiscus
 - `satin-bow.svg` — from https://openclipart.org/detail/170156/pink-bow
+- `butterfly.svg` — from https://openclipart.org/detail/190433/simple-butterfly
+- `daisy.svg` — from https://openclipart.org/detail/183948/daisy

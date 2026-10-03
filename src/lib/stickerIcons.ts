@@ -1,3 +1,5 @@
+import butterflyUrl from "@/assets/stickers/butterfly.svg";
+import daisyUrl from "@/assets/stickers/daisy.svg";
 import hibiscusUrl from "@/assets/stickers/hibiscus.svg";
 import satinBowUrl from "@/assets/stickers/satin-bow.svg";
 import { lighten } from "@/lib/color";
@@ -38,10 +40,6 @@ function grad(color: string, id = "g"): { def: string; fill: string } {
   };
 }
 
-function petal(angle: number, fill: string): string {
-  return `<ellipse cx="50" cy="28" rx="15" ry="24" fill="${fill}" stroke="${OUTLINE}" stroke-width="2.5" transform="rotate(${angle} 50 50)"/>`;
-}
-
 function ray(angle: number): string {
   return `<line x1="50" y1="22" x2="50" y2="10" stroke="${OUTLINE}" stroke-width="4" stroke-linecap="round" transform="rotate(${angle} 50 50)"/>`;
 }
@@ -49,14 +47,10 @@ function ray(angle: number): string {
 const heart = grad("#f0b9c2");
 const star = grad("#f0d99b");
 const sparkle = grad("#fbf3df");
-const flowerPetal = grad("#fbeedc");
-const flowerCenter = grad("#f0d99b", "g2");
 const moon = grad("#f6e9b8");
 const cloud = grad("#d6e6f5");
 const leaf = grad("#bcd9a8");
 const bow = grad("#e3b4bb");
-const butterflyWing = grad("#e3c6e8");
-const butterflyWing2 = grad("#d6aedd", "g2");
 const crown = grad("#f2d98a");
 const balloon = grad("#f0b9c2");
 const sun = grad("#f6e3a1");
@@ -71,9 +65,9 @@ export const STICKER_ICONS: StickerIconDef[] = [
   {
     id: "heart",
     label: "Heart",
-    svg: svg(
-      `<defs>${heart.def}</defs><path d="M50 88 C20 65 5 45 5 28 C5 12 18 3 32 3 C42 3 50 10 50 20 C50 10 58 3 68 3 C82 3 95 12 95 28 C95 45 80 65 50 88 Z" fill="${heart.fill}" stroke="${OUTLINE}" stroke-width="3"/>`,
-    ),
+    // A real public-domain heart silhouette (openclipart.org, see SOURCES.md) rather than a
+    // hand-drawn approximation — its own path data, just given this app's gradient fill/outline.
+    svg: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 368.84 334.56"><defs>${heart.def}</defs><path transform="translate(-270.22 -431.16)" d="m517.61 480.68c-26.068 0-49.128 12.681-63.469 32.188-14.36-19.294-37.287-31.812-63.188-31.812-43.516 0-78.781 35.266-78.781 78.781 0 10.745 2.1376 20.98 6.0312 30.312l0.0625 0.0937c2.7605 6.5901 6.4245 12.713 10.781 18.25l124.59 129.84c41.757-41.799 88.655-91.415 125.88-130.22 4.3568-5.5365 8.0208-11.66 10.781-18.25l0.0625-0.0937c3.8936-9.3323 6.0312-19.568 6.0312-30.312 0-43.516-35.266-78.781-78.781-78.781z" fill="${heart.fill}" stroke="${OUTLINE}" stroke-width="10"/></svg>`,
   },
   {
     id: "star",
@@ -91,10 +85,9 @@ export const STICKER_ICONS: StickerIconDef[] = [
   },
   {
     id: "flower",
-    label: "Flower",
-    svg: svg(
-      `<defs>${flowerPetal.def}${flowerCenter.def}</defs>${[0, 72, 144, 216, 288].map((a) => petal(a, flowerPetal.fill)).join("")}<circle cx="50" cy="50" r="13" fill="${flowerCenter.fill}" stroke="${OUTLINE}" stroke-width="2.5"/>`,
-    ),
+    label: "Daisy",
+    url: daisyUrl,
+    aspect: 455.54 / 460.19,
   },
   {
     id: "moon",
@@ -127,9 +120,8 @@ export const STICKER_ICONS: StickerIconDef[] = [
   {
     id: "butterfly",
     label: "Butterfly",
-    svg: svg(
-      `<defs>${butterflyWing.def}${butterflyWing2.def}</defs><ellipse cx="30" cy="35" rx="22" ry="28" fill="${butterflyWing.fill}" stroke="${OUTLINE}" stroke-width="2.5" transform="rotate(-18 30 35)"/><ellipse cx="70" cy="35" rx="22" ry="28" fill="${butterflyWing.fill}" stroke="${OUTLINE}" stroke-width="2.5" transform="rotate(18 70 35)"/><ellipse cx="35" cy="66" rx="14" ry="17" fill="${butterflyWing2.fill}" stroke="${OUTLINE}" stroke-width="2.5" transform="rotate(-10 35 66)"/><ellipse cx="65" cy="66" rx="14" ry="17" fill="${butterflyWing2.fill}" stroke="${OUTLINE}" stroke-width="2.5" transform="rotate(10 65 66)"/><rect x="47" y="24" width="6" height="56" rx="3" fill="${OUTLINE}"/>`,
-    ),
+    url: butterflyUrl,
+    aspect: 697.91 / 535.04,
   },
   {
     id: "crown",

@@ -147,11 +147,6 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: INK,
     tapeColor: CORAL,
-    defaultStickers: [
-      { iconId: "star", x: 0.15, y: 0.88, size: 0.14 },
-      { iconId: "star", x: 0.32, y: 0.92, size: 0.1 },
-      { iconId: "star", x: 0.85, y: 0.9, size: 0.11 },
-    ],
   },
   {
     id: "polka-dot",
@@ -164,10 +159,6 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: INK,
     tapeColor: CLOUD,
     swirlColor: LEAF,
-    defaultStickers: [
-      { iconId: "heart", x: 0.13, y: 0.12, size: 0.14 },
-      { iconId: "heart", x: 0.87, y: 0.87, size: 0.19 },
-    ],
   },
   {
     id: "daisy-chain",
@@ -179,12 +170,6 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: INK,
     tapeColor: CLOUD,
-    defaultStickers: [
-      { iconId: "flower", x: 0.86, y: 0.11, size: 0.15 },
-      { iconId: "flower", x: 0.13, y: 0.14, size: 0.12 },
-      { iconId: "flower", x: 0.14, y: 0.88, size: 0.14 },
-      { iconId: "leaf", x: 0.32, y: 0.92, size: 0.1 },
-    ],
   },
   {
     id: "bow-stripe",
@@ -196,10 +181,6 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: INK,
     tapeColor: null,
-    defaultStickers: [
-      { iconId: "bow", x: 0.5, y: 0.07, size: 0.17 },
-      { iconId: "star", x: 0.85, y: 0.88, size: 0.11 },
-    ],
   },
   {
     id: "gingham",
@@ -247,10 +228,6 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: INK,
     tapeColor: CLOUD,
-    defaultStickers: [
-      { iconId: "hibiscus", x: 0.88, y: 0.08, size: 0.5 },
-      { iconId: "hibiscus", x: 0.1, y: 0.92, size: 0.48 },
-    ],
   },
   {
     id: "scarlet-ribbon",
@@ -260,7 +237,6 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: IVORY,
     tapeColor: null,
     tornEdge: true,
-    defaultStickers: [{ iconId: "satin-bow", x: 0.5, y: 0.05, size: 0.4 }],
   },
   {
     id: "noir",
