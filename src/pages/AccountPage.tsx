@@ -3,6 +3,8 @@ import type { FormEvent } from "react";
 import {
   BookMarked,
   Camera,
+  Eye,
+  EyeOff,
   LoaderCircle,
   LogOut,
   Mail,
@@ -38,6 +40,7 @@ function AuthForms() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -114,15 +117,29 @@ function AuthForms() {
         </label>
         <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
           Password
-          <input
-            type="password"
-            required
-            minLength={6}
-            autoComplete={mode === "signUp" ? "new-password" : "current-password"}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={inputClass}
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              required
+              minLength={6}
+              autoComplete={mode === "signUp" ? "new-password" : "current-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className={`${inputClass} pr-12`}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((shown) => !shown)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-3 flex items-center text-ink-soft hover:text-ink"
+            >
+              {showPassword ? (
+                <EyeOff className="size-5" aria-hidden="true" />
+              ) : (
+                <Eye className="size-5" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         </label>
 
         <PopButton type="submit" tone="saffron" size="lg" disabled={busy} className="mt-2">
