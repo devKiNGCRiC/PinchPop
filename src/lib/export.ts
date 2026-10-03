@@ -163,6 +163,64 @@ export async function renderPolaroidBlob(memory: Memory, filterCss = "none"): Pr
   return toBlob(canvas);
 }
 
+export interface QuickPolaroid {
+  photo: string;
+  /** Width divided by height. */
+  aspect: number;
+  caption: string;
+  /** Already formatted (e.g. "Oct 3"); omit to leave the date off the print entirely. */
+  timestamp?: string;
+}
+
+/** Renders a polaroid from any photo — no score/moves line, since there is no puzzle behind it —
+ * for the no-game "make a polaroid" tool. Caption and optional date only, plus the PinchPop mark. */
+export async function renderQuickPolaroidBlob(
+  input: QuickPolaroid,
+  filterCss = "none",
+): Promise<Blob> {
+  const [picture] = await Promise.all([
+    loadImage(input.photo).then((image) => ({
+      image,
+      aspect: Math.min(1.4, Math.max(0.75, input.aspect)),
+    })),
+    ensureFonts(),
+  ]);
+
+  const margin = 64;
+  const pad = 44;
+  const cardW = 880;
+  const photoW = cardW - pad * 2;
+  const photoH = Math.round(photoW / picture.aspect);
+  const footer = input.timestamp ? 230 : 170;
+  const cardH = pad + photoH + footer;
+  const [canvas, ctx] = makeCanvas(cardW + margin * 2 + 12, cardH + margin * 2 + 12);
+
+  ctx.fillStyle = IVORY;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  drawFrame(ctx, margin, margin, cardW, cardH);
+  drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
+
+  ctx.fillStyle = INK;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  const cx = margin + cardW / 2;
+  const captionY = margin + pad + photoH + 96;
+  ctx.font = '700 84px "Caveat", cursive';
+  ctx.fillText(input.caption, cx, captionY);
+
+  if (input.timestamp) {
+    ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
+    ctx.fillStyle = "#4a4f6e";
+    ctx.fillText(input.timestamp, cx, captionY + 62);
+  }
+
+  ctx.textAlign = "right";
+  ctx.font = '800 30px "Unbounded", system-ui, sans-serif';
+  ctx.fillStyle = INK;
+  ctx.fillText("PinchPop", margin + cardW - pad, margin + cardH - 34);
+  return toBlob(canvas);
+}
+
 /** Renders up to three camera photos as a vertical photobooth strip, oldest at the top. */
 export async function renderStripBlob(memories: Memory[]): Promise<Blob> {
   // Newest three camera photos, laid out oldest first like a real photobooth strip.

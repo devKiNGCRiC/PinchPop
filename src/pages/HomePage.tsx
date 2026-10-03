@@ -136,6 +136,15 @@ export default function HomePage() {
                 New here? See how to play.
               </Link>
             </p>
+            <p className="mt-2 max-w-md text-base text-white/75">
+              Not into puzzles?{" "}
+              <Link
+                to="/polaroid"
+                className="font-semibold text-marigold underline underline-offset-4"
+              >
+                Turn any photo into a polaroid instead.
+              </Link>
+            </p>
           </div>
 
           <HeroPuzzle />

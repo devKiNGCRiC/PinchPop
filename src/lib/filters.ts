@@ -23,6 +23,19 @@ export const FILTER_PRESETS: FilterPreset[] = [
     css: "saturate(1.45) contrast(1.12) brightness(1.02) hue-rotate(-4deg)",
   },
   { id: "hd", label: "HD", css: "contrast(1.15) saturate(1.08) brightness(1.02)" },
+  { id: "noir", label: "Noir", css: "grayscale(1) contrast(1.25) brightness(1.03)" },
+  {
+    id: "warm",
+    label: "Warm",
+    css: "sepia(0.2) saturate(1.3) brightness(1.04) hue-rotate(-8deg)",
+  },
+  { id: "cool", label: "Cool", css: "saturate(1.1) brightness(1.03) hue-rotate(10deg)" },
+  { id: "fade", label: "Fade", css: "saturate(0.65) contrast(0.9) brightness(1.1)" },
+  {
+    id: "dramatic",
+    label: "Dramatic",
+    css: "contrast(1.35) saturate(1.15) brightness(0.92)",
+  },
 ];
 
 export function filterCssFor(id: string): string {

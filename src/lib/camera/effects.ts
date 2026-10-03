@@ -14,6 +14,24 @@ const SAVED_JPEG_QUALITY = 0.9;
 /** Longest side of an uploaded photo's working canvas. Capped well above SAVED_MAX_SIDE so a
  * phone photo stays smooth to drag and animate as puzzle pieces, not just small once saved. */
 const UPLOAD_MAX_SIDE = 1600;
+/** Generous but not unbounded, so one huge phone photo can't blow the localStorage quota. */
+export const UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
+
+export function loadImageFile(file: File): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(url);
+      resolve(image);
+    };
+    image.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("Could not read that image."));
+    };
+    image.src = url;
+  });
+}
 
 function gaussianNoise(std: number): number {
   const u1 = Math.random() || 1e-6;

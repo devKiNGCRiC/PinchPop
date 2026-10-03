@@ -11,6 +11,7 @@ export const NAV_LINKS = [
 export const EXTRA_LINKS = [
   { to: "/account", label: "Account", end: false },
   { to: "/camera", label: "Camera mode", end: false },
+  { to: "/polaroid", label: "Make a polaroid", end: false },
   { to: "/how-to-play", label: "How to play", end: false },
   { to: "/about", label: "About", end: false },
   { to: "/privacy", label: "Privacy", end: false },

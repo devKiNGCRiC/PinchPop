@@ -7,8 +7,10 @@ import type { Engine, EngineEvent, Status } from "@/lib/camera/engine";
 import {
   capturePhoto,
   capturePhotoFromImage,
+  loadImageFile,
   slicePieces,
   toSavedPhoto,
+  UPLOAD_MAX_BYTES,
 } from "@/lib/camera/effects";
 import { describeCameraError, openCamera, stopStream } from "@/lib/camera/media";
 import type { CameraError } from "@/lib/camera/media";
@@ -73,25 +75,6 @@ function fitBox(box: Box, width: number, height: number): Box {
  * captures what they can actually see on screen, not a guessed crop. */
 function defaultFrame(width: number, height: number): Box {
   return { x: 0, y: 0, width, height };
-}
-
-/** Generous but not unbounded, so one huge phone photo can't blow the localStorage quota. */
-const UPLOAD_MAX_BYTES = 15 * 1024 * 1024;
-
-function loadImageFile(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.onload = () => {
-      URL.revokeObjectURL(url);
-      resolve(image);
-    };
-    image.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error("Could not read that image."));
-    };
-    image.src = url;
-  });
 }
 
 /**

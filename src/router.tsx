@@ -11,6 +11,7 @@ import HomePage from "@/pages/HomePage";
 import HowToPlayPage from "@/pages/HowToPlayPage";
 import LeaderboardPage from "@/pages/LeaderboardPage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import PolaroidMakerPage from "@/pages/PolaroidMakerPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ResultsPage from "@/pages/ResultsPage";
@@ -44,6 +45,7 @@ const router = createBrowserRouter([
       { path: "privacy", element: <PrivacyPage /> },
       { path: "gallery", element: <GalleryPage /> },
       { path: "profile", element: <ProfilePage /> },
+      { path: "polaroid", element: <PolaroidMakerPage /> },
       {
         path: "account",
         // Loaded on demand so @supabase/supabase-js only downloads when someone opens this page.
