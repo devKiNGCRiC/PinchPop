@@ -4,6 +4,8 @@ import "@fontsource/unbounded/800.css";
 import "@fontsource/bricolage-grotesque/400.css";
 import "@fontsource/bricolage-grotesque/600.css";
 import "@fontsource/caveat/700.css";
+import "@fontsource/dancing-script/700.css";
+import "@fontsource/playfair-display/700.css";
 import "./index.css";
 
 import { AppRouter } from "./router";

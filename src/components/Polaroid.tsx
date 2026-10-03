@@ -3,8 +3,8 @@ import type { CSSProperties, ReactNode } from "react";
 import { Art } from "@/components/Art";
 import { StickerLayer } from "@/components/StickerLayer";
 import { Postmark } from "@/components/Stamp";
+import { captionFontFor, DEFAULT_CAPTION_FONT_ID, DEFAULT_CAPTION_SIZE } from "@/lib/captionFonts";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
-import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
 import type { PlacedSticker } from "@/lib/stickers";
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ interface PolaroidProps {
   photo?: string;
   /** Width divided by height of `photo`. */
   aspect?: number;
+  /** Empty renders no caption at all — there is no implicit placeholder text baked into prints. */
   caption: string;
   /** Resting rotation in degrees. */
   tilt?: number;
@@ -27,6 +28,12 @@ interface PolaroidProps {
   /** One of FRAME_PRESETS' ids (see src/lib/frames.ts) — controls frame color, border, tape and
    * caption color. Defaults to the original white-and-ink look. */
   frameId?: string;
+  /** One of CAPTION_FONTS' ids (see src/lib/captionFonts.ts). Defaults to the handwritten font. */
+  captionFontId?: string;
+  /** Caption font size in px. Defaults to 26. */
+  captionSize?: number;
+  /** Overrides the frame's own caption color when set. */
+  captionColor?: string;
   /** Decorative stickers placed over the photo. */
   stickers?: PlacedSticker[];
   /** When true, stickers can be dragged, resized and removed. Every caller that leaves this unset
@@ -37,7 +44,7 @@ interface PolaroidProps {
   children?: ReactNode;
 }
 
-/** An instant print: white frame, thick bottom margin, handwritten caption, optional tape and postmark. */
+/** An instant print: colored frame, thick bottom margin, handwritten caption, optional tape and postmark. */
 export function Polaroid({
   artId,
   photo,
@@ -49,6 +56,9 @@ export function Polaroid({
   develop = false,
   filter,
   frameId = DEFAULT_FRAME_ID,
+  captionFontId = DEFAULT_CAPTION_FONT_ID,
+  captionSize = DEFAULT_CAPTION_SIZE,
+  captionColor,
   stickers,
   editableStickers = false,
   onStickersChange,
@@ -58,14 +68,10 @@ export function Polaroid({
   const style = (develop ? { "--tilt": `${tilt}deg` } : { rotate: `${tilt}deg` }) as CSSProperties;
   const frame = frameFor(frameId);
   const showTape = tape && frame.tapeColor !== null;
-  const frameStyle: CSSProperties =
-    frame.pattern && frame.patternColor
-      ? {
-          backgroundImage: `url("${patternDataUri(frame.pattern, frame.frameBg, frame.patternColor)}")`,
-          backgroundSize: `${PATTERN_TILE_SIZE}px ${PATTERN_TILE_SIZE}px`,
-          backgroundRepeat: "repeat",
-        }
-      : { background: frame.frameBg };
+  const font = captionFontFor(captionFontId);
+  const frameStyle: CSSProperties = frame.gradient
+    ? { backgroundImage: `linear-gradient(135deg, ${frame.gradient[0]}, ${frame.gradient[1]})` }
+    : { background: frame.frameBg };
 
   return (
     <figure
@@ -74,23 +80,8 @@ export function Polaroid({
         develop && "animate-print-in",
         className,
       )}
-      style={{
-        ...style,
-        ...frameStyle,
-        borderColor: frame.borderColor,
-        borderStyle: frame.dashedBorder ? "dashed" : undefined,
-      }}
+      style={{ ...style, ...frameStyle, borderColor: frame.borderColor }}
     >
-      {frame.stripe ? (
-        <div
-          aria-hidden="true"
-          className="absolute inset-x-0 top-0 grid h-1.5 grid-cols-3 overflow-hidden rounded-t-[inherit]"
-        >
-          <span style={{ background: "#ff9933" }} />
-          <span style={{ background: "#ffffff" }} />
-          <span style={{ background: "#138808" }} />
-        </div>
-      ) : null}
       {showTape ? (
         <span
           aria-hidden="true"
@@ -120,21 +111,6 @@ export function Polaroid({
             onChange={onStickersChange}
           />
         ) : null}
-        {frame.swirlColor ? (
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 200 40"
-            className="pointer-events-none absolute bottom-[6%] left-[15%] w-[70%]"
-          >
-            <path
-              d="M5,20 Q30,2 55,20 T105,20 T155,20 T195,20"
-              fill="none"
-              stroke={frame.swirlColor}
-              strokeWidth="7"
-              strokeLinecap="round"
-            />
-          </svg>
-        ) : null}
       </div>
       {postmark ? (
         <Postmark
@@ -144,12 +120,18 @@ export function Polaroid({
         />
       ) : null}
       <figcaption className="mt-2 flex min-h-12 flex-col items-center justify-center text-center">
-        <span
-          className="font-hand text-[26px] leading-none font-bold"
-          style={{ color: frame.captionColor }}
-        >
-          {caption}
-        </span>
+        {caption ? (
+          <span
+            className="leading-none font-bold"
+            style={{
+              color: captionColor ?? frame.captionColor,
+              fontFamily: font.family,
+              fontSize: `${captionSize}px`,
+            }}
+          >
+            {caption}
+          </span>
+        ) : null}
         {children}
       </figcaption>
     </figure>

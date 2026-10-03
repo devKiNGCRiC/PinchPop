@@ -3,15 +3,18 @@ import { createElement } from "react";
 import { Art } from "@/components/Art";
 import { getArt } from "@/lib/art";
 import type { FramePreset } from "@/lib/frames";
-import { patternDataUri } from "@/lib/framePatterns";
 import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { formatDate } from "@/lib/stats";
+import { stickerIconDataUri } from "@/lib/stickerIcons";
 import type { PlacedSticker } from "@/lib/stickers";
 
 const INK = "#111426";
 const IVORY = "#fff6e6";
 const MARIGOLD = "#ffc61a";
+/** Export's caption-size baseline: the live preview's default 26px caption maps to 84px on the
+ * fixed 880-wide export canvas — preserves the exact scale this was already tuned at. */
+const CAPTION_SCALE = 84 / 26;
 
 interface Picture {
   image: HTMLImageElement;
@@ -50,6 +53,8 @@ async function ensureFonts(): Promise<void> {
   if (!("fonts" in document)) return;
   await Promise.all([
     document.fonts.load('700 72px "Caveat"'),
+    document.fonts.load('700 72px "Dancing Script"'),
+    document.fonts.load('700 72px "Playfair Display"'),
     document.fonts.load('600 34px "Bricolage Grotesque"'),
     document.fonts.load('800 32px "Unbounded"'),
   ]).catch(() => undefined);
@@ -93,7 +98,22 @@ function drawCover(
   ctx.drawImage(image, (image.width - sw) / 2, (image.height - sh) / 2, sw, sh, x, y, w, h);
 }
 
-/** A sticker-style print: hard shadow, a colored (or patterned) frame, outlined border. The
+/** A diagonal two-color fill approximating the live preview's `linear-gradient(135deg, ...)`. */
+function diagonalGradient(
+  ctx: CanvasRenderingContext2D,
+  colors: [string, string],
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+): CanvasGradient {
+  const gradient = ctx.createLinearGradient(x, y, x + w, y + h);
+  gradient.addColorStop(0, colors[0]);
+  gradient.addColorStop(1, colors[1]);
+  return gradient;
+}
+
+/** A sticker-style print: hard shadow, a colored (flat or gradient) frame, outlined border. The
  * shadow stays ink regardless of the frame's own colors, matching every sticker in the app. */
 function drawFrame(
   ctx: CanvasRenderingContext2D,
@@ -101,9 +121,8 @@ function drawFrame(
   y: number,
   w: number,
   h: number,
-  bg: string | CanvasPattern = "#ffffff",
+  bg: string | CanvasGradient = "#ffffff",
   border = INK,
-  dashed = false,
 ) {
   ctx.fillStyle = INK;
   ctx.fillRect(x + 12, y + 12, w, h);
@@ -111,82 +130,27 @@ function drawFrame(
   ctx.fillRect(x, y, w, h);
   ctx.lineWidth = 6;
   ctx.strokeStyle = border;
-  ctx.setLineDash(dashed ? [10, 8] : []);
   ctx.strokeRect(x, y, w, h);
-  ctx.setLineDash([]);
-}
-
-/** Loads a frame's tiled pattern (see src/lib/framePatterns.ts) as a repeating CanvasPattern, or
- * null for a frame with a flat color instead. */
-async function patternFor(frame: FramePreset): Promise<CanvasPattern | null> {
-  if (!frame.pattern || !frame.patternColor) return null;
-  const image = await loadImage(patternDataUri(frame.pattern, frame.frameBg, frame.patternColor));
-  return document.createElement("canvas").getContext("2d")?.createPattern(image, "repeat") ?? null;
-}
-
-/** The thin saffron/white/leaf accent bar for the "tiranga" frame, echoing the footer's flag stripe. */
-function drawFlagStripe(ctx: CanvasRenderingContext2D, x: number, y: number, w: number) {
-  const stripeH = 10;
-  const third = w / 3;
-  ctx.fillStyle = "#ff9933";
-  ctx.fillRect(x, y, third, stripeH);
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(x + third, y, third, stripeH);
-  ctx.fillStyle = "#138808";
-  ctx.fillRect(x + third * 2, y, w - third * 2, stripeH);
-}
-
-/** A hand-drawn squiggle doodle near the bottom of the photo — matches the live preview's SVG
- * wave path, scaled to the photo's own width/height. */
-function drawSwirl(
-  ctx: CanvasRenderingContext2D,
-  color: string,
-  x: number,
-  y: number,
-  w: number,
-  h: number,
-) {
-  const vbW = 200;
-  const vbH = 40;
-  const scale = (w * 0.7) / vbW;
-  const originX = x + w * 0.15;
-  const originY = y + h * 0.94 - vbH * scale;
-  const p = (vx: number, vy: number): [number, number] => [
-    originX + vx * scale,
-    originY + vy * scale,
-  ];
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 7 * scale;
-  ctx.lineCap = "round";
-  ctx.beginPath();
-  ctx.moveTo(...p(5, 20));
-  ctx.quadraticCurveTo(...p(30, 2), ...p(55, 20));
-  ctx.quadraticCurveTo(...p(80, 38), ...p(105, 20));
-  ctx.quadraticCurveTo(...p(130, 2), ...p(155, 20));
-  ctx.quadraticCurveTo(...p(180, 38), ...p(195, 20));
-  ctx.stroke();
-  ctx.restore();
 }
 
 /** Draws each placed sticker over the photo at its relative position/size — matches the live
- * preview's StickerLayer geometry (coordinates and size are both fractions of the photo itself). */
-function drawStickers(
+ * preview's StickerLayer geometry (coordinates and size are both fractions of the photo itself).
+ * `icons` must be pre-loaded, one per entry in `stickers`, in the same order. */
+function drawStickerIcons(
   ctx: CanvasRenderingContext2D,
   stickers: PlacedSticker[],
+  icons: HTMLImageElement[],
   x: number,
   y: number,
   w: number,
   h: number,
 ) {
-  ctx.save();
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  for (const sticker of stickers) {
-    ctx.font = `${Math.round(sticker.size * w)}px sans-serif`;
-    ctx.fillText(sticker.emoji, x + sticker.x * w, y + sticker.y * h);
-  }
-  ctx.restore();
+  stickers.forEach((sticker, i) => {
+    const icon = icons[i];
+    if (!icon) return;
+    const size = sticker.size * w;
+    ctx.drawImage(icon, x + sticker.x * w - size / 2, y + sticker.y * h - size / 2, size, size);
+  });
 }
 
 function drawPhoto(
@@ -255,26 +219,34 @@ export interface QuickPolaroid {
   photo: string;
   /** Width divided by height. */
   aspect: number;
+  /** Empty leaves the print with no caption at all — there is no implicit placeholder text. */
   caption: string;
   /** Already formatted (e.g. "Oct 3"); omit to leave the date off the print entirely. */
   timestamp?: string;
   stickers?: PlacedSticker[];
+  /** A CSS font-family value, e.g. '"Dancing Script", cursive' — see src/lib/captionFonts.ts. */
+  captionFontFamily?: string;
+  /** Caption size in the live preview's own px scale (default 26) — scaled up for this canvas. */
+  captionSize?: number;
+  /** Overrides the frame's own caption color when set. */
+  captionColor?: string;
 }
 
 /** Renders a polaroid from any photo — no score/moves line, since there is no puzzle behind it —
- * for the no-game "make a polaroid" tool. Caption and optional date only, plus the PinchPop mark.
- * `frame` (see src/lib/frames.ts) controls the frame's own color, border, and caption color. */
+ * for the no-game "make a polaroid" tool. `frame` (see src/lib/frames.ts) controls the frame's
+ * own color/gradient, border, and default caption color. */
 export async function renderQuickPolaroidBlob(
   input: QuickPolaroid,
   filterCss: string,
   frame: FramePreset,
 ): Promise<Blob> {
-  const [picture, pattern] = await Promise.all([
+  const stickers = input.stickers ?? [];
+  const [picture, stickerIcons] = await Promise.all([
     loadImage(input.photo).then((image) => ({
       image,
       aspect: Math.min(1.4, Math.max(0.75, input.aspect)),
     })),
-    patternFor(frame),
+    Promise.all(stickers.map((s) => loadImage(stickerIconDataUri(s.iconId)))),
     ensureFonts(),
   ]);
 
@@ -289,43 +261,41 @@ export async function renderQuickPolaroidBlob(
 
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawFrame(
-    ctx,
-    margin,
-    margin,
-    cardW,
-    cardH,
-    pattern ?? frame.frameBg,
-    frame.borderColor,
-    frame.dashedBorder,
-  );
-  if (frame.stripe) drawFlagStripe(ctx, margin, margin, cardW);
+  const bg = frame.gradient
+    ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
+    : frame.frameBg;
+  drawFrame(ctx, margin, margin, cardW, cardH, bg, frame.borderColor);
   drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
-  if (input.stickers && input.stickers.length > 0) {
-    drawStickers(ctx, input.stickers, margin + pad, margin + pad, photoW, photoH);
-  }
-  if (frame.swirlColor) {
-    drawSwirl(ctx, frame.swirlColor, margin + pad, margin + pad, photoW, photoH);
+  if (stickers.length > 0) {
+    drawStickerIcons(ctx, stickers, stickerIcons, margin + pad, margin + pad, photoW, photoH);
   }
 
-  ctx.fillStyle = frame.captionColor;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
   const cx = margin + cardW / 2;
   const captionY = margin + pad + photoH + 96;
-  ctx.font = '700 84px "Caveat", cursive';
-  ctx.fillText(input.caption, cx, captionY);
+  const captionColor = input.captionColor ?? frame.captionColor;
+  const hasCaption = input.caption.length > 0;
+
+  if (hasCaption) {
+    ctx.fillStyle = captionColor;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
+    const size = Math.round((input.captionSize ?? 26) * CAPTION_SCALE);
+    ctx.font = `700 ${size}px ${input.captionFontFamily ?? '"Caveat", cursive'}`;
+    ctx.fillText(input.caption, cx, captionY);
+  }
 
   if (input.timestamp) {
+    ctx.textAlign = "center";
+    ctx.textBaseline = "alphabetic";
     ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
-    ctx.fillStyle = frame.captionColor;
-    ctx.fillText(input.timestamp, cx, captionY + 62);
+    ctx.fillStyle = captionColor;
+    ctx.fillText(input.timestamp, cx, hasCaption ? captionY + 62 : captionY);
   }
 
   ctx.textAlign = "right";
-  ctx.font = '800 30px "Unbounded", system-ui, sans-serif';
-  ctx.fillStyle = frame.captionColor;
-  ctx.fillText("PinchPop", margin + cardW - pad, margin + cardH - 34);
+  ctx.font = '700 40px "Dancing Script", cursive';
+  ctx.fillStyle = captionColor;
+  ctx.fillText("PinchPop", margin + cardW - pad, margin + cardH - 30);
   return toBlob(canvas);
 }
 

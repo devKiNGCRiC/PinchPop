@@ -1,7 +1,7 @@
-import { STICKER_EMOJIS } from "@/lib/stickers";
+import { STICKER_ICONS, stickerIconDataUri } from "@/lib/stickerIcons";
 
 interface StickerPickerProps {
-  onAdd: (emoji: string) => void;
+  onAdd: (iconId: string) => void;
   /** Shown as a "Clear" link next to the label when there's something to clear. */
   onClear?: () => void;
 }
@@ -20,15 +20,15 @@ export function StickerPicker({ onAdd, onClear }: StickerPickerProps) {
         </button>
       ) : null}
       <div className="flex max-w-full flex-wrap gap-2">
-        {STICKER_EMOJIS.map((emoji) => (
+        {STICKER_ICONS.map((icon) => (
           <button
-            key={emoji}
+            key={icon.id}
             type="button"
-            onClick={() => onAdd(emoji)}
-            aria-label={`Add ${emoji} sticker`}
-            className="pop sticker flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-white text-2xl"
+            onClick={() => onAdd(icon.id)}
+            aria-label={`Add ${icon.label} sticker`}
+            className="pop sticker flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-white p-2"
           >
-            {emoji}
+            <img src={stickerIconDataUri(icon.id)} alt="" className="size-full" />
           </button>
         ))}
       </div>

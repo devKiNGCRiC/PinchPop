@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { Download, ImagePlus, Share2 } from "lucide-react";
 
+import { CaptionStylePicker } from "@/components/CaptionStylePicker";
 import { Chakra } from "@/components/Chakra";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { FilterPicker } from "@/components/FilterPicker";
@@ -15,6 +16,12 @@ import {
   toSavedPhoto,
   UPLOAD_MAX_BYTES,
 } from "@/lib/camera/effects";
+import {
+  CAPTION_FONTS,
+  captionFontFor,
+  DEFAULT_CAPTION_FONT_ID,
+  DEFAULT_CAPTION_SIZE,
+} from "@/lib/captionFonts";
 import { downloadBlob, renderQuickPolaroidBlob, shareOrDownload } from "@/lib/export";
 import { DEFAULT_FILTER_ID, filterCssFor, FILTER_PRESETS } from "@/lib/filters";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
@@ -40,19 +47,19 @@ export default function PolaroidMakerPage() {
   const [caption, setCaption] = useState("");
   const [showDate, setShowDate] = useState(false);
   const [stickers, setStickers] = useState<PlacedSticker[]>([]);
+  const [captionFontId, setCaptionFontId] = useState(DEFAULT_CAPTION_FONT_ID);
+  const [captionSize, setCaptionSize] = useState(DEFAULT_CAPTION_SIZE);
+  // null means "use the frame's own caption color" — only set once the player picks one explicitly.
+  const [captionColorOverride, setCaptionColorOverride] = useState<string | null>(null);
   // Computed once — "today" for the life of this page view, not re-read on every render.
   const [today] = useState(() => formatDate(Date.now()));
   const [busy, setBusy] = useState<Busy>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
-  function handleFrameChange(id: string) {
-    setFrameId(id);
-    const preset = frameFor(id);
-    if (preset.defaultStickers && stickers.length === 0) {
-      setStickers(preset.defaultStickers.map((s) => ({ ...s, id: crypto.randomUUID() })));
-    }
-  }
+  const trimmedCaption = caption.trim();
+  const frame = frameFor(frameId);
+  const captionColor = captionColorOverride ?? frame.captionColor;
 
   async function handleFile(file: File) {
     setError("");
@@ -85,12 +92,15 @@ export default function PolaroidMakerPage() {
         {
           photo: photo.dataUrl,
           aspect: photo.aspect,
-          caption: caption.trim() || "your moment",
+          caption: trimmedCaption,
           timestamp: showDate ? today : undefined,
           stickers,
+          captionFontFamily: captionFontFor(captionFontId).family,
+          captionSize,
+          captionColor,
         },
         filterCssFor(filterId),
-        frameFor(frameId),
+        frame,
       );
       if (kind === "download") {
         downloadBlob(blob, "pinchpop-polaroid.png");
@@ -137,11 +147,14 @@ export default function PolaroidMakerPage() {
               artId="camera"
               photo={photo.dataUrl}
               aspect={photo.aspect}
-              caption={caption.trim() || "your moment"}
+              caption={trimmedCaption}
               tilt={-2}
               tape
               filter={filterCssFor(filterId)}
               frameId={frameId}
+              captionFontId={captionFontId}
+              captionSize={captionSize}
+              captionColor={captionColorOverride ?? undefined}
               stickers={stickers}
               editableStickers
               onStickersChange={setStickers}
@@ -149,7 +162,7 @@ export default function PolaroidMakerPage() {
               {showDate ? (
                 <span
                   className="mt-1 text-sm font-semibold opacity-75"
-                  style={{ color: frameFor(frameId).captionColor }}
+                  style={{ color: captionColor }}
                 >
                   {today}
                 </span>
@@ -225,8 +238,8 @@ export default function PolaroidMakerPage() {
               </label>
 
               <div className="mt-6 flex flex-col gap-3">
-                <CollapsibleSection title="Frame" summary={frameFor(frameId).label} defaultOpen>
-                  <FramePicker value={frameId} onChange={handleFrameChange} />
+                <CollapsibleSection title="Frame" summary={frame.label} defaultOpen>
+                  <FramePicker value={frameId} onChange={setFrameId} />
                 </CollapsibleSection>
 
                 <CollapsibleSection
@@ -237,11 +250,25 @@ export default function PolaroidMakerPage() {
                 </CollapsibleSection>
 
                 <CollapsibleSection
+                  title="Caption style"
+                  summary={CAPTION_FONTS.find((f) => f.id === captionFontId)?.label}
+                >
+                  <CaptionStylePicker
+                    fontId={captionFontId}
+                    onFontChange={setCaptionFontId}
+                    size={captionSize}
+                    onSizeChange={setCaptionSize}
+                    color={captionColor}
+                    onColorChange={setCaptionColorOverride}
+                  />
+                </CollapsibleSection>
+
+                <CollapsibleSection
                   title="Stickers"
                   summary={stickers.length > 0 ? `${stickers.length} placed` : undefined}
                 >
                   <StickerPicker
-                    onAdd={(emoji) => setStickers((prev) => [...prev, createSticker(emoji)])}
+                    onAdd={(iconId) => setStickers((prev) => [...prev, createSticker(iconId)])}
                     onClear={stickers.length > 0 ? () => setStickers([]) : undefined}
                   />
                 </CollapsibleSection>
@@ -267,8 +294,8 @@ export default function PolaroidMakerPage() {
             </>
           ) : (
             <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — 10 frames, 12 filters, stickers and a caption turn
-              it into an instant print you can download or share.
+              Pick a photo on the left to start — 10 frames, 12 filters, stickers, custom type and a
+              caption turn it into an instant print you can download or share.
             </p>
           )}
         </div>
