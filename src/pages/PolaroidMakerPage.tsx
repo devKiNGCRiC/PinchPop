@@ -7,8 +7,8 @@ import { PopButton } from "@/components/PopButton";
 import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
 import {
-  capturePhotoFromImage,
   loadImageFile,
+  preparePlainPhoto,
   toSavedPhoto,
   UPLOAD_MAX_BYTES,
 } from "@/lib/camera/effects";
@@ -52,8 +52,7 @@ export default function PolaroidMakerPage() {
     setBusy("preparing");
     try {
       const image = await loadImageFile(file);
-      const captured = capturePhotoFromImage(image);
-      setPhoto(toSavedPhoto(captured.color));
+      setPhoto(toSavedPhoto(preparePlainPhoto(image)));
     } catch {
       setError("Could not read that photo. Please try another.");
     } finally {

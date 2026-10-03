@@ -140,6 +140,17 @@ export function capturePhotoFromImage(image: HTMLImageElement): CapturedPhoto {
   return processFrame(frame, { x: 0, y: 0, width: frame.width, height: frame.height });
 }
 
+/** Resizes an uploaded photo like capturePhotoFromImage, but without baking in the photobooth
+ * grain/contrast/vignette — for the no-game polaroid tool, where the chosen filter preset (which
+ * includes a literal "none") is meant to be the only styling applied, so "Default" actually looks
+ * like the photo that was uploaded. */
+export function preparePlainPhoto(image: HTMLImageElement): HTMLCanvasElement {
+  const scale = Math.min(1, UPLOAD_MAX_SIDE / Math.max(image.naturalWidth, image.naturalHeight));
+  const canvas = makeCanvas(image.naturalWidth * scale, image.naturalHeight * scale);
+  highQualityContext(canvas).drawImage(image, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
 /** Cuts the black-and-white photo into one canvas per puzzle piece, indexed by piece id. */
 export function slicePieces(source: HTMLCanvasElement, puzzle: Puzzle): HTMLCanvasElement[] {
   return puzzle.pieces.map((piece) => {
