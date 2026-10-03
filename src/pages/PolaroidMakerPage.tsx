@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Download, ImagePlus, Share2 } from "lucide-react";
 
 import { Chakra } from "@/components/Chakra";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { FilterPicker } from "@/components/FilterPicker";
 import { FramePicker } from "@/components/FramePicker";
 import { PopButton } from "@/components/PopButton";
@@ -15,7 +16,7 @@ import {
   UPLOAD_MAX_BYTES,
 } from "@/lib/camera/effects";
 import { downloadBlob, renderQuickPolaroidBlob, shareOrDownload } from "@/lib/export";
-import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
+import { DEFAULT_FILTER_ID, filterCssFor, FILTER_PRESETS } from "@/lib/filters";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { formatDate } from "@/lib/stats";
 import { createSticker } from "@/lib/stickers";
@@ -223,19 +224,27 @@ export default function PolaroidMakerPage() {
                 Add today's date
               </label>
 
-              <div className="mt-6">
-                <FramePicker value={frameId} onChange={handleFrameChange} />
-              </div>
+              <div className="mt-6 flex flex-col gap-3">
+                <CollapsibleSection title="Frame" summary={frameFor(frameId).label} defaultOpen>
+                  <FramePicker value={frameId} onChange={handleFrameChange} />
+                </CollapsibleSection>
 
-              <div className="mt-6">
-                <FilterPicker value={filterId} onChange={setFilterId} />
-              </div>
+                <CollapsibleSection
+                  title="Filter"
+                  summary={FILTER_PRESETS.find((f) => f.id === filterId)?.label}
+                >
+                  <FilterPicker value={filterId} onChange={setFilterId} />
+                </CollapsibleSection>
 
-              <div className="mt-6">
-                <StickerPicker
-                  onAdd={(emoji) => setStickers((prev) => [...prev, createSticker(emoji)])}
-                  onClear={stickers.length > 0 ? () => setStickers([]) : undefined}
-                />
+                <CollapsibleSection
+                  title="Stickers"
+                  summary={stickers.length > 0 ? `${stickers.length} placed` : undefined}
+                >
+                  <StickerPicker
+                    onAdd={(emoji) => setStickers((prev) => [...prev, createSticker(emoji)])}
+                    onClear={stickers.length > 0 ? () => setStickers([]) : undefined}
+                  />
+                </CollapsibleSection>
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">

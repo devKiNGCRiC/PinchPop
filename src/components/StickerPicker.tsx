@@ -10,19 +10,16 @@ interface StickerPickerProps {
 export function StickerPicker({ onAdd, onClear }: StickerPickerProps) {
   return (
     <div>
-      <div className="flex items-center justify-between gap-3">
-        <p className="text-sm font-semibold text-ink-soft">Stickers</p>
-        {onClear ? (
-          <button
-            type="button"
-            onClick={onClear}
-            className="text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
-          >
-            Clear stickers
-          </button>
-        ) : null}
-      </div>
-      <div className="mt-2 flex max-w-full flex-wrap gap-2">
+      {onClear ? (
+        <button
+          type="button"
+          onClick={onClear}
+          className="mb-2 text-sm font-semibold text-ink-soft underline underline-offset-4 hover:text-ink"
+        >
+          Clear stickers
+        </button>
+      ) : null}
+      <div className="flex max-w-full flex-wrap gap-2">
         {STICKER_EMOJIS.map((emoji) => (
           <button
             key={emoji}

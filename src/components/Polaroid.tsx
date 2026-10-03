@@ -120,6 +120,21 @@ export function Polaroid({
             onChange={onStickersChange}
           />
         ) : null}
+        {frame.swirlColor ? (
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 200 40"
+            className="pointer-events-none absolute bottom-[6%] left-[15%] w-[70%]"
+          >
+            <path
+              d="M5,20 Q30,2 55,20 T105,20 T155,20 T195,20"
+              fill="none"
+              stroke={frame.swirlColor}
+              strokeWidth="7"
+              strokeLinecap="round"
+            />
+          </svg>
+        ) : null}
       </div>
       {postmark ? (
         <Postmark

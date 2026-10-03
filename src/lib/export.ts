@@ -136,6 +136,39 @@ function drawFlagStripe(ctx: CanvasRenderingContext2D, x: number, y: number, w: 
   ctx.fillRect(x + third * 2, y, w - third * 2, stripeH);
 }
 
+/** A hand-drawn squiggle doodle near the bottom of the photo — matches the live preview's SVG
+ * wave path, scaled to the photo's own width/height. */
+function drawSwirl(
+  ctx: CanvasRenderingContext2D,
+  color: string,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+) {
+  const vbW = 200;
+  const vbH = 40;
+  const scale = (w * 0.7) / vbW;
+  const originX = x + w * 0.15;
+  const originY = y + h * 0.94 - vbH * scale;
+  const p = (vx: number, vy: number): [number, number] => [
+    originX + vx * scale,
+    originY + vy * scale,
+  ];
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 7 * scale;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(...p(5, 20));
+  ctx.quadraticCurveTo(...p(30, 2), ...p(55, 20));
+  ctx.quadraticCurveTo(...p(80, 38), ...p(105, 20));
+  ctx.quadraticCurveTo(...p(130, 2), ...p(155, 20));
+  ctx.quadraticCurveTo(...p(180, 38), ...p(195, 20));
+  ctx.stroke();
+  ctx.restore();
+}
+
 /** Draws each placed sticker over the photo at its relative position/size — matches the live
  * preview's StickerLayer geometry (coordinates and size are both fractions of the photo itself). */
 function drawStickers(
@@ -270,6 +303,9 @@ export async function renderQuickPolaroidBlob(
   drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
   if (input.stickers && input.stickers.length > 0) {
     drawStickers(ctx, input.stickers, margin + pad, margin + pad, photoW, photoH);
+  }
+  if (frame.swirlColor) {
+    drawSwirl(ctx, frame.swirlColor, margin + pad, margin + pad, photoW, photoH);
   }
 
   ctx.fillStyle = frame.captionColor;

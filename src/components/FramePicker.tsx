@@ -11,8 +11,7 @@ interface FramePickerProps {
 export function FramePicker({ value, onChange }: FramePickerProps) {
   return (
     <div>
-      <p className="text-sm font-semibold text-ink-soft">Frame</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2">
         {FRAME_PRESETS.map((preset) => (
           <button
             key={preset.id}

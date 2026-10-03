@@ -9,6 +9,7 @@ const CHAKRA = "#1c34a6";
 const MARIGOLD = "#ffc61a";
 const SINDOOR = "#d7263d";
 const CORAL = "#ff6b5b";
+const LEAF = "#138808";
 
 export interface DefaultSticker {
   emoji: string;
@@ -32,6 +33,8 @@ export interface FramePreset {
   stripe?: boolean;
   /** A dashed rather than solid border, for a lighter decorative touch. */
   dashedBorder?: boolean;
+  /** A hand-drawn squiggle doodle near the bottom of the photo. */
+  swirlColor?: string;
   /** Placed automatically the first time this frame is picked on a photo with no stickers yet —
    * never overwrites stickers someone has already placed. */
   defaultStickers?: DefaultSticker[];
@@ -52,14 +55,15 @@ export const FRAME_PRESETS: FramePreset[] = [
     id: "candy-stripe",
     label: "Candy Stripe",
     frameBg: "#ffffff",
-    pattern: "stripes",
+    pattern: "diagonal-stripes",
     patternColor: CHAKRA,
     borderColor: INK,
     captionColor: INK,
     tapeColor: CORAL,
     defaultStickers: [
-      { emoji: "⭐", x: 0.14, y: 0.88, size: 0.13 },
-      { emoji: "⭐", x: 0.3, y: 0.92, size: 0.1 },
+      { emoji: "⭐", x: 0.15, y: 0.88, size: 0.14 },
+      { emoji: "🌟", x: 0.32, y: 0.92, size: 0.11 },
+      { emoji: "⭐", x: 0.85, y: 0.9, size: 0.1 },
     ],
   },
   {
@@ -71,9 +75,10 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: INK,
     tapeColor: CLOUD,
+    swirlColor: LEAF,
     defaultStickers: [
-      { emoji: "💖", x: 0.14, y: 0.13, size: 0.15 },
-      { emoji: "💕", x: 0.87, y: 0.86, size: 0.13 },
+      { emoji: "💚", x: 0.13, y: 0.12, size: 0.13 },
+      { emoji: "💖", x: 0.87, y: 0.87, size: 0.2 },
     ],
   },
   {
@@ -86,8 +91,10 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: INK,
     tapeColor: CLOUD,
     defaultStickers: [
-      { emoji: "🌼", x: 0.88, y: 0.12, size: 0.15 },
-      { emoji: "🌸", x: 0.13, y: 0.87, size: 0.14 },
+      { emoji: "🌼", x: 0.86, y: 0.11, size: 0.15 },
+      { emoji: "🌸", x: 0.13, y: 0.14, size: 0.12 },
+      { emoji: "🌷", x: 0.14, y: 0.88, size: 0.14 },
+      { emoji: "🍃", x: 0.32, y: 0.92, size: 0.1 },
     ],
   },
   {
@@ -109,7 +116,10 @@ export const FRAME_PRESETS: FramePreset[] = [
     borderColor: INK,
     captionColor: INK,
     tapeColor: null,
-    defaultStickers: [{ emoji: "🎀", x: 0.5, y: 0.07, size: 0.16 }],
+    defaultStickers: [
+      { emoji: "🎀", x: 0.5, y: 0.07, size: 0.17 },
+      { emoji: "⭐", x: 0.85, y: 0.88, size: 0.11 },
+    ],
   },
   {
     id: "vintage",
