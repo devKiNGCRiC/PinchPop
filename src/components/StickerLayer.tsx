@@ -114,7 +114,8 @@ export function StickerLayer({ stickers, editable = false, onChange }: StickerLa
                 }
                 alt=""
                 draggable={false}
-                className="size-full"
+                className="size-full object-contain"
+                style={{ filter: "drop-shadow(0 3px 3px rgba(17,20,38,0.35))" }}
               />
             </div>
             {selected ? (

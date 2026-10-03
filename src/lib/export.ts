@@ -208,13 +208,19 @@ function drawStickerIcons(
     const dh = dw / (sticker.aspect ?? 1);
     const cx = x + sticker.x * w;
     const cy = y + sticker.y * h;
+    // A soft shadow under every sticker so it reads as placed on the photo rather than flat —
+    // matches the live preview's CSS drop-shadow (see StickerLayer.tsx).
+    ctx.save();
+    ctx.shadowColor = "rgba(17,20,38,0.35)";
+    ctx.shadowBlur = 6;
+    ctx.shadowOffsetY = 4;
     if (sticker.iconId === "banner") {
       drawBannerOnCanvas(ctx, sticker.text ?? "", cx, cy, dw, dh);
-      return;
+    } else {
+      const icon = icons[i];
+      if (icon) ctx.drawImage(icon, cx - dw / 2, cy - dh / 2, dw, dh);
     }
-    const icon = icons[i];
-    if (!icon) return;
-    ctx.drawImage(icon, cx - dw / 2, cy - dh / 2, dw, dh);
+    ctx.restore();
   });
 }
 

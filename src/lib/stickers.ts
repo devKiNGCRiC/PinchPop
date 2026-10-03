@@ -1,4 +1,5 @@
 import { BANNER_ASPECT } from "@/lib/bannerArt";
+import { iconAspectFor } from "@/lib/stickerIcons";
 
 export interface PlacedSticker {
   id: string;
@@ -28,7 +29,13 @@ function randomNearCenter(): { x: number; y: number } {
 /** A new sticker at a slightly randomized spot near center, so adding several in a row doesn't
  * stack them exactly on top of each other before the player drags them apart. */
 export function createSticker(iconId: string): PlacedSticker {
-  return { id: crypto.randomUUID(), iconId, size: DEFAULT_SIZE, ...randomNearCenter() };
+  return {
+    id: crypto.randomUUID(),
+    iconId,
+    size: DEFAULT_SIZE,
+    aspect: iconAspectFor(iconId),
+    ...randomNearCenter(),
+  };
 }
 
 /** A labeled ribbon/banner sticker carrying its own custom text (see src/lib/bannerArt.ts). */

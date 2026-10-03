@@ -1,3 +1,5 @@
+import hibiscusUrl from "@/assets/stickers/hibiscus.svg";
+import satinBowUrl from "@/assets/stickers/satin-bow.svg";
 import { lighten } from "@/lib/color";
 import { tapeStripInner } from "@/lib/tapeArt";
 
@@ -5,8 +7,15 @@ export interface StickerIconDef {
   id: string;
   label: string;
   /** Raw <svg> markup, viewBox 0 0 100 100 — used both as a data URI (DOM <img> and canvas
-   * drawImage) so the picker, live preview and exported image are always pixel-identical. */
-  svg: string;
+   * drawImage) so the picker, live preview and exported image are always pixel-identical. Omitted
+   * when `url` is set instead. */
+  svg?: string;
+  /** A real public-domain (CC0, openclipart.org) illustration file, for the handful of icons
+   * where a hand-drawn shape reads as flat clip-art next to the real thing — recolored to this
+   * app's own palette, but otherwise untouched. Takes priority over `svg` when both are absent/present. */
+  url?: string;
+  /** Width divided by height. Defaults to 1 (square) when omitted. */
+  aspect?: number;
 }
 
 // A soft, muted palette (dusty rose, sage, pale gold, cream) rather than bold cartoon-emoji
@@ -57,12 +66,6 @@ const paw = grad("#dcc6a8");
 const metal = grad("#cbd3de");
 const pinHead = grad("#e3737e");
 const pinPoint = grad("#9aa0ad", "g2");
-// Deliberately more saturated than the muted palette above, with a thick white outline instead
-// of the dark OUTLINE stroke — reads as a die-cut sticker pasted on paper, for frames modeled on
-// bold scrapbook/collage reference photos rather than the soft pastel look used elsewhere.
-const hibiscusPetal = grad("#ec5a82");
-const hibiscusCenter = grad("#ffb703", "g2");
-const satinBow = grad("#9c1f2e");
 
 export const STICKER_ICONS: StickerIconDef[] = [
   {
@@ -236,23 +239,14 @@ export const STICKER_ICONS: StickerIconDef[] = [
   {
     id: "hibiscus",
     label: "Hibiscus",
-    svg: svg(
-      `<defs>${hibiscusPetal.def}${hibiscusCenter.def}</defs>${[0, 72, 144, 216, 288]
-        .map(
-          (a) =>
-            `<ellipse cx="50" cy="26" rx="19" ry="28" fill="${hibiscusPetal.fill}" stroke="#ffffff" stroke-width="5" transform="rotate(${a} 50 50)"/>`,
-        )
-        .join(
-          "",
-        )}<circle cx="50" cy="50" r="12" fill="${hibiscusCenter.fill}" stroke="#ffffff" stroke-width="4"/><line x1="50" y1="50" x2="50" y2="29" stroke="#d7263d" stroke-width="3" stroke-linecap="round"/><circle cx="50" cy="27" r="2.5" fill="#d7263d"/>`,
-    ),
+    url: hibiscusUrl,
+    aspect: 519.48 / 363.65,
   },
   {
     id: "satin-bow",
     label: "Satin bow",
-    svg: svg(
-      `<defs>${satinBow.def}</defs><path d="M50 46 C30 20 5 20 5 42 C5 58 28 54 50 46 Z" fill="${satinBow.fill}" stroke="#3a0d14" stroke-width="2.5" stroke-linejoin="round"/><path d="M50 46 C70 20 95 20 95 42 C95 58 72 54 50 46 Z" fill="${satinBow.fill}" stroke="#3a0d14" stroke-width="2.5" stroke-linejoin="round"/><path d="M50 46 C44 60 40 85 34 96 L46 90 L50 100 L54 90 L66 96 C60 85 56 60 50 46 Z" fill="${satinBow.fill}" stroke="#3a0d14" stroke-width="2.5" stroke-linejoin="round"/><circle cx="50" cy="46" r="10" fill="${satinBow.fill}" stroke="#3a0d14" stroke-width="2.5"/><path d="M20 30 C15 36 15 44 22 48" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round"/><path d="M80 30 C85 36 85 44 78 48" fill="none" stroke="#ffffff" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round"/>`,
-    ),
+    url: satinBowUrl,
+    aspect: 1052.4 / 744.09,
   },
 ];
 
@@ -261,6 +255,12 @@ function svgDataUri(markup: string): string {
 }
 
 export function stickerIconDataUri(id: string): string {
-  const icon = STICKER_ICONS.find((i) => i.id === id);
-  return svgDataUri(icon?.svg ?? STICKER_ICONS[0].svg);
+  const icon = STICKER_ICONS.find((i) => i.id === id) ?? STICKER_ICONS[0];
+  return icon.url ?? svgDataUri(icon.svg ?? "");
+}
+
+/** Width/height for a sticker icon — most hand-drawn icons are square (1); the two real
+ * illustration assets (hibiscus, satin-bow) have their own natural proportions. */
+export function iconAspectFor(id: string): number {
+  return STICKER_ICONS.find((i) => i.id === id)?.aspect ?? 1;
 }

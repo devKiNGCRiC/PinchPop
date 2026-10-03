@@ -37,7 +37,7 @@ export function StickerPicker({ onAdd, onAddBanner, onClear }: StickerPickerProp
             aria-label={`Add ${icon.label} sticker`}
             className="pop sticker flex size-11 shrink-0 items-center justify-center rounded-full border-2 border-ink bg-white p-2"
           >
-            <img src={stickerIconDataUri(icon.id)} alt="" className="size-full" />
+            <img src={stickerIconDataUri(icon.id)} alt="" className="size-full object-contain" />
           </button>
         ))}
       </div>

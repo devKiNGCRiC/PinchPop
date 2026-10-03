@@ -248,9 +248,8 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: INK,
     tapeColor: CLOUD,
     defaultStickers: [
-      { iconId: "hibiscus", x: 0.92, y: 0.05, size: 0.42 },
-      { iconId: "hibiscus", x: 0.05, y: 0.95, size: 0.4 },
-      { iconId: "leaf", x: 0.83, y: 0.23, size: 0.1 },
+      { iconId: "hibiscus", x: 0.88, y: 0.08, size: 0.5 },
+      { iconId: "hibiscus", x: 0.1, y: 0.92, size: 0.48 },
     ],
   },
   {
@@ -261,7 +260,7 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: IVORY,
     tapeColor: null,
     tornEdge: true,
-    defaultStickers: [{ iconId: "satin-bow", x: 0.5, y: 0.045, size: 0.26 }],
+    defaultStickers: [{ iconId: "satin-bow", x: 0.5, y: 0.05, size: 0.4 }],
   },
   {
     id: "noir",

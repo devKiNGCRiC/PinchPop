@@ -29,6 +29,7 @@ import { downloadBlob, renderQuickPolaroidBlob, shareOrDownload } from "@/lib/ex
 import { DEFAULT_FILTER_ID, filterCssFor, FILTER_PRESETS } from "@/lib/filters";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { formatDate } from "@/lib/stats";
+import { iconAspectFor } from "@/lib/stickerIcons";
 import { createBanner, createSticker } from "@/lib/stickers";
 import type { PlacedSticker } from "@/lib/stickers";
 
@@ -75,7 +76,11 @@ export default function PolaroidMakerPage() {
     // over a different frame's decorations tends to clash rather than complement the new look.
     setStickers(
       preset.defaultStickers
-        ? preset.defaultStickers.map((s) => ({ ...s, id: crypto.randomUUID() }))
+        ? preset.defaultStickers.map((s) => ({
+            ...s,
+            id: crypto.randomUUID(),
+            aspect: iconAspectFor(s.iconId),
+          }))
         : [],
     );
   }
