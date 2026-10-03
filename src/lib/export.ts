@@ -3,6 +3,7 @@ import { createElement } from "react";
 import { Art } from "@/components/Art";
 import { getArt } from "@/lib/art";
 import type { FramePreset } from "@/lib/frames";
+import { patternDataUri } from "@/lib/framePatterns";
 import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
 import { formatDate } from "@/lib/stats";
@@ -92,16 +93,17 @@ function drawCover(
   ctx.drawImage(image, (image.width - sw) / 2, (image.height - sh) / 2, sw, sh, x, y, w, h);
 }
 
-/** A sticker-style print: hard shadow, a colored frame, outlined border. The shadow stays ink
- * regardless of the frame's own colors, matching the drop-shadow every sticker in the app uses. */
+/** A sticker-style print: hard shadow, a colored (or patterned) frame, outlined border. The
+ * shadow stays ink regardless of the frame's own colors, matching every sticker in the app. */
 function drawFrame(
   ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   w: number,
   h: number,
-  bg = "#ffffff",
+  bg: string | CanvasPattern = "#ffffff",
   border = INK,
+  dashed = false,
 ) {
   ctx.fillStyle = INK;
   ctx.fillRect(x + 12, y + 12, w, h);
@@ -109,7 +111,17 @@ function drawFrame(
   ctx.fillRect(x, y, w, h);
   ctx.lineWidth = 6;
   ctx.strokeStyle = border;
+  ctx.setLineDash(dashed ? [10, 8] : []);
   ctx.strokeRect(x, y, w, h);
+  ctx.setLineDash([]);
+}
+
+/** Loads a frame's tiled pattern (see src/lib/framePatterns.ts) as a repeating CanvasPattern, or
+ * null for a frame with a flat color instead. */
+async function patternFor(frame: FramePreset): Promise<CanvasPattern | null> {
+  if (!frame.pattern || !frame.patternColor) return null;
+  const image = await loadImage(patternDataUri(frame.pattern, frame.frameBg, frame.patternColor));
+  return document.createElement("canvas").getContext("2d")?.createPattern(image, "repeat") ?? null;
 }
 
 /** The thin saffron/white/leaf accent bar for the "tiranga" frame, echoing the footer's flag stripe. */
@@ -224,11 +236,12 @@ export async function renderQuickPolaroidBlob(
   filterCss: string,
   frame: FramePreset,
 ): Promise<Blob> {
-  const [picture] = await Promise.all([
+  const [picture, pattern] = await Promise.all([
     loadImage(input.photo).then((image) => ({
       image,
       aspect: Math.min(1.4, Math.max(0.75, input.aspect)),
     })),
+    patternFor(frame),
     ensureFonts(),
   ]);
 
@@ -243,7 +256,16 @@ export async function renderQuickPolaroidBlob(
 
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawFrame(ctx, margin, margin, cardW, cardH, frame.frameBg, frame.borderColor);
+  drawFrame(
+    ctx,
+    margin,
+    margin,
+    cardW,
+    cardH,
+    pattern ?? frame.frameBg,
+    frame.borderColor,
+    frame.dashedBorder,
+  );
   if (frame.stripe) drawFlagStripe(ctx, margin, margin, cardW);
   drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
   if (input.stickers && input.stickers.length > 0) {

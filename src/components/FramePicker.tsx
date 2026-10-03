@@ -1,4 +1,5 @@
 import { FRAME_PRESETS } from "@/lib/frames";
+import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
 import { cn } from "@/lib/utils";
 
 interface FramePickerProps {
@@ -26,7 +27,14 @@ export function FramePicker({ value, onChange }: FramePickerProps) {
             <span
               aria-hidden="true"
               className="size-6 shrink-0 rounded-full border-2 border-ink"
-              style={{ background: preset.frameBg }}
+              style={
+                preset.pattern && preset.patternColor
+                  ? {
+                      backgroundImage: `url("${patternDataUri(preset.pattern, preset.frameBg, preset.patternColor)}")`,
+                      backgroundSize: `${PATTERN_TILE_SIZE / 2}px ${PATTERN_TILE_SIZE / 2}px`,
+                    }
+                  : { background: preset.frameBg }
+              }
             />
             {preset.label}
           </button>

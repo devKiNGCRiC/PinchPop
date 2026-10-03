@@ -45,6 +45,14 @@ export default function PolaroidMakerPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
+  function handleFrameChange(id: string) {
+    setFrameId(id);
+    const preset = frameFor(id);
+    if (preset.defaultStickers && stickers.length === 0) {
+      setStickers(preset.defaultStickers.map((s) => ({ ...s, id: crypto.randomUUID() })));
+    }
+  }
+
   async function handleFile(file: File) {
     setError("");
     setMessage("");
@@ -216,7 +224,7 @@ export default function PolaroidMakerPage() {
               </label>
 
               <div className="mt-6">
-                <FramePicker value={frameId} onChange={setFrameId} />
+                <FramePicker value={frameId} onChange={handleFrameChange} />
               </div>
 
               <div className="mt-6">

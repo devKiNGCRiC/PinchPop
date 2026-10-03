@@ -4,6 +4,7 @@ import { Art } from "@/components/Art";
 import { StickerLayer } from "@/components/StickerLayer";
 import { Postmark } from "@/components/Stamp";
 import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
+import { patternDataUri, PATTERN_TILE_SIZE } from "@/lib/framePatterns";
 import type { PlacedSticker } from "@/lib/stickers";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +58,14 @@ export function Polaroid({
   const style = (develop ? { "--tilt": `${tilt}deg` } : { rotate: `${tilt}deg` }) as CSSProperties;
   const frame = frameFor(frameId);
   const showTape = tape && frame.tapeColor !== null;
+  const frameStyle: CSSProperties =
+    frame.pattern && frame.patternColor
+      ? {
+          backgroundImage: `url("${patternDataUri(frame.pattern, frame.frameBg, frame.patternColor)}")`,
+          backgroundSize: `${PATTERN_TILE_SIZE}px ${PATTERN_TILE_SIZE}px`,
+          backgroundRepeat: "repeat",
+        }
+      : { background: frame.frameBg };
 
   return (
     <figure
@@ -65,7 +74,12 @@ export function Polaroid({
         develop && "animate-print-in",
         className,
       )}
-      style={{ ...style, background: frame.frameBg, borderColor: frame.borderColor }}
+      style={{
+        ...style,
+        ...frameStyle,
+        borderColor: frame.borderColor,
+        borderStyle: frame.dashedBorder ? "dashed" : undefined,
+      }}
     >
       {frame.stripe ? (
         <div
