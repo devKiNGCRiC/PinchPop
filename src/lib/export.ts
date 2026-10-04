@@ -17,6 +17,7 @@ import { traceTornEdge } from "@/lib/tornEdge";
 const INK = "#111426";
 const IVORY = "#fff6e6";
 const MARIGOLD = "#ffc61a";
+const CORAL = "#ff6b5b";
 /** Export's caption-size baseline: the live preview's default 26px caption maps to 84px on the
  * fixed 880-wide export canvas — preserves the exact scale this was already tuned at. */
 const CAPTION_SCALE = 84 / 26;
@@ -322,14 +323,341 @@ export interface QuickPolaroid {
   captionBgColor?: string;
 }
 
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface QuickRender {
+  canvas: HTMLCanvasElement;
+  /** The photo's own rectangle on the canvas — sticker positions are fractions of this. */
+  photo: Rect;
+}
+
+const MARGIN = 64;
+const CARD_W = 880;
+const FILM_BAND = 96;
+const CASSETTE_BAND = 170;
+const NOTE_PAPER = "#fdf8ec";
+const CASSETTE_SHELL = "#f6ecd6";
+const STICKY = "#ffe27a";
+const STICKY_CURL = "#f2c94c";
+
+interface QuickLayout {
+  canvasW: number;
+  canvasH: number;
+  card: Rect;
+  photo: Rect;
+  captionY: number;
+  tsY: number;
+}
+
+function quickLayout(
+  frame: FramePreset,
+  aspect: number,
+  hasCaption: boolean,
+  hasTs: boolean,
+): QuickLayout {
+  const x = MARGIN;
+  const y = MARGIN;
+  const captionGap = hasCaption ? 62 : 0;
+  let card: Rect;
+  let photo: Rect;
+  let captionY: number;
+  let tsY: number;
+
+  if (frame.design === "film") {
+    const photoW = 760;
+    const photoH = Math.round(photoW / aspect);
+    photo = { x: x + 60, y: y + FILM_BAND + 44, w: photoW, h: photoH };
+    captionY = photo.y + photoH + 100;
+    tsY = captionY + captionGap;
+    card = {
+      x,
+      y,
+      w: CARD_W,
+      h: FILM_BAND + 44 + photoH + (hasTs ? 190 : 140) + FILM_BAND,
+    };
+  } else if (frame.design === "notebook") {
+    const photoW = 760;
+    const photoH = Math.round(photoW / aspect);
+    photo = { x: x + 60, y: y + 84, w: photoW, h: photoH };
+    captionY = photo.y + photoH + 110;
+    tsY = captionY + captionGap;
+    card = { x, y, w: CARD_W, h: 84 + photoH + (hasTs ? 200 : 150) + 50 };
+  } else if (frame.design === "cassette") {
+    const photoW = 560;
+    const photoH = Math.round(photoW / aspect);
+    photo = { x: x + (CARD_W - photoW) / 2, y: y + CASSETTE_BAND + 56, w: photoW, h: photoH };
+    captionY = y + CASSETTE_BAND / 2 + 22;
+    tsY = photo.y + photoH + 44;
+    card = { x, y, w: CARD_W, h: CASSETTE_BAND + 56 + photoH + 170 };
+  } else if (frame.design === "sticky") {
+    const photoW = 700;
+    const photoH = Math.round(photoW / aspect);
+    photo = { x: x + 90, y: y + 90, w: photoW, h: photoH };
+    captionY = photo.y + photoH + 118;
+    tsY = captionY + captionGap;
+    card = { x, y, w: CARD_W, h: 90 + photoH + (hasTs ? 200 : 150) + 40 };
+  } else {
+    const pad = 44;
+    const photoW = CARD_W - pad * 2;
+    const photoH = Math.round(photoW / aspect);
+    photo = { x: x + pad, y: y + pad, w: photoW, h: photoH };
+    captionY = photo.y + photoH + 96;
+    tsY = captionY + captionGap;
+    card = { x, y, w: CARD_W, h: pad + photoH + (hasTs ? 230 : 170) };
+  }
+
+  return {
+    canvasW: card.w + MARGIN * 2 + 12,
+    canvasH: card.h + MARGIN * 2 + 12,
+    card,
+    photo,
+    captionY,
+    tsY,
+  };
+}
+
+interface DrawArgs {
+  ctx: CanvasRenderingContext2D;
+  input: QuickPolaroid;
+  frame: FramePreset;
+  picture: Picture;
+  filterCss: string;
+  pattern: CanvasPattern | null;
+  L: QuickLayout;
+}
+
+function drawCaption(
+  ctx: CanvasRenderingContext2D,
+  input: QuickPolaroid,
+  cx: number,
+  y: number,
+  color: string,
+): void {
+  if (input.caption.length === 0) return;
+  const size = Math.round((input.captionSize ?? 26) * CAPTION_SCALE);
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `700 ${size}px ${input.captionFontFamily ?? '"Caveat", cursive'}`;
+  if (input.captionBackground === "tape") {
+    const textWidth = ctx.measureText(input.caption).width;
+    const padX = size * 0.35;
+    const padY = size * 0.22;
+    const rectW = textWidth + padX * 2;
+    const rectH = size * 0.78 + padY * 2;
+    const tape = input.captionBgColor ?? "#ffc61a";
+    drawTapeStrip(ctx, cx, y - size * 0.3, rectW, rectH, lighten(tape, 0.15), tape, -0.025);
+  }
+  ctx.fillStyle = color;
+  ctx.fillText(input.caption, cx, y);
+  ctx.restore();
+}
+
+function drawCaptionAndDate(a: DrawArgs, color: string): void {
+  const cx = a.L.card.x + a.L.card.w / 2;
+  drawCaption(a.ctx, a.input, cx, a.L.captionY, color);
+  if (!a.input.timestamp) return;
+  a.ctx.save();
+  a.ctx.textAlign = "center";
+  a.ctx.textBaseline = "alphabetic";
+  a.ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
+  a.ctx.fillStyle = color;
+  a.ctx.fillText(a.input.timestamp, cx, a.L.tsY);
+  a.ctx.restore();
+}
+
+function drawBrand(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  color: string,
+  align: CanvasTextAlign,
+): void {
+  ctx.save();
+  ctx.textAlign = align;
+  ctx.textBaseline = "alphabetic";
+  ctx.font = '700 40px "Dancing Script", cursive';
+  ctx.fillStyle = color;
+  ctx.fillText("PinchPop", x, y);
+  ctx.restore();
+}
+
+function drawClassic(a: DrawArgs): void {
+  const { ctx, frame, L } = a;
+  const bg = frame.gradient
+    ? diagonalGradient(ctx, frame.gradient, L.card.x, L.card.y, L.card.w, L.card.h)
+    : frame.frameBg;
+  drawFrame(
+    ctx,
+    L.card.x,
+    L.card.y,
+    L.card.w,
+    L.card.h,
+    bg,
+    frame.borderColor,
+    a.pattern ?? undefined,
+  );
+  drawPhoto(
+    ctx,
+    a.picture,
+    L.photo.x,
+    L.photo.y,
+    L.photo.w,
+    L.photo.h,
+    a.filterCss,
+    frame.tornEdge ? frame.borderColor : undefined,
+  );
+}
+
+function drawFilm(a: DrawArgs): void {
+  const { ctx, L, frame } = a;
+  const { card, photo } = L;
+  drawFrame(ctx, card.x, card.y, card.w, card.h, INK, INK);
+  ctx.fillStyle = IVORY;
+  for (const cy of [card.y + 20, card.y + card.h - 20]) {
+    for (let hx = card.x + 34; hx < card.x + card.w - 34; hx += 56) {
+      ctx.fillRect(hx, cy - 10, 28, 20);
+    }
+  }
+  drawPhoto(ctx, a.picture, photo.x, photo.y, photo.w, photo.h, a.filterCss);
+  ctx.strokeStyle = IVORY;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(photo.x - 4, photo.y - 4, photo.w + 8, photo.h + 8);
+  drawCaptionAndDate(a, a.input.captionColor ?? frame.captionColor);
+  ctx.save();
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.font = '700 30px "Bricolage Grotesque", system-ui, sans-serif';
+  ctx.fillStyle = MARIGOLD;
+  ctx.fillText("12A", card.x + 60, card.y + card.h - 40);
+  ctx.restore();
+  drawBrand(ctx, card.x + card.w - 60, card.y + card.h - 40, IVORY, "right");
+}
+
+function drawNotebook(a: DrawArgs): void {
+  const { ctx, L } = a;
+  const { card, photo } = L;
+  drawFrame(ctx, card.x, card.y, card.w, card.h, NOTE_PAPER, INK);
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(card.x, card.y, card.w, card.h);
+  ctx.clip();
+  ctx.strokeStyle = "#cfe0f5";
+  ctx.lineWidth = 2;
+  for (let y = card.y + 120; y < card.y + card.h; y += 44) {
+    ctx.beginPath();
+    ctx.moveTo(card.x, y);
+    ctx.lineTo(card.x + card.w, y);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "#f29b9b";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(card.x + 48, card.y);
+  ctx.lineTo(card.x + 48, card.y + card.h);
+  ctx.stroke();
+  ctx.restore();
+  ctx.fillStyle = "rgba(17,20,38,0.18)";
+  ctx.fillRect(photo.x + 8, photo.y + 10, photo.w, photo.h);
+  drawPhoto(ctx, a.picture, photo.x, photo.y, photo.w, photo.h, a.filterCss);
+  drawTapeStrip(ctx, photo.x + 40, photo.y + 6, 150, 46, lighten(MARIGOLD, 0.15), MARIGOLD, -0.6);
+  drawTapeStrip(
+    ctx,
+    photo.x + photo.w - 40,
+    photo.y + 6,
+    150,
+    46,
+    lighten(CORAL, 0.15),
+    CORAL,
+    0.55,
+  );
+  drawCaptionAndDate(a, a.input.captionColor ?? a.frame.captionColor);
+  drawBrand(ctx, card.x + card.w - 44, card.y + card.h - 30, INK, "right");
+}
+
+function drawCassette(a: DrawArgs): void {
+  const { ctx, L } = a;
+  const { card, photo } = L;
+  drawFrame(ctx, card.x, card.y, card.w, card.h, CASSETTE_SHELL, INK);
+  ctx.fillStyle = CORAL;
+  ctx.fillRect(card.x, card.y, card.w, CASSETTE_BAND);
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(card.x, card.y + CASSETTE_BAND);
+  ctx.lineTo(card.x + card.w, card.y + CASSETTE_BAND);
+  ctx.stroke();
+  drawPhoto(ctx, a.picture, photo.x, photo.y, photo.w, photo.h, a.filterCss);
+  const holeY = card.y + card.h - 70;
+  for (const hx of [card.x + card.w / 2 - 120, card.x + card.w / 2 + 120]) {
+    ctx.fillStyle = INK;
+    ctx.beginPath();
+    ctx.arc(hx, holeY, 26, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = CASSETTE_SHELL;
+    ctx.beginPath();
+    ctx.arc(hx, holeY, 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  drawCaptionAndDate(a, INK);
+  drawBrand(ctx, card.x + card.w - 44, card.y + card.h - 40, INK, "right");
+}
+
+function drawSticky(a: DrawArgs): void {
+  const { ctx, L } = a;
+  const { card, photo } = L;
+  drawFrame(ctx, card.x, card.y, card.w, card.h, STICKY, INK);
+  ctx.beginPath();
+  ctx.moveTo(card.x + card.w, card.y + card.h - 96);
+  ctx.lineTo(card.x + card.w - 96, card.y + card.h);
+  ctx.lineTo(card.x + card.w, card.y + card.h);
+  ctx.closePath();
+  ctx.fillStyle = STICKY_CURL;
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  ctx.fillStyle = "rgba(17,20,38,0.2)";
+  ctx.fillRect(photo.x - 14, photo.y - 10, photo.w + 36, photo.h + 36);
+  ctx.fillStyle = "#fffdf8";
+  ctx.fillRect(photo.x - 18, photo.y - 18, photo.w + 36, photo.h + 36);
+  drawPhoto(ctx, a.picture, photo.x, photo.y, photo.w, photo.h, a.filterCss);
+  const pinX = card.x + card.w / 2;
+  const pinY = photo.y - 14;
+  ctx.fillStyle = "rgba(17,20,38,0.25)";
+  ctx.beginPath();
+  ctx.arc(pinX + 4, pinY + 7, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = CORAL;
+  ctx.beginPath();
+  ctx.arc(pinX, pinY, 22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.6)";
+  ctx.beginPath();
+  ctx.arc(pinX - 7, pinY - 7, 6, 0, Math.PI * 2);
+  ctx.fill();
+  drawCaptionAndDate(a, INK);
+  drawBrand(ctx, card.x + 44, card.y + card.h - 30, INK, "left");
+}
+
 /** Renders a polaroid from any photo — no score/moves line, since there is no puzzle behind it —
- * for the no-game "make a polaroid" tool. `frame` (see src/lib/frames.ts) controls the frame's
- * own color/gradient, border, and default caption color. */
-export async function renderQuickPolaroidBlob(
+ * for the no-game "make a polaroid" tool. `frame` picks the card design (or the classic frame when
+ * it has none) and its colors. Stickers are skipped when `includeStickers` is false, for the live
+ * preview, which draws them as an editable overlay instead. */
+export async function renderQuickPolaroidCanvas(
   input: QuickPolaroid,
   filterCss: string,
   frame: FramePreset,
-): Promise<Blob> {
+  includeStickers = true,
+): Promise<QuickRender> {
   const stickers = input.stickers ?? [];
   const [picture, stickerIcons, pattern] = await Promise.all([
     loadImage(input.photo).then((image) => ({
@@ -343,84 +671,40 @@ export async function renderQuickPolaroidBlob(
     ensureFonts(),
   ]);
 
-  const margin = 64;
-  const pad = 44;
-  const cardW = 880;
-  const photoW = cardW - pad * 2;
-  const photoH = Math.round(photoW / picture.aspect);
-  const footer = input.timestamp ? 230 : 170;
-  const cardH = pad + photoH + footer;
-  const [canvas, ctx] = makeCanvas(cardW + margin * 2 + 12, cardH + margin * 2 + 12);
-
+  const L = quickLayout(frame, picture.aspect, input.caption.length > 0, Boolean(input.timestamp));
+  const [canvas, ctx] = makeCanvas(L.canvasW, L.canvasH);
   ctx.fillStyle = IVORY;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  const bg = frame.gradient
-    ? diagonalGradient(ctx, frame.gradient, margin, margin, cardW, cardH)
-    : frame.frameBg;
-  drawFrame(ctx, margin, margin, cardW, cardH, bg, frame.borderColor, pattern ?? undefined);
-  drawPhoto(
-    ctx,
-    picture,
-    margin + pad,
-    margin + pad,
-    photoW,
-    photoH,
-    filterCss,
-    frame.tornEdge ? frame.borderColor : undefined,
-  );
-  if (stickers.length > 0) {
-    drawStickerIcons(ctx, stickers, stickerIcons, margin + pad, margin + pad, photoW, photoH);
-  }
-  if (frame.swirlColor) {
-    drawSwirl(ctx, frame.swirlColor, margin + pad, margin + pad, photoW, photoH);
+
+  const args: DrawArgs = { ctx, input, frame, picture, filterCss, pattern, L };
+  if (frame.design === "film") drawFilm(args);
+  else if (frame.design === "notebook") drawNotebook(args);
+  else if (frame.design === "cassette") drawCassette(args);
+  else if (frame.design === "sticky") drawSticky(args);
+  else drawClassic(args);
+
+  if (includeStickers && stickers.length > 0) {
+    drawStickerIcons(ctx, stickers, stickerIcons, L.photo.x, L.photo.y, L.photo.w, L.photo.h);
   }
 
-  const cx = margin + cardW / 2;
-  const captionY = margin + pad + photoH + 96;
-  const captionColor = input.captionColor ?? frame.captionColor;
-  const hasCaption = input.caption.length > 0;
-
-  if (hasCaption) {
-    const size = Math.round((input.captionSize ?? 26) * CAPTION_SCALE);
-    ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    ctx.font = `700 ${size}px ${input.captionFontFamily ?? '"Caveat", cursive'}`;
-
-    if (input.captionBackground === "tape") {
-      const textWidth = ctx.measureText(input.caption).width;
-      const padX = size * 0.35;
-      const padY = size * 0.22;
-      const rectW = textWidth + padX * 2;
-      const rectH = size * 0.78 + padY * 2;
-      const color = input.captionBgColor ?? "#ffc61a";
-      drawTapeStrip(
-        ctx,
-        cx,
-        captionY - size * 0.3,
-        rectW,
-        rectH,
-        lighten(color, 0.15),
-        color,
-        -0.025,
-      );
+  if (!frame.design) {
+    if (frame.swirlColor) {
+      drawSwirl(ctx, frame.swirlColor, L.photo.x, L.photo.y, L.photo.w, L.photo.h);
     }
-
-    ctx.fillStyle = captionColor;
-    ctx.fillText(input.caption, cx, captionY);
+    const captionColor = input.captionColor ?? frame.captionColor;
+    drawCaptionAndDate(args, captionColor);
+    drawBrand(ctx, L.card.x + L.card.w - 44, L.card.y + L.card.h - 30, captionColor, "right");
   }
 
-  if (input.timestamp) {
-    ctx.textAlign = "center";
-    ctx.textBaseline = "alphabetic";
-    ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
-    ctx.fillStyle = captionColor;
-    ctx.fillText(input.timestamp, cx, hasCaption ? captionY + 62 : captionY);
-  }
+  return { canvas, photo: L.photo };
+}
 
-  ctx.textAlign = "right";
-  ctx.font = '700 40px "Dancing Script", cursive';
-  ctx.fillStyle = captionColor;
-  ctx.fillText("PinchPop", margin + cardW - pad, margin + cardH - 30);
+export async function renderQuickPolaroidBlob(
+  input: QuickPolaroid,
+  filterCss: string,
+  frame: FramePreset,
+): Promise<Blob> {
+  const { canvas } = await renderQuickPolaroidCanvas(input, filterCss, frame);
   return toBlob(canvas);
 }
 

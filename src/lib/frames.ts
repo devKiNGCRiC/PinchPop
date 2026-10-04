@@ -21,6 +21,8 @@ export interface DefaultSticker {
   size: number;
 }
 
+export type QuickDesign = "film" | "notebook" | "cassette" | "sticky";
+
 export interface FramePreset {
   id: string;
   label: string;
@@ -40,6 +42,9 @@ export interface FramePreset {
   /** Gives the photo a ragged, hand-torn-paper edge instead of a straight rectangle (see
    * src/lib/tornEdge.ts), for frames modeled on scrapbook/collage reference photos. */
   tornEdge?: boolean;
+  /** A whole-card design (see drawFilm/drawNotebook/... in src/lib/export.ts) that replaces the
+   * plain frame: the card is built from one physical object, not just colors. */
+  design?: QuickDesign;
   /** Placed automatically the first time this frame is picked on a photo with no stickers yet —
    * never overwrites stickers someone has already placed. */
   defaultStickers?: DefaultSticker[];
@@ -48,6 +53,42 @@ export interface FramePreset {
 export const DEFAULT_FRAME_ID = "classic";
 
 export const FRAME_PRESETS: FramePreset[] = [
+  {
+    id: "film-roll",
+    label: "Film Roll",
+    frameBg: INK,
+    borderColor: INK,
+    captionColor: IVORY,
+    tapeColor: null,
+    design: "film",
+  },
+  {
+    id: "notebook",
+    label: "Notebook",
+    frameBg: "#fdf8ec",
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: null,
+    design: "notebook",
+  },
+  {
+    id: "cassette",
+    label: "Cassette",
+    frameBg: "#f6ecd6",
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: null,
+    design: "cassette",
+  },
+  {
+    id: "sticky-note",
+    label: "Sticky Note",
+    frameBg: "#ffe27a",
+    borderColor: INK,
+    captionColor: INK,
+    tapeColor: null,
+    design: "sticky",
+  },
   {
     id: "classic",
     label: "Classic",

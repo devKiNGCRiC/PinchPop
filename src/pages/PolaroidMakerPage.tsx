@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Download, ImagePlus, Share2 } from "lucide-react";
 
 import { CaptionStylePicker } from "@/components/CaptionStylePicker";
@@ -7,7 +7,7 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { FilterPicker } from "@/components/FilterPicker";
 import { FramePicker } from "@/components/FramePicker";
 import { PopButton } from "@/components/PopButton";
-import { Polaroid } from "@/components/Polaroid";
+import { PrintPreview } from "@/components/PrintPreview";
 import { Seo } from "@/components/Seo";
 import { StickerPicker } from "@/components/StickerPicker";
 import {
@@ -68,6 +68,33 @@ export default function PolaroidMakerPage() {
   const trimmedCaption = caption.trim();
   const frame = frameFor(frameId);
   const captionColor = captionColorOverride ?? frame.captionColor;
+  const printInput = useMemo(
+    () =>
+      photo
+        ? {
+            photo: photo.dataUrl,
+            aspect: photo.aspect,
+            caption: trimmedCaption,
+            timestamp: showDate ? today : undefined,
+            captionFontFamily: captionFontFor(captionFontId).family,
+            captionSize,
+            captionColor: captionColorOverride ?? undefined,
+            captionBackground,
+            captionBgColor,
+          }
+        : null,
+    [
+      photo,
+      trimmedCaption,
+      showDate,
+      today,
+      captionFontId,
+      captionSize,
+      captionColorOverride,
+      captionBackground,
+      captionBgColor,
+    ],
+  );
 
   function handleFrameChange(id: string) {
     setFrameId(id);
@@ -168,34 +195,14 @@ export default function PolaroidMakerPage() {
 
       <div className="mt-10 grid items-start gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="mx-auto w-full max-w-100">
-          {photo ? (
-            <Polaroid
-              artId="camera"
-              photo={photo.dataUrl}
-              aspect={photo.aspect}
-              caption={trimmedCaption}
-              tilt={-2}
-              tape
-              filter={filterCssFor(filterId)}
-              frameId={frameId}
-              captionFontId={captionFontId}
-              captionSize={captionSize}
-              captionColor={captionColorOverride ?? undefined}
-              captionBackground={captionBackground}
-              captionBgColor={captionBgColor}
+          {photo && printInput ? (
+            <PrintPreview
+              input={printInput}
+              filterCss={filterCssFor(filterId)}
+              frame={frame}
               stickers={stickers}
-              editableStickers
               onStickersChange={setStickers}
-            >
-              {showDate ? (
-                <span
-                  className="mt-1 text-sm font-semibold opacity-75"
-                  style={{ color: captionColor }}
-                >
-                  {today}
-                </span>
-              ) : null}
-            </Polaroid>
+            />
           ) : (
             <button
               type="button"
@@ -219,9 +226,9 @@ export default function PolaroidMakerPage() {
             accept="image/*"
             className="sr-only"
             onChange={(event) => {
-              const file = event.target.files?.[0];
-              event.target.value = "";
-              if (file) void handleFile(file);
+              const input = event.currentTarget;
+              const file = input.files?.[0];
+              if (file) void handleFile(file).finally(() => (input.value = ""));
             }}
           />
           {error ? <p className="mt-3 text-center text-base text-sindoor">{error}</p> : null}
