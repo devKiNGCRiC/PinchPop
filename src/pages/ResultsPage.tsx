@@ -256,34 +256,14 @@ export default function ResultsPage() {
   );
 }
 
-const LOGIN_NUDGE_KEY = "pinchpop.loginNudgeShown.v1";
-
 /** A one-time, dismissible nudge toward signing in, shown the first time someone views their own
  * result while signed out — the moment they have something worth keeping. Never shows again after
  * that first time, whether it was dismissed or just ignored, so it never nags on later visits. */
 function LoginNudge() {
   const { session, loading } = useSession();
   const [dismissed, setDismissed] = useState(false);
-  // Read once at mount, before this run has a chance to mark itself as shown below — this is
-  // "was it already shown before now", not "has it been shown this render".
-  const [alreadyShown] = useState(() => {
-    try {
-      return localStorage.getItem(LOGIN_NUDGE_KEY) === "1";
-    } catch {
-      return true;
-    }
-  });
 
-  useEffect(() => {
-    if (loading || session || alreadyShown) return;
-    try {
-      localStorage.setItem(LOGIN_NUDGE_KEY, "1");
-    } catch {
-      // Nothing to persist to — the nudge still shows this once, just not reliably skipped later.
-    }
-  }, [loading, session, alreadyShown]);
-
-  if (loading || session || alreadyShown || dismissed) return null;
+  if (loading || session || dismissed) return null;
 
   return (
     <div
@@ -292,10 +272,11 @@ function LoginNudge() {
     >
       <div className="min-w-0 flex-1">
         <p className="font-display text-lg leading-tight font-extrabold tracking-[-0.03em]">
-          Keep this one?
+          Post this to the worldwide board?
         </p>
         <p className="mt-1 text-sm leading-snug">
-          Sign in to sync your photos across devices and join the worldwide leaderboard.
+          Only signed-in players appear on the worldwide leaderboard. Sign in to post this run and
+          sync your photos across devices.
         </p>
         <PopLink to="/account" tone="marigold" size="sm" className="mt-3">
           Sign in
