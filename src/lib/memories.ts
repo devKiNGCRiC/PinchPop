@@ -193,6 +193,9 @@ export function saveMemory(input: {
 
 export function deleteMemory(id: string): void {
   write(getAllRaw().filter((memory) => memory.id !== id));
+  void import("@/lib/cloudRuns")
+    .then(({ deleteCloudRunByLocalId }) => deleteCloudRunByLocalId(id))
+    .catch((error: unknown) => console.warn("[PinchPop] Could not remove the cloud copy:", error));
 }
 
 /** Renames a memory's caption. An empty/whitespace-only value reverts to the destination's

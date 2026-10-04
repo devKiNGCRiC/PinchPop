@@ -344,3 +344,38 @@ export async function fetchWorldwideLeaderboard(limit = 50): Promise<CloudRun[]>
     };
   });
 }
+
+async function deleteRunsWhere(column: "id" | "local_id" | "all", value?: string): Promise<void> {
+  const { supabase } = await import("@/lib/supabase");
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) return;
+  const userId = session.user.id;
+
+  let query = supabase.from("runs").delete().eq("user_id", userId);
+  if (column === "id") query = query.eq("id", value ?? "");
+  if (column === "local_id") query = query.eq("local_id", value ?? "");
+  const { data, error } = await query.select("photo_path");
+  if (error) throw error;
+
+  const paths = (data ?? [])
+    .map((row: { photo_path: string | null }) => row.photo_path)
+    .filter((path): path is string => !!path);
+  if (paths.length > 0) await supabase.storage.from("photos").remove(paths);
+}
+
+/** Deletes one of the signed-in player's cloud runs, plus its photo. */
+export function deleteCloudRun(runId: string): Promise<void> {
+  return deleteRunsWhere("id", runId);
+}
+
+/** Deletes the cloud copy of a run that was synced from this device's local memory `localId`. */
+export function deleteCloudRunByLocalId(localId: string): Promise<void> {
+  return deleteRunsWhere("local_id", localId);
+}
+
+/** Deletes every cloud run the signed-in player owns, along with their photos. */
+export function deleteAllMyCloudRuns(): Promise<void> {
+  return deleteRunsWhere("all");
+}

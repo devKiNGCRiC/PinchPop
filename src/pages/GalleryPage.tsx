@@ -77,9 +77,35 @@ function useCloudOnlyMemories(localMemories: Memory[]): Memory[] {
 
 export default function GalleryPage() {
   const memories = useMemories();
-  const cloudOnly = useCloudOnlyMemories(memories);
+  const { session } = useProfile();
+  const [removedCloudIds, setRemovedCloudIds] = useState<Set<string>>(() => new Set());
+  const [clearError, setClearError] = useState("");
+  const cloudOnly = useCloudOnlyMemories(memories).filter((m) => !removedCloudIds.has(m.id));
   const allMemories = [...memories, ...cloudOnly].sort((a, b) => b.createdAt - a.createdAt);
   const cloudIds = new Set(cloudOnly.map((m) => m.id));
+
+  async function removeCloudRun(id: string) {
+    const { deleteCloudRun } = await import("@/lib/cloudRuns");
+    await deleteCloudRun(id);
+    setRemovedCloudIds((prev) => new Set(prev).add(id));
+  }
+
+  async function clearAll() {
+    setClearError("");
+    try {
+      if (session) {
+        const { deleteAllMyCloudRuns } = await import("@/lib/cloudRuns");
+        await deleteAllMyCloudRuns();
+      }
+    } catch (error) {
+      console.warn("[PinchPop] Could not clear the account runs:", error);
+      setClearError("Couldn't clear your account runs. Check your connection and try again.");
+      return;
+    }
+    clearMemories();
+    setRemovedCloudIds(new Set(cloudIds));
+    setConfirmClear(false);
+  }
   const [sort, setSort] = useState<Sort>("newest");
   const [filter, setFilter] = useState<Filter>("all");
   const [confirmClear, setConfirmClear] = useState(false);
@@ -147,15 +173,8 @@ export default function GalleryPage() {
             </div>
             {confirmClear ? (
               <>
-                <PopButton
-                  tone="coral"
-                  size="sm"
-                  onClick={() => {
-                    clearMemories();
-                    setConfirmClear(false);
-                  }}
-                >
-                  Yes, clear this device's
+                <PopButton tone="coral" size="sm" onClick={() => void clearAll()}>
+                  {session ? "Yes, clear everything" : "Yes, clear this device's"}
                 </PopButton>
                 <PopButton tone="white" size="sm" onClick={() => setConfirmClear(false)}>
                   Keep them
@@ -170,6 +189,11 @@ export default function GalleryPage() {
         ) : null}
       </div>
 
+      {clearError ? (
+        <p role="alert" className="mt-4 text-base text-sindoor">
+          {clearError}
+        </p>
+      ) : null}
       <PhotoStripCard memories={allMemories} />
 
       {allMemories.length > 0 ? (
@@ -255,24 +279,25 @@ export default function GalleryPage() {
                     </span>
                   </Polaroid>
                 </Link>
-                {isCloudOnly ? (
-                  <span
-                    aria-label="Synced from another device"
-                    title="Synced from another device"
-                    className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-chakra text-white"
-                  >
-                    <Cloud className="size-5" aria-hidden="true" />
-                  </span>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label={`Delete ${art.name} polaroid`}
-                    onClick={() => deleteMemory(memory.id)}
-                    className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-cloud"
-                  >
-                    <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label={
+                    isCloudOnly
+                      ? `Delete ${art.name} polaroid from your account`
+                      : `Delete ${art.name} polaroid`
+                  }
+                  title={
+                    isCloudOnly
+                      ? "Synced from another device — delete it from your account"
+                      : undefined
+                  }
+                  onClick={() =>
+                    isCloudOnly ? void removeCloudRun(memory.id) : deleteMemory(memory.id)
+                  }
+                  className="pop sticker absolute -top-3 -right-2 z-10 flex size-11 items-center justify-center rounded-full bg-cloud"
+                >
+                  <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
+                </button>
               </li>
             );
           })}
