@@ -1,4 +1,4 @@
-export type PatternKind = "stripes" | "diagonal-stripes" | "dots" | "gingham";
+export type PatternKind = "stripes" | "diagonal-stripes" | "dots" | "gingham" | "lace";
 
 /** Small tileable SVGs, generated rather than drawn by hand or sourced as image assets — zero
  * cost, zero licensing, and the exact same source can back both the live CSS preview (as a
@@ -34,6 +34,21 @@ function ginghamSvg(color: string, opacity: number): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${TILE}" height="${TILE}"><rect width="${half}" height="${half}" fill="${color}" fill-opacity="${opacity}"/><rect x="${half}" y="${half}" width="${half}" height="${half}" fill="${color}" fill-opacity="${opacity}"/></svg>`;
 }
 
+const LACE_TILE = 88;
+
+/** Two outlined five-petal blossoms with small loops and dots, on an 88px tile so each motif sits
+ * fully inside it and the pattern repeats without seams. */
+function laceSvg(color: string, opacity: number): string {
+  const blossom = (cx: number, cy: number, s: number) =>
+    [0, 72, 144, 216, 288]
+      .map(
+        (a) =>
+          `<ellipse cx="${cx}" cy="${cy - 9 * s}" rx="${6 * s}" ry="${9 * s}" transform="rotate(${a} ${cx} ${cy})"/>`,
+      )
+      .join("") + `<circle cx="${cx}" cy="${cy}" r="${3 * s}"/>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${LACE_TILE * 3}" height="${LACE_TILE * 3}" viewBox="0 0 ${LACE_TILE} ${LACE_TILE}"><g fill="none" stroke="${color}" stroke-opacity="${opacity}" stroke-width="1.2">${blossom(22, 22, 1)}${blossom(66, 66, 1)}${blossom(66, 22, 0.55)}${blossom(22, 66, 0.55)}</g><g fill="${color}" fill-opacity="${opacity}"><circle cx="44" cy="44" r="1.6"/><circle cx="44" cy="8" r="1.2"/></g></svg>`;
+}
+
 export const PATTERN_TILE_SIZE = TILE;
 
 export function patternDataUri(
@@ -44,5 +59,6 @@ export function patternDataUri(
   if (kind === "stripes") return svgDataUri(stripesSvg(color, opacity));
   if (kind === "diagonal-stripes") return svgDataUri(diagonalStripesSvg(color, opacity));
   if (kind === "dots") return svgDataUri(dotsSvg(color, opacity));
+  if (kind === "lace") return svgDataUri(laceSvg(color, opacity));
   return svgDataUri(ginghamSvg(color, opacity));
 }

@@ -21,7 +21,7 @@ export interface DefaultSticker {
   size: number;
 }
 
-export type QuickDesign = "film" | "notebook" | "cassette" | "sticky";
+export type QuickDesign = "film" | "notebook" | "cassette" | "sticky" | "lace" | "ribbon";
 
 export interface FramePreset {
   id: string;
@@ -88,6 +88,26 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: INK,
     tapeColor: null,
     design: "sticky",
+  },
+  {
+    id: "lace-blush",
+    label: "Lace Blush",
+    frameBg: "#f7d6dc",
+    pattern: "lace",
+    patternColor: "#ffffff",
+    borderColor: "#e6e0e8",
+    captionColor: "#7a2a46",
+    tapeColor: null,
+    design: "lace",
+  },
+  {
+    id: "pink-ribbon",
+    label: "Pink Ribbon",
+    frameBg: "#ffffff",
+    borderColor: "#e9e6ea",
+    captionColor: "#8a1f44",
+    tapeColor: null,
+    design: "ribbon",
   },
   {
     id: "classic",
