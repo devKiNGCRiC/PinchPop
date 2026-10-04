@@ -36,6 +36,9 @@ interface Picture {
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
+    // Remote photos (other devices' runs come from signed storage URLs) must be requested with CORS,
+    // or the canvas is tainted and the exported PNG/strip can't be read back.
+    if (/^https?:/.test(src)) image.crossOrigin = "anonymous";
     image.onload = () => resolve(image);
     image.onerror = () => reject(new Error("Could not load the picture for export."));
     image.src = src;
