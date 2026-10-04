@@ -498,62 +498,63 @@ function drawImageCentered(
   ctx.drawImage(image, cx - w / 2, cy - h / 2, w, h);
 }
 
-/** A lipstick kiss print: two soft rose lip shapes with a darker rim, a central fold and a faint
- * gloss, slightly blurred like ink pressed onto paper. */
+/** A lipstick kiss print: rose lips with a streaked texture clipped to the lip shapes, a darker rim,
+ * and the paper showing through the mouth gap, the way a real lip print looks. */
 function drawKissMark(ctx: CanvasRenderingContext2D, cx: number, cy: number, scale: number): void {
-  const upper = () => {
-    ctx.beginPath();
-    ctx.moveTo(-58, 0);
-    ctx.bezierCurveTo(-42, -24, -18, -30, 0, -16);
-    ctx.bezierCurveTo(18, -30, 42, -24, 58, 0);
-    ctx.bezierCurveTo(30, 5, -30, 5, -58, 0);
+  const addLips = () => {
+    ctx.moveTo(-72, 6);
+    ctx.bezierCurveTo(-58, -16, -34, -28, -18, -22);
+    ctx.quadraticCurveTo(0, -10, 18, -22);
+    ctx.bezierCurveTo(34, -28, 58, -16, 72, 6);
+    ctx.quadraticCurveTo(0, 2, -72, 6);
+    ctx.closePath();
+    ctx.moveTo(-70, 10);
+    ctx.quadraticCurveTo(0, 8, 70, 10);
+    ctx.bezierCurveTo(60, 34, 28, 46, 0, 46);
+    ctx.bezierCurveTo(-28, 46, -60, 34, -70, 10);
     ctx.closePath();
   };
-  const lower = () => {
-    ctx.beginPath();
-    ctx.moveTo(-58, 0);
-    ctx.bezierCurveTo(-30, 5, 30, 5, 58, 0);
-    ctx.bezierCurveTo(50, 24, 26, 34, 0, 31);
-    ctx.bezierCurveTo(-26, 34, -50, 24, -58, 0);
-    ctx.closePath();
+  const rand = (i: number) => {
+    const v = Math.sin(i * 127.1 + 311.7) * 43758.5453;
+    return v - Math.floor(v);
   };
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(-0.1);
+  ctx.rotate(-0.08);
   ctx.scale(scale, scale);
-  const body = ctx.createRadialGradient(0, -4, 4, 0, 0, 62);
-  body.addColorStop(0, "#d98aa0");
-  body.addColorStop(1, "#b65d7b");
-  ctx.filter = "blur(0.5px)";
-  ctx.globalAlpha = 0.78;
-  ctx.fillStyle = body;
-  upper();
-  ctx.fill();
-  lower();
-  ctx.fill();
-  ctx.filter = "none";
-  ctx.globalAlpha = 0.45;
-  ctx.strokeStyle = "#8c3b57";
-  ctx.lineWidth = 1.4;
-  upper();
-  ctx.stroke();
-  lower();
-  ctx.stroke();
-  ctx.globalAlpha = 0.6;
-  ctx.strokeStyle = "#7a2d48";
-  ctx.lineWidth = 2.2;
+  const fill = ctx.createLinearGradient(0, -28, 0, 46);
+  fill.addColorStop(0, "#e8a0b4");
+  fill.addColorStop(0.5, "#f2bccb");
+  fill.addColorStop(1, "#e39aae");
+  ctx.save();
+  ctx.filter = "blur(0.4px)";
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = fill;
   ctx.beginPath();
-  ctx.moveTo(-52, 0);
-  ctx.quadraticCurveTo(0, 7, 52, 0);
-  ctx.stroke();
-  ctx.globalAlpha = 0.5;
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 1.6;
+  addLips();
+  ctx.fill();
+  ctx.restore();
+  ctx.save();
   ctx.beginPath();
-  ctx.moveTo(-24, -12);
-  ctx.quadraticCurveTo(-18, -18, -10, -16);
-  ctx.moveTo(10, -14);
-  ctx.quadraticCurveTo(16, -18, 24, -12);
+  addLips();
+  ctx.clip();
+  for (let i = 0; i < 110; i++) {
+    const x = -74 + rand(i) * 148;
+    const y = -28 + rand(i + 500) * 80;
+    const len = 12 + rand(i + 900) * 24;
+    ctx.strokeStyle = rand(i + 300) > 0.5 ? "rgba(255,255,255,0.4)" : "rgba(170,70,100,0.25)";
+    ctx.lineWidth = 0.7 + rand(i + 700) * 0.9;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + len, y + (rand(i + 100) - 0.5) * 3);
+    ctx.stroke();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 0.4;
+  ctx.strokeStyle = "#b35d7a";
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  addLips();
   ctx.stroke();
   ctx.restore();
 }
@@ -589,7 +590,7 @@ function drawLace(a: DrawArgs): void {
   const captionColor = a.input.captionColor ?? frame.captionColor;
   drawCaptionAndDate(a, captionColor);
   drawBrand(ctx, card.x + 44, card.y + card.h - 30, captionColor, "left");
-  drawKissMark(ctx, card.x + card.w - 136, card.y + card.h - 80, 1.6);
+  drawKissMark(ctx, card.x + card.w - 136, card.y + card.h - 80, 1.3);
 }
 
 const NOTE_CREAM = "#f4e9da";
@@ -710,7 +711,12 @@ function drawDried(a: DrawArgs): void {
   drawBloom(ctx, card.x + 46, card.y + 170, 1, 0.3);
   drawBloom(ctx, card.x + 90, card.y + 130, 0.8, -0.5);
   drawBloom(ctx, card.x + card.w - 46, card.y + card.h - 200, 0.9, 0.7);
-  drawTapeStrip(ctx, card.x + 60, card.y + card.h - 105, 150, 44, "#d9b98c", "#c49e6f", -0.35);
+  const stemX = card.x + 70;
+  const stemY = card.y + card.h - 40;
+  const t = 0.3;
+  const tapeX = (1 - t) * (1 - t) * stemX + 2 * (1 - t) * t * (stemX - 30) + t * t * (stemX + 30);
+  const tapeY = (1 - t) * (1 - t) * stemY + 2 * (1 - t) * t * (stemY - 110) + t * t * (stemY - 210);
+  drawTapeStrip(ctx, tapeX, tapeY, 140, 42, "#d9b98c", "#c49e6f", -0.35);
   if (decor) {
     drawImageCentered(
       ctx,

@@ -5,8 +5,8 @@
  * only choice guaranteed to render the same way everywhere — the canvas export deliberately uses
  * the exact same font string so the two never look different from each other. */
 const BANNER_FONT = `Georgia, "Times New Roman", serif`;
-export const BANNER_BG: [string, string] = ["#fff3d6", "#f2d99a"];
-export const BANNER_TEXT_COLOR = "#3a2f1d";
+export const BANNER_BG: [string, string] = ["#fdf6f8", "#f4e3ea"];
+export const BANNER_TEXT_COLOR = "#6e4f5c";
 export const BANNER_ASPECT = 220 / 70;
 
 function escapeXml(s: string): string {
@@ -21,7 +21,7 @@ function escapeXml(s: string): string {
 export function bannerSvg(text: string, w = 220, h = 70): string {
   const notch = h * 0.3;
   const points = `0,${h / 2} ${notch},0 ${w - notch},0 ${w},${h / 2} ${w - notch},${h} ${notch},${h}`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="bn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${BANNER_BG[0]}"/><stop offset="1" stop-color="${BANNER_BG[1]}"/></linearGradient></defs><polygon points="${points}" fill="url(#bn)" stroke="#4a4f6e" stroke-width="2"/><text x="${w / 2}" y="${h / 2 + h * 0.12}" text-anchor="middle" font-family='${BANNER_FONT}' font-size="${h * 0.36}" font-weight="700" fill="${BANNER_TEXT_COLOR}">${escapeXml(text)}</text></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs><linearGradient id="bn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${BANNER_BG[0]}"/><stop offset="1" stop-color="${BANNER_BG[1]}"/></linearGradient></defs><polygon points="${points}" fill="url(#bn)" stroke="#b9a3ad" stroke-width="1.5"/><text x="${w / 2}" y="${h / 2 + h * 0.12}" text-anchor="middle" font-family='${BANNER_FONT}' font-size="${h * 0.36}" font-weight="700" fill="${BANNER_TEXT_COLOR}">${escapeXml(text)}</text></svg>`;
 }
 
 export function bannerDataUri(text: string, w = 220, h = 70): string {
@@ -52,7 +52,7 @@ export function drawBannerOnCanvas(
   gradient.addColorStop(1, BANNER_BG[1]);
   ctx.fillStyle = gradient;
   ctx.fill();
-  ctx.strokeStyle = "#4a4f6e";
+  ctx.strokeStyle = "#b9a3ad";
   ctx.lineWidth = 2;
   ctx.stroke();
   ctx.fillStyle = BANNER_TEXT_COLOR;
