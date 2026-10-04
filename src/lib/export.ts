@@ -498,39 +498,62 @@ function drawImageCentered(
   ctx.drawImage(image, cx - w / 2, cy - h / 2, w, h);
 }
 
-/** A soft, slightly lifted kiss print — two lip shapes and a centre line, drawn rather than sourced
- * because the available clip art was too saturated to read as a lipstick print. */
+/** A lipstick kiss print: two soft rose lip shapes with a darker rim, a central fold and a faint
+ * gloss, slightly blurred like ink pressed onto paper. */
 function drawKissMark(ctx: CanvasRenderingContext2D, cx: number, cy: number, scale: number): void {
+  const upper = () => {
+    ctx.beginPath();
+    ctx.moveTo(-58, 0);
+    ctx.bezierCurveTo(-42, -24, -18, -30, 0, -16);
+    ctx.bezierCurveTo(18, -30, 42, -24, 58, 0);
+    ctx.bezierCurveTo(30, 5, -30, 5, -58, 0);
+    ctx.closePath();
+  };
+  const lower = () => {
+    ctx.beginPath();
+    ctx.moveTo(-58, 0);
+    ctx.bezierCurveTo(-30, 5, 30, 5, 58, 0);
+    ctx.bezierCurveTo(50, 24, 26, 34, 0, 31);
+    ctx.bezierCurveTo(-26, 34, -50, 24, -58, 0);
+    ctx.closePath();
+  };
   ctx.save();
   ctx.translate(cx, cy);
-  ctx.rotate(-0.12);
+  ctx.rotate(-0.1);
   ctx.scale(scale, scale);
-  const fill = ctx.createLinearGradient(-60, 0, 60, 0);
-  fill.addColorStop(0, "#f1bfcb");
-  fill.addColorStop(0.5, "#f9dfe6");
-  fill.addColorStop(1, "#f1bfcb");
-  ctx.fillStyle = fill;
+  const body = ctx.createRadialGradient(0, -4, 4, 0, 0, 62);
+  body.addColorStop(0, "#d98aa0");
+  body.addColorStop(1, "#b65d7b");
+  ctx.filter = "blur(0.5px)";
+  ctx.globalAlpha = 0.78;
+  ctx.fillStyle = body;
+  upper();
+  ctx.fill();
+  lower();
+  ctx.fill();
+  ctx.filter = "none";
+  ctx.globalAlpha = 0.45;
+  ctx.strokeStyle = "#8c3b57";
+  ctx.lineWidth = 1.4;
+  upper();
+  ctx.stroke();
+  lower();
+  ctx.stroke();
   ctx.globalAlpha = 0.6;
-  ctx.beginPath();
-  ctx.moveTo(-58, 0);
-  ctx.bezierCurveTo(-40, -26, -16, -30, 0, -16);
-  ctx.bezierCurveTo(16, -30, 40, -26, 58, 0);
-  ctx.bezierCurveTo(30, 6, -30, 6, -58, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.beginPath();
-  ctx.moveTo(-58, 0);
-  ctx.bezierCurveTo(-30, 6, 30, 6, 58, 0);
-  ctx.bezierCurveTo(48, 26, 24, 34, 0, 30);
-  ctx.bezierCurveTo(-24, 34, -48, 26, -58, 0);
-  ctx.closePath();
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.strokeStyle = "#c98fa0";
+  ctx.strokeStyle = "#7a2d48";
   ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.moveTo(-54, 0);
-  ctx.quadraticCurveTo(0, 10, 54, 0);
+  ctx.moveTo(-52, 0);
+  ctx.quadraticCurveTo(0, 7, 52, 0);
+  ctx.stroke();
+  ctx.globalAlpha = 0.5;
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(-24, -12);
+  ctx.quadraticCurveTo(-18, -18, -10, -16);
+  ctx.moveTo(10, -14);
+  ctx.quadraticCurveTo(16, -18, 24, -12);
   ctx.stroke();
   ctx.restore();
 }
@@ -566,10 +589,10 @@ function drawLace(a: DrawArgs): void {
   const captionColor = a.input.captionColor ?? frame.captionColor;
   drawCaptionAndDate(a, captionColor);
   drawBrand(ctx, card.x + 44, card.y + card.h - 30, captionColor, "left");
-  drawKissMark(ctx, card.x + card.w - 130, card.y + card.h - 80, 1.2);
+  drawKissMark(ctx, card.x + card.w - 136, card.y + card.h - 80, 1.6);
 }
 
-const NOTE_CREAM = "#faf4ea";
+const NOTE_CREAM = "#f4e9da";
 
 function drawNote(a: DrawArgs): void {
   const { ctx, L, frame } = a;
@@ -611,49 +634,61 @@ function drawNote(a: DrawArgs): void {
 
   ctx.save();
   ctx.globalAlpha = 0.85;
-  drawTapeStrip(ctx, card.x + 70, card.y + 6, 200, 56, "#f7c3cf", "#eda9b8", -0.6);
+  drawTapeStrip(ctx, card.x + 74, card.y + 22, 180, 44, "#f7c3cf", "#eda9b8", -0.5);
   ctx.restore();
 
   drawCaptionAndDate(a, a.input.captionColor ?? frame.captionColor);
 }
 
-/** A small pressed-flower sprig: a curved stem with five-petal blooms in dried cream and gold. */
-function drawDriedSprig(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+/** One five-petal dried bloom: cream petals with a gold centre, scaled and rotated in place. */
+function drawBloom(
+  ctx: CanvasRenderingContext2D,
+  bx: number,
+  by: number,
+  s: number,
+  rot: number,
+): void {
+  ctx.save();
+  ctx.translate(bx, by);
+  ctx.rotate(rot);
+  for (let p = 0; p < 5; p++) {
+    ctx.save();
+    ctx.rotate((p * Math.PI * 2) / 5);
+    ctx.beginPath();
+    ctx.ellipse(0, -7 * s, 5.5 * s, 7.5 * s, 0, 0, Math.PI * 2);
+    ctx.fillStyle = "#f4e6b3";
+    ctx.fill();
+    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = "#b8a27a";
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.beginPath();
+  ctx.arc(0, 0, 2.8 * s, 0, Math.PI * 2);
+  ctx.fillStyle = "#d9b86a";
+  ctx.fill();
+  ctx.restore();
+}
+
+/** A pressed sprig: a curved stem with blooms along it. `dir` mirrors it for the other corner. */
+function drawDriedSprig(ctx: CanvasRenderingContext2D, x: number, y: number, dir: 1 | -1): void {
+  const px = (dx: number) => x + dx * dir;
   ctx.save();
   ctx.strokeStyle = "#b8a27a";
   ctx.lineWidth = 3;
   ctx.lineCap = "round";
   ctx.beginPath();
   ctx.moveTo(x, y);
-  ctx.quadraticCurveTo(x - 30, y - 110, x + 30, y - 210);
+  ctx.quadraticCurveTo(px(-30), y - 110, px(30), y - 210);
   ctx.stroke();
-  const blooms: [number, number][] = [
-    [x + 4, y - 60],
-    [x - 18, y - 110],
-    [x + 12, y - 150],
-    [x + 26, y - 200],
-    [x - 8, y - 30],
+  const blooms: [number, number, number][] = [
+    [px(4), y - 60, 1],
+    [px(-18), y - 110, 0.9],
+    [px(12), y - 150, 1.05],
+    [px(26), y - 200, 0.95],
+    [px(-8), y - 30, 0.85],
   ];
-  for (const [bx, by] of blooms) {
-    for (let p = 0; p < 5; p++) {
-      const angle = (p * Math.PI * 2) / 5;
-      ctx.save();
-      ctx.translate(bx, by);
-      ctx.rotate(angle);
-      ctx.beginPath();
-      ctx.ellipse(0, -7, 5, 7, 0, 0, Math.PI * 2);
-      ctx.fillStyle = "#f4e6b3";
-      ctx.fill();
-      ctx.lineWidth = 1.2;
-      ctx.strokeStyle = "#b8a27a";
-      ctx.stroke();
-      ctx.restore();
-    }
-    ctx.beginPath();
-    ctx.arc(bx, by, 2.5, 0, Math.PI * 2);
-    ctx.fillStyle = "#d9b86a";
-    ctx.fill();
-  }
+  for (const [bx, by, s] of blooms) drawBloom(ctx, bx, by, s, dir * 0.4);
   ctx.restore();
 }
 
@@ -669,8 +704,13 @@ function drawDried(a: DrawArgs): void {
   ctx.restore();
   drawSoftPhoto(ctx, a, photo);
 
-  drawDriedSprig(ctx, card.x + 70, card.y + card.h - 40);
-  drawTapeStrip(ctx, card.x + 150, card.y + card.h - 92, 150, 46, "#d9b98c", "#c49e6f", -0.35);
+  const baseY = card.y + card.h - 40;
+  drawDriedSprig(ctx, card.x + 70, baseY, 1);
+  drawDriedSprig(ctx, card.x + card.w - 70, baseY, -1);
+  drawBloom(ctx, card.x + 46, card.y + 170, 1, 0.3);
+  drawBloom(ctx, card.x + 90, card.y + 130, 0.8, -0.5);
+  drawBloom(ctx, card.x + card.w - 46, card.y + card.h - 200, 0.9, 0.7);
+  drawTapeStrip(ctx, card.x + 60, card.y + card.h - 105, 150, 44, "#d9b98c", "#c49e6f", -0.35);
   if (decor) {
     drawImageCentered(
       ctx,
@@ -683,7 +723,6 @@ function drawDried(a: DrawArgs): void {
   }
 
   drawCaptionAndDate(a, a.input.captionColor ?? frame.captionColor);
-  drawBrand(ctx, card.x + card.w - 44, card.y + card.h - 30, frame.captionColor, "right");
 }
 
 function drawRibbon(a: DrawArgs): void {
