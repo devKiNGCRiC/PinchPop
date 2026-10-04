@@ -8,6 +8,7 @@ import silverStarUrl from "@/assets/stickers/silver-star.svg";
 import { getArt } from "@/lib/art";
 import { drawBannerOnCanvas } from "@/lib/bannerArt";
 import { lighten } from "@/lib/color";
+import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import type { FramePreset } from "@/lib/frames";
 import { patternDataUri } from "@/lib/framePatterns";
 import type { Memory } from "@/lib/memories";
@@ -263,47 +264,37 @@ function drawPhoto(
   ctx.strokeRect(x, y, w, h);
 }
 
-/** Renders one polaroid, with its caption and score line, as a PNG. `filterCss` is baked into
- * the photo only (frame, caption and postmark stay untouched), matching the live preview. */
-export async function renderPolaroidBlob(memory: Memory, filterCss = "none"): Promise<Blob> {
-  const [picture] = await Promise.all([pictureOf(memory), ensureFonts()]);
+/** The picture behind a run: its camera photo, or its illustration rendered as an SVG data URI. */
+export async function memoryPhotoUrl(memory: Memory): Promise<string> {
+  if (memory.photo) return memory.photo;
+  const { renderToStaticMarkup } = await import("react-dom/server");
+  const markup = renderToStaticMarkup(
+    createElement(Art, { artId: memory.artId, decorative: true }),
+  ).replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900"');
+  return `data:image/svg+xml,${encodeURIComponent(markup)}`;
+}
+
+/** The puzzle-run print, built with the same cards, frames and stickers as the maker. The run's
+ * score line sits where the maker shows its date. */
+export async function renderPolaroidBlob(
+  memory: Memory,
+  filterCss = "none",
+  frame: FramePreset = frameFor(DEFAULT_FRAME_ID),
+  stickers: PlacedSticker[] = [],
+): Promise<Blob> {
   const art = getArt(memory.artId);
-
-  const margin = 64;
-  const pad = 44;
-  const cardW = 880;
-  const photoW = cardW - pad * 2;
-  const photoH = Math.round(photoW / picture.aspect);
-  const footer = 230;
-  const cardH = pad + photoH + footer;
-  const [canvas, ctx] = makeCanvas(cardW + margin * 2 + 12, cardH + margin * 2 + 12);
-
-  ctx.fillStyle = IVORY;
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  drawFrame(ctx, margin, margin, cardW, cardH);
-  drawPhoto(ctx, picture, margin + pad, margin + pad, photoW, photoH, filterCss);
-
-  ctx.fillStyle = INK;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "alphabetic";
-  const cx = margin + cardW / 2;
-  const captionY = margin + pad + photoH + 96;
-  ctx.font = '700 84px "Caveat", cursive';
-  ctx.fillText(memory.caption ?? art.caption, cx, captionY);
-
   const accuracy = memory.accuracy !== undefined ? ` · ${formatAccuracy(memory.accuracy)}` : "";
-  ctx.font = '600 34px "Bricolage Grotesque", system-ui, sans-serif';
-  ctx.fillStyle = "#4a4f6e";
-  ctx.fillText(
-    `${memory.score} pts · ${memory.moves} moves · ${formatTime(memory.seconds)}${accuracy}`,
-    cx,
-    captionY + 62,
+  const { canvas } = await renderQuickPolaroidCanvas(
+    {
+      photo: await memoryPhotoUrl(memory),
+      aspect: memory.photo ? (memory.aspect ?? 1) : 1,
+      caption: memory.caption ?? art.caption,
+      timestamp: `${memory.score} pts · ${memory.moves} moves · ${formatTime(memory.seconds)}${accuracy}`,
+      stickers,
+    },
+    filterCss,
+    frame,
   );
-
-  ctx.textAlign = "right";
-  ctx.font = '800 30px "Unbounded", system-ui, sans-serif';
-  ctx.fillStyle = INK;
-  ctx.fillText("PinchPop", margin + cardW - pad, margin + cardH - 34);
   return toBlob(canvas);
 }
 

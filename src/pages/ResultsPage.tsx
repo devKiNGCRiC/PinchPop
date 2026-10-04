@@ -1,23 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, LoaderCircle, Pencil, Trash2, X } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { Confetti } from "@/components/Confetti";
 import { EmptyState } from "@/components/EmptyState";
 import { FilterPicker } from "@/components/FilterPicker";
+import { FramePicker } from "@/components/FramePicker";
 import { PolaroidActions } from "@/components/PolaroidActions";
 import { PopButton, PopLink } from "@/components/PopButton";
+import { PrintPreview } from "@/components/PrintPreview";
 import { ReplayDownload } from "@/components/ReplayDownload";
-import { Polaroid } from "@/components/Polaroid";
 import { Seo } from "@/components/Seo";
+import { StickerPicker } from "@/components/StickerPicker";
 import { ART_LIST, getArt, isCameraId } from "@/lib/art";
 import { useProfile, useSession } from "@/lib/auth";
+import { memoryPhotoUrl } from "@/lib/export";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
+import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import { deleteMemory, updateMemoryCaption, useMemories } from "@/lib/memories";
 import type { Memory } from "@/lib/memories";
 import { formatAccuracy, formatTime } from "@/lib/puzzle";
-import { postmarkDate, tiltFor, visitedPlaces } from "@/lib/stats";
+import { createBanner, createSticker } from "@/lib/stickers";
+import type { PlacedSticker } from "@/lib/stickers";
+import { visitedPlaces } from "@/lib/stats";
 
 /** A requested id that isn't on this device at all is most likely a cloud run solved on a
  * different one (e.g. a link opened from the Album's "synced from another device" tiles) — this
@@ -59,6 +66,32 @@ export default function ResultsPage() {
   const cloudFallback = useCloudFallback(requested, !!localMemory);
   const isCloudOnly = !localMemory && !!cloudFallback.memory;
   const memory = localMemory ?? cloudFallback.memory ?? (requested ? undefined : memories[0]);
+  const [frameId, setFrameId] = useState(DEFAULT_FRAME_ID);
+  const [stickers, setStickers] = useState<PlacedSticker[]>([]);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!memory) return;
+    let active = true;
+    memoryPhotoUrl(memory).then((url) => {
+      if (active) setPhotoUrl(url);
+    });
+    return () => {
+      active = false;
+    };
+  }, [memory]);
+
+  const printInput = useMemo(() => {
+    if (!memory || !photoUrl) return null;
+    const art = getArt(memory.artId);
+    const accuracy = memory.accuracy !== undefined ? ` · ${formatAccuracy(memory.accuracy)}` : "";
+    return {
+      photo: photoUrl,
+      aspect: memory.photo ? (memory.aspect ?? 1) : 1,
+      caption: memory.caption ?? art.caption,
+      timestamp: `${memory.score} pts · ${memory.moves} moves · ${formatTime(memory.seconds)}${accuracy}`,
+    };
+  }, [memory, photoUrl]);
 
   if (!memory) {
     if (requested && cloudFallback.loading) {
@@ -113,21 +146,15 @@ export default function ResultsPage() {
       <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="relative mx-auto w-full max-w-100 py-4">
           <Confetti key={memory.id} />
-          <Polaroid
-            artId={memory.artId}
-            photo={memory.photo}
-            aspect={memory.aspect}
-            caption={memory.caption ?? art.caption}
-            tilt={tiltFor(memory.id) || 3}
-            tape
-            develop
-            postmark={{ place: art.place, date: postmarkDate(memory.createdAt) }}
-            filter={filterCssFor(filterId)}
-          >
-            <span className="mt-1 text-sm font-semibold text-ink-soft">
-              {camera ? "Taken in camera mode" : `${art.name}, ${art.state}`}
-            </span>
-          </Polaroid>
+          {printInput ? (
+            <PrintPreview
+              input={printInput}
+              filterCss={filterCssFor(filterId)}
+              frame={frameFor(frameId)}
+              stickers={stickers}
+              onStickersChange={setStickers}
+            />
+          ) : null}
           {camera && !isCloudOnly ? (
             <CaptionEditor memory={memory} defaultCaption={art.caption} />
           ) : null}
@@ -166,9 +193,34 @@ export default function ResultsPage() {
           </p>
 
           <div className="mt-8">
-            <FilterPicker value={filterId} onChange={setFilterId} />
+            <div className="flex flex-col gap-3">
+              <CollapsibleSection title="Frame" summary={frameFor(frameId).label} defaultOpen>
+                <FramePicker value={frameId} onChange={setFrameId} />
+              </CollapsibleSection>
+              <CollapsibleSection
+                title="Filter"
+                summary={filterId === DEFAULT_FILTER_ID ? "Default" : undefined}
+              >
+                <FilterPicker value={filterId} onChange={setFilterId} />
+              </CollapsibleSection>
+              <CollapsibleSection
+                title="Stickers"
+                summary={stickers.length > 0 ? `${stickers.length} placed` : undefined}
+              >
+                <StickerPicker
+                  onAdd={(iconId) => setStickers((prev) => [...prev, createSticker(iconId)])}
+                  onAddBanner={(text) => setStickers((prev) => [...prev, createBanner(text)])}
+                  onClear={stickers.length > 0 ? () => setStickers([]) : undefined}
+                />
+              </CollapsibleSection>
+            </div>
             <div className="mt-4">
-              <PolaroidActions memory={memory} filterId={filterId} />
+              <PolaroidActions
+                memory={memory}
+                filterId={filterId}
+                frameId={frameId}
+                stickers={stickers}
+              />
             </div>
             <ReplayDownload memoryId={memory.id} />
             {camera && !isCloudOnly ? <PublicShareToggle memory={memory} /> : null}

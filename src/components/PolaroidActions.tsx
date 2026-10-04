@@ -5,20 +5,29 @@ import { PopButton } from "@/components/PopButton";
 import { getArt } from "@/lib/art";
 import { downloadBlob, renderPolaroidBlob, shareOrDownload } from "@/lib/export";
 import { DEFAULT_FILTER_ID, filterCssFor } from "@/lib/filters";
+import { DEFAULT_FRAME_ID, frameFor } from "@/lib/frames";
 import type { Memory } from "@/lib/memories";
 import { INSTAGRAM_LINK } from "@/lib/social";
+import type { PlacedSticker } from "@/lib/stickers";
 
 interface PolaroidActionsProps {
   memory: Memory;
   /** The chosen filter preset id, baked into the exported image. Defaults to no filter for
    * callers (like the share page) that don't offer a picker. */
   filterId?: string;
+  frameId?: string;
+  stickers?: PlacedSticker[];
 }
 
 type Busy = "download" | "share" | null;
 
 /** Save the polaroid as an image, or send it through the device's share sheet (SHARE-04, SHARE-05). */
-export function PolaroidActions({ memory, filterId = DEFAULT_FILTER_ID }: PolaroidActionsProps) {
+export function PolaroidActions({
+  memory,
+  filterId = DEFAULT_FILTER_ID,
+  frameId = DEFAULT_FRAME_ID,
+  stickers = [],
+}: PolaroidActionsProps) {
   const [busy, setBusy] = useState<Busy>(null);
   const [message, setMessage] = useState("");
   const filename = `pinchpop-${getArt(memory.artId).id}-${memory.id}.png`;
@@ -27,7 +36,12 @@ export function PolaroidActions({ memory, filterId = DEFAULT_FILTER_ID }: Polaro
     setBusy(kind);
     setMessage("");
     try {
-      const blob = await renderPolaroidBlob(memory, filterCssFor(filterId));
+      const blob = await renderPolaroidBlob(
+        memory,
+        filterCssFor(filterId),
+        frameFor(frameId),
+        stickers,
+      );
       if (kind === "download") {
         downloadBlob(blob, filename);
         setMessage("Image saved to your downloads.");
