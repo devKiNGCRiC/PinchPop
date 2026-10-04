@@ -67,7 +67,7 @@ export const CAMERA_META: ArtMeta = {
   name: "Your photo",
   place: "Camera",
   state: "Live camera",
-  caption: "your shot",
+  caption: "",
   color: "#111426",
   swatch: "bg-ink",
 };

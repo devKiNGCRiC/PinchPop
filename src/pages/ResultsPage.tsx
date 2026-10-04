@@ -313,7 +313,7 @@ function LoginNudge() {
   );
 }
 
-/** Lets a camera photo's caption ("your shot" by default) be renamed, right under the polaroid
+/** Lets a camera photo's caption be added or renamed, right under the polaroid
  * it labels. Destination polaroids keep their fixed, place-tied caption. */
 function CaptionEditor({ memory, defaultCaption }: { memory: Memory; defaultCaption: string }) {
   const [editing, setEditing] = useState(false);
@@ -332,7 +332,7 @@ function CaptionEditor({ memory, defaultCaption }: { memory: Memory; defaultCapt
         className="mx-auto mt-3 flex items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-chakra"
       >
         <Pencil className="size-3.5" aria-hidden="true" />
-        Edit caption ("{shown}")
+        {shown ? `Edit caption ("${shown}")` : "Add a caption"}
       </button>
     );
   }
@@ -349,7 +349,7 @@ function CaptionEditor({ memory, defaultCaption }: { memory: Memory; defaultCapt
       <input
         autoFocus
         maxLength={40}
-        placeholder={defaultCaption}
+        placeholder="Add a caption"
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && save()}

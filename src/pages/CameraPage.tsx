@@ -106,14 +106,24 @@ export default function CameraPage() {
         description="Frame with your hands, pinch to snap a photo, then solve it with hand gestures. Free, in-browser hand tracking — no app, no upload."
         path="/camera"
       />
-      <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
+      <h1
+        className={cn(
+          "font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]",
+          running && "sr-only",
+        )}
+      >
         Camera mode
       </h1>
-      <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
+      <p className={cn("mt-4 max-w-xl text-lg leading-relaxed text-ink-soft", running && "hidden")}>
         Frame a shot with your hands, pinch to snap it, then solve your own photo. No mouse needed.
       </p>
 
-      <div className="sticker-lg relative mt-8 overflow-hidden rounded-3xl bg-ink">
+      <div
+        className={cn(
+          "sticker-lg relative overflow-hidden rounded-3xl bg-ink",
+          running ? "mt-4" : "mt-8",
+        )}
+      >
         <video
           ref={videoRef}
           playsInline
@@ -123,11 +133,55 @@ export default function CameraPage() {
         />
         {/* min-h keeps the idle/error/starting overlay's own content from needing to scroll inside
             this box on narrow phones, where a strict 16:9 height would be too short for it. */}
-        <div className={running ? undefined : "aspect-video min-h-140 sm:min-h-120 lg:min-h-0"}>
+        {running ? (
+          <div className="relative z-10 flex items-start justify-between gap-3 p-3 sm:p-4">
+            <p
+              aria-live="polite"
+              className={cn(
+                "sticker inline-flex max-w-[calc(100%-7rem)] items-center gap-2 rounded-2xl px-3 py-2 text-sm leading-snug font-semibold sm:text-base",
+                info.tone,
+              )}
+            >
+              <StatusIcon className="size-5 shrink-0" aria-hidden="true" />
+              {statusText}
+            </p>
+            <div className="pointer-events-auto flex gap-2">
+              <button
+                type="button"
+                onClick={toggleSound}
+                aria-pressed={ui.soundOn}
+                aria-label={ui.soundOn ? "Mute sounds" : "Turn sounds on"}
+                className="pop sticker flex size-11 items-center justify-center rounded-full bg-white"
+              >
+                {ui.soundOn ? (
+                  <Volume2 className="size-5" aria-hidden="true" />
+                ) : (
+                  <VolumeX className="size-5" aria-hidden="true" />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={stop}
+                aria-label="Stop camera"
+                className="pop sticker flex size-11 items-center justify-center rounded-full bg-coral"
+              >
+                <X className="size-5" aria-hidden="true" />
+              </button>
+            </div>
+          </div>
+        ) : null}
+        <div
+          className={
+            running ? "flex justify-center" : "aspect-video min-h-140 sm:min-h-120 lg:min-h-0"
+          }
+        >
           <canvas
             ref={canvasRef}
             aria-label="Live camera view"
-            className={cn("h-auto w-full touch-none select-none", running ? "block" : "hidden")}
+            className={cn(
+              "h-auto max-h-[calc(100dvh-15rem)] w-auto max-w-full touch-none select-none",
+              running ? "block" : "hidden",
+            )}
             {...pointerHandlers}
           />
         </div>
@@ -220,42 +274,6 @@ export default function CameraPage() {
 
         {running ? (
           <>
-            <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-3 sm:p-4">
-              <p
-                aria-live="polite"
-                className={cn(
-                  "sticker inline-flex max-w-[calc(100%-7rem)] items-center gap-2 rounded-2xl px-3 py-2 text-sm leading-snug font-semibold sm:text-base",
-                  info.tone,
-                )}
-              >
-                <StatusIcon className="size-5 shrink-0" aria-hidden="true" />
-                {statusText}
-              </p>
-              <div className="pointer-events-auto flex gap-2">
-                <button
-                  type="button"
-                  onClick={toggleSound}
-                  aria-pressed={ui.soundOn}
-                  aria-label={ui.soundOn ? "Mute sounds" : "Turn sounds on"}
-                  className="pop sticker flex size-11 items-center justify-center rounded-full bg-white"
-                >
-                  {ui.soundOn ? (
-                    <Volume2 className="size-5" aria-hidden="true" />
-                  ) : (
-                    <VolumeX className="size-5" aria-hidden="true" />
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={stop}
-                  aria-label="Stop camera"
-                  className="pop sticker flex size-11 items-center justify-center rounded-full bg-coral"
-                >
-                  <X className="size-5" aria-hidden="true" />
-                </button>
-              </div>
-            </div>
-
             {ui.canSnap ? (
               <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
                 <button

@@ -18,7 +18,7 @@ export interface Memory {
   photo?: string;
   /** Width divided by height of `photo`. */
   aspect?: number;
-  /** A player-written caption for a camera photo, replacing the default "your shot". */
+  /** A player-written caption for a camera photo, written by the player. */
   caption?: string;
   /** Whoever was signed in when this was saved, or undefined for anonymous play. Every read in
    * this module is scoped to this so one browser shared by several accounts never mixes their
@@ -196,7 +196,7 @@ export function deleteMemory(id: string): void {
 }
 
 /** Renames a memory's caption. An empty/whitespace-only value reverts to the destination's
- * default caption (e.g. "your shot" for camera photos) rather than storing a blank string. */
+ * default caption (none for camera photos) rather than storing a blank string. */
 export function updateMemoryCaption(id: string, caption: string): void {
   const trimmed = caption.trim();
   write(
