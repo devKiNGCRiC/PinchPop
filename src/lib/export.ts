@@ -1,7 +1,8 @@
 import { createElement } from "react";
 
 import { Art } from "@/components/Art";
-import hibiscusUrl from "@/assets/stickers/hibiscus-soft.svg";
+import butterflyUrl from "@/assets/stickers/butterfly-tan.svg";
+import hibiscusUrl from "@/assets/stickers/hibiscus-muted.svg";
 import satinBowPinkUrl from "@/assets/stickers/satin-bow-pink.svg";
 import silverStarUrl from "@/assets/stickers/silver-star.svg";
 import { getArt } from "@/lib/art";
@@ -415,6 +416,16 @@ function quickLayout(
     captionY = photo.y + photoH + 96;
     tsY = captionY + captionGap;
     card = { x: cardX, y: cardY, w: CARD_W - inset * 2, h: pad + photoH + (hasTs ? 230 : 170) };
+  } else if (frame.design === "note") {
+    const inset = 40;
+    const cardX = x + inset;
+    const cardY = y + inset;
+    const photoW = CARD_W - inset * 2 - 120;
+    const photoH = Math.round(photoW / aspect);
+    photo = { x: cardX + 60, y: cardY + 70, w: photoW, h: photoH };
+    captionY = photo.y + photoH + 110;
+    tsY = captionY + captionGap;
+    card = { x: cardX, y: cardY, w: CARD_W - inset * 2, h: 70 + photoH + (hasTs ? 210 : 160) };
   } else if (frame.design === "ribbon") {
     const photoW = 792;
     const photoH = Math.round(photoW / aspect);
@@ -443,6 +454,7 @@ function quickLayout(
 }
 
 interface DecorImages {
+  butterfly: HTMLImageElement;
   hibiscus: HTMLImageElement;
   bow: HTMLImageElement;
   star: HTMLImageElement;
@@ -460,17 +472,19 @@ interface DrawArgs {
 }
 
 async function loadDecor(): Promise<DecorImages> {
-  const [hibiscus, bow, star] = await Promise.all([
+  const [butterfly, hibiscus, bow, star] = await Promise.all([
+    loadImage(butterflyUrl),
     loadImage(hibiscusUrl),
     loadImage(satinBowPinkUrl),
     loadImage(silverStarUrl),
   ]);
-  return { hibiscus, bow, star };
+  return { butterfly, hibiscus, bow, star };
 }
 
 const BOW_ASPECT = 1052.4 / 744.09;
 const STAR_ASPECT = 86.046 / 81.715;
 const HIBISCUS_ASPECT = 519.48 / 363.65;
+const BUTTERFLY_ASPECT = 697.91 / 535.04;
 
 function drawImageCentered(
   ctx: CanvasRenderingContext2D,
@@ -492,11 +506,11 @@ function drawKissMark(ctx: CanvasRenderingContext2D, cx: number, cy: number, sca
   ctx.rotate(-0.12);
   ctx.scale(scale, scale);
   const fill = ctx.createLinearGradient(-60, 0, 60, 0);
-  fill.addColorStop(0, "#eb8fa9");
-  fill.addColorStop(0.5, "#f6b8c9");
-  fill.addColorStop(1, "#eb8fa9");
+  fill.addColorStop(0, "#f1bfcb");
+  fill.addColorStop(0.5, "#f9dfe6");
+  fill.addColorStop(1, "#f1bfcb");
   ctx.fillStyle = fill;
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 0.6;
   ctx.beginPath();
   ctx.moveTo(-58, 0);
   ctx.bezierCurveTo(-40, -26, -16, -30, 0, -16);
@@ -512,7 +526,7 @@ function drawKissMark(ctx: CanvasRenderingContext2D, cx: number, cy: number, sca
   ctx.closePath();
   ctx.fill();
   ctx.globalAlpha = 1;
-  ctx.strokeStyle = "#c96a86";
+  ctx.strokeStyle = "#c98fa0";
   ctx.lineWidth = 2.2;
   ctx.beginPath();
   ctx.moveTo(-54, 0);
@@ -553,6 +567,123 @@ function drawLace(a: DrawArgs): void {
   drawCaptionAndDate(a, captionColor);
   drawBrand(ctx, card.x + 44, card.y + card.h - 30, captionColor, "left");
   drawKissMark(ctx, card.x + card.w - 130, card.y + card.h - 80, 1.2);
+}
+
+const NOTE_CREAM = "#faf4ea";
+
+function drawNote(a: DrawArgs): void {
+  const { ctx, L, frame } = a;
+  const { card, photo } = L;
+  ctx.save();
+  ctx.shadowColor = "rgba(40,30,30,0.18)";
+  ctx.shadowBlur = 24;
+  ctx.shadowOffsetY = 8;
+  ctx.fillStyle = NOTE_CREAM;
+  ctx.fillRect(card.x, card.y, card.w, card.h);
+  ctx.restore();
+  ctx.fillStyle = IVORY;
+  for (let nx = card.x + 11; nx < card.x + card.w; nx += 22) {
+    ctx.beginPath();
+    ctx.arc(nx, card.y, 9, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  drawSoftPhoto(ctx, a, photo);
+
+  const hx = card.x + card.w - 120;
+  const hy = card.y + card.h - 80;
+  ctx.strokeStyle = "#f0909f";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(hx, hy + 14);
+  ctx.bezierCurveTo(hx - 28, hy - 10, hx - 26, hy - 34, hx, hy - 20);
+  ctx.bezierCurveTo(hx + 26, hy - 34, hx + 28, hy - 10, hx, hy + 14);
+  ctx.stroke();
+  ctx.fillStyle = "#f0909f";
+  for (const [dx, dy] of [
+    [18, -40],
+    [30, -30],
+  ]) {
+    ctx.beginPath();
+    ctx.arc(hx + dx, hy + dy, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.save();
+  ctx.globalAlpha = 0.85;
+  drawTapeStrip(ctx, card.x + 70, card.y + 6, 200, 56, "#f7c3cf", "#eda9b8", -0.6);
+  ctx.restore();
+
+  drawCaptionAndDate(a, a.input.captionColor ?? frame.captionColor);
+}
+
+/** A small pressed-flower sprig: a curved stem with five-petal blooms in dried cream and gold. */
+function drawDriedSprig(ctx: CanvasRenderingContext2D, x: number, y: number): void {
+  ctx.save();
+  ctx.strokeStyle = "#b8a27a";
+  ctx.lineWidth = 3;
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(x, y);
+  ctx.quadraticCurveTo(x - 30, y - 110, x + 30, y - 210);
+  ctx.stroke();
+  const blooms: [number, number][] = [
+    [x + 4, y - 60],
+    [x - 18, y - 110],
+    [x + 12, y - 150],
+    [x + 26, y - 200],
+    [x - 8, y - 30],
+  ];
+  for (const [bx, by] of blooms) {
+    for (let p = 0; p < 5; p++) {
+      const angle = (p * Math.PI * 2) / 5;
+      ctx.save();
+      ctx.translate(bx, by);
+      ctx.rotate(angle);
+      ctx.beginPath();
+      ctx.ellipse(0, -7, 5, 7, 0, 0, Math.PI * 2);
+      ctx.fillStyle = "#f4e6b3";
+      ctx.fill();
+      ctx.lineWidth = 1.2;
+      ctx.strokeStyle = "#b8a27a";
+      ctx.stroke();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.arc(bx, by, 2.5, 0, Math.PI * 2);
+    ctx.fillStyle = "#d9b86a";
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawDried(a: DrawArgs): void {
+  const { ctx, L, frame, decor } = a;
+  const { card, photo } = L;
+  ctx.save();
+  ctx.shadowColor = "rgba(60,50,40,0.18)";
+  ctx.shadowBlur = 26;
+  ctx.shadowOffsetY = 8;
+  ctx.fillStyle = frame.frameBg;
+  ctx.fillRect(card.x, card.y, card.w, card.h);
+  ctx.restore();
+  drawSoftPhoto(ctx, a, photo);
+
+  drawDriedSprig(ctx, card.x + 70, card.y + card.h - 40);
+  drawTapeStrip(ctx, card.x + 150, card.y + card.h - 92, 150, 46, "#d9b98c", "#c49e6f", -0.35);
+  if (decor) {
+    drawImageCentered(
+      ctx,
+      decor.butterfly,
+      card.x + card.w - 80,
+      card.y + 40,
+      190,
+      BUTTERFLY_ASPECT,
+    );
+  }
+
+  drawCaptionAndDate(a, a.input.captionColor ?? frame.captionColor);
+  drawBrand(ctx, card.x + card.w - 44, card.y + card.h - 30, frame.captionColor, "right");
 }
 
 function drawRibbon(a: DrawArgs): void {
@@ -856,7 +987,7 @@ export async function renderQuickPolaroidCanvas(
       stickers.map((s) => (s.iconId === "banner" ? null : loadImage(stickerIconDataUri(s.iconId)))),
     ),
     patternFor(frame),
-    frame.design === "ribbon" ? loadDecor() : Promise.resolve(null),
+    frame.design === "ribbon" || frame.design === "dried" ? loadDecor() : Promise.resolve(null),
     ensureFonts(),
   ]);
 
@@ -872,6 +1003,8 @@ export async function renderQuickPolaroidCanvas(
   else if (frame.design === "sticky") drawSticky(args);
   else if (frame.design === "lace") drawLace(args);
   else if (frame.design === "ribbon") drawRibbon(args);
+  else if (frame.design === "note") drawNote(args);
+  else if (frame.design === "dried") drawDried(args);
   else drawClassic(args);
 
   if (includeStickers && stickers.length > 0) {

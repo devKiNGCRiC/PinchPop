@@ -21,7 +21,8 @@ export interface DefaultSticker {
   size: number;
 }
 
-export type QuickDesign = "film" | "notebook" | "cassette" | "sticky" | "lace" | "ribbon";
+export type QuickDesign =
+  "film" | "notebook" | "cassette" | "sticky" | "lace" | "ribbon" | "note" | "dried";
 
 export interface FramePreset {
   id: string;
@@ -108,6 +109,24 @@ export const FRAME_PRESETS: FramePreset[] = [
     captionColor: "#8a1f44",
     tapeColor: null,
     design: "ribbon",
+  },
+  {
+    id: "torn-note",
+    label: "Torn Note",
+    frameBg: "#faf4ea",
+    borderColor: INK,
+    captionColor: "#5a3b44",
+    tapeColor: null,
+    design: "note",
+  },
+  {
+    id: "pressed-flowers",
+    label: "Pressed Flowers",
+    frameBg: "#fbfaf7",
+    borderColor: "#e6e2da",
+    captionColor: "#6b5a4a",
+    tapeColor: null,
+    design: "dried",
   },
   {
     id: "classic",
