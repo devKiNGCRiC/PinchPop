@@ -17,6 +17,7 @@ export const EXTRA_LINKS = [
   { to: "/how-to-play", label: "How to play", end: false },
   { to: "/about", label: "About", end: false },
   { to: "/privacy", label: "Privacy", end: false },
+  { to: "/terms", label: "Terms", end: false },
 ];
 
 const BY_PATH = new Map([...NAV_LINKS, ...EXTRA_LINKS].map((item) => [item.to, item]));
@@ -41,4 +42,5 @@ export const ALL_LINKS = [
   link("/how-to-play"),
   link("/about"),
   link("/privacy"),
+  link("/terms"),
 ];

@@ -15,6 +15,7 @@ import PolaroidMakerPage from "@/pages/PolaroidMakerPage";
 import PrivacyPage from "@/pages/PrivacyPage";
 import ProfilePage from "@/pages/ProfilePage";
 import ResultsPage from "@/pages/ResultsPage";
+import TermsPage from "@/pages/TermsPage";
 
 // Shown while a lazily loaded route (such as camera mode) downloads on a direct page load.
 function BootFallback() {
@@ -43,6 +44,7 @@ const router = createBrowserRouter([
       { path: "how-to-play", element: <HowToPlayPage /> },
       { path: "about", element: <AboutPage /> },
       { path: "privacy", element: <PrivacyPage /> },
+      { path: "terms", element: <TermsPage /> },
       { path: "gallery", element: <GalleryPage /> },
       { path: "profile", element: <ProfilePage /> },
       { path: "polaroid", element: <PolaroidMakerPage /> },

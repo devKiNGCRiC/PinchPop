@@ -49,6 +49,9 @@ export const EMAIL_LINK: SocialLink = {
   href: "mailto:devkingcric@gmail.com",
   path: MAIL_PATH,
 };
+/** The plain address behind EMAIL_LINK, for places (like the Terms page) that need the address
+ * itself rather than a social-icon link. */
+export const CONTACT_EMAIL = EMAIL_LINK.href.replace("mailto:", "");
 
 /** The quiet icon row used site-wide (footer): one link per platform, no duplicates. */
 export const CORE_LINKS: SocialLink[] = [GITHUB_LINK, LINKEDIN_LINK, INSTAGRAM_LINK, X_LINK];
