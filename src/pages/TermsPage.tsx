@@ -29,7 +29,7 @@ const SECTIONS: Section[] = [
   },
   {
     title: "One person to contact, two roles",
-    body: "The same person handles both copyright complaints (as PinchPop's designated agent) and user grievances under India's IT Rules. Contact details are in both sections below.",
+    body: "The same person handles both copyright complaints and user grievances under India's IT Rules. Contact details are in both sections below.",
     Icon: Gavel,
   },
 ];
@@ -121,12 +121,10 @@ export default function TermsPage() {
           >
             {CONTACT_EMAIL}
           </a>
-          , registered as PinchPop's designated agent with the U.S. Copyright Office. Valid notices
-          are acted on promptly, which may include removing or disabling access to the reported
-          content. If you believe content was removed in error, you can send a counter-notice to the
-          same address identifying the material and explaining why; it will be handled under the
-          same law that governs the original notice. Accounts found to be repeat infringers may be
-          suspended or terminated.
+          . Valid notices are acted on promptly, which may include removing or disabling access to
+          the reported content. If you believe content was removed in error, you can send a
+          counter-notice to the same address identifying the material and explaining why. Accounts
+          found to be repeat infringers may be suspended or terminated.
         </p>
       </section>
 
@@ -140,7 +138,7 @@ export default function TermsPage() {
           also be raised with the Grievance Officer:
         </p>
         <p className="mt-3 max-w-2xl text-lg leading-relaxed text-ink-soft">
-          [Your full name]
+          Raj Roy
           <br />
           Email:{" "}
           <a
