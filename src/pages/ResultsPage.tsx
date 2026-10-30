@@ -359,6 +359,7 @@ function CaptionEditor({ memory, defaultCaption }: { memory: Memory; defaultCapt
 function PublicShareToggle({ memory }: { memory: Memory }) {
   const { session, username } = useProfile();
   const [isPublic, setIsPublic] = useState<boolean | null>(null);
+  const [confirmRights, setConfirmRights] = useState(false);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -384,6 +385,7 @@ function PublicShareToggle({ memory }: { memory: Memory }) {
 
   async function toggle() {
     if (!session) return;
+    if (!isPublic && !confirmRights) return;
     setBusy(true);
     setMessage(null);
     const next = !isPublic;
@@ -421,12 +423,23 @@ function PublicShareToggle({ memory }: { memory: Memory }) {
           tone={isPublic ? "chakra" : "white"}
           size="sm"
           onClick={() => void toggle()}
-          disabled={busy}
+          disabled={busy || (!isPublic && !confirmRights)}
         >
           {busy ? <LoaderCircle className="size-4 animate-spin" aria-hidden="true" /> : null}
           {isPublic ? "Make private" : "Make public"}
         </PopButton>
       </div>
+      {!isPublic ? (
+        <label className="mt-3 flex items-start gap-2 text-sm leading-snug text-ink-soft">
+          <input
+            type="checkbox"
+            checked={confirmRights}
+            onChange={(e) => setConfirmRights(e.target.checked)}
+            className="mt-0.5 size-4 shrink-0 rounded border-2 border-ink accent-chakra"
+          />
+          <span>I own this photo, or have the right to share it publicly.</span>
+        </label>
+      ) : null}
       {isPublic && shareUrl ? (
         <div className="mt-3 flex items-center gap-2">
           <input

@@ -13,7 +13,7 @@ import {
   User,
   UserCircle,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { PopButton, PopLink } from "@/components/PopButton";
@@ -41,6 +41,7 @@ function AuthForms() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -141,6 +142,25 @@ function AuthForms() {
             </button>
           </div>
         </label>
+
+        {mode === "signUp" ? (
+          <label className="flex items-start gap-2 text-sm leading-snug text-ink-soft">
+            <input
+              type="checkbox"
+              required
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 rounded border-2 border-ink accent-chakra"
+            />
+            <span>
+              I agree to the{" "}
+              <Link to="/terms" className="font-semibold text-chakra underline underline-offset-4">
+                Terms
+              </Link>
+              , including the minimum age requirement.
+            </span>
+          </label>
+        ) : null}
 
         <PopButton type="submit" tone="saffron" size="lg" disabled={busy} className="mt-2">
           {busy ? (
