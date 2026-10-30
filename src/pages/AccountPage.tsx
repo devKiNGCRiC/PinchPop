@@ -184,20 +184,25 @@ function AuthForms() {
 
 function AvatarField({ userId, avatarPath }: { userId: string; avatarPath: string | null }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
+  const [confirmRights, setConfirmRights] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
   const url = avatarUrl(avatarPath);
 
-  async function handleFile(file: File) {
+  async function confirmUpload() {
+    if (!pendingFile || !confirmRights) return;
     setBusy(true);
     setMessage("");
-    const result = await uploadAvatar(userId, file);
+    const result = await uploadAvatar(userId, pendingFile);
     if (!result.ok) setMessage(result.message);
     setBusy(false);
+    setPendingFile(null);
+    setConfirmRights(false);
   }
 
   return (
-    <div className="mx-auto w-fit">
+    <div className="mx-auto w-fit text-center">
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
@@ -226,9 +231,50 @@ function AvatarField({ userId, avatarPath }: { userId: string; avatarPath: strin
         onChange={(event) => {
           const file = event.target.files?.[0];
           event.target.value = "";
-          if (file) void handleFile(file);
+          if (file) setPendingFile(file);
         }}
       />
+      <p className="mt-2 max-w-48 text-xs text-ink-soft">
+        Shown publicly on the leaderboard — use a photo of yourself.
+      </p>
+      {pendingFile ? (
+        <div className="mt-3 max-w-48 rounded-2xl border-2 border-dashed border-ink/25 p-3 text-left">
+          <label className="flex items-start gap-2 text-sm leading-snug text-ink-soft">
+            <input
+              type="checkbox"
+              checked={confirmRights}
+              onChange={(e) => setConfirmRights(e.target.checked)}
+              className="mt-0.5 size-4 shrink-0 rounded border-2 border-ink accent-chakra"
+            />
+            <span>This is a photo of me, or I have the right to use it.</span>
+          </label>
+          <div className="mt-2 flex gap-2">
+            <PopButton
+              tone="saffron"
+              size="sm"
+              onClick={() => void confirmUpload()}
+              disabled={busy || !confirmRights}
+            >
+              {busy ? (
+                <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              ) : (
+                "Use this photo"
+              )}
+            </PopButton>
+            <PopButton
+              tone="white"
+              size="sm"
+              onClick={() => {
+                setPendingFile(null);
+                setConfirmRights(false);
+              }}
+              disabled={busy}
+            >
+              Cancel
+            </PopButton>
+          </div>
+        </div>
+      ) : null}
       {message ? <p className="mt-2 max-w-48 text-sm text-sindoor">{message}</p> : null}
     </div>
   );
