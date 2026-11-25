@@ -44,3 +44,18 @@ export const ALL_LINKS = [
   link("/privacy"),
   link("/terms"),
 ];
+
+// The footer's own grouping: what you play, what you've collected, and help/legal for the bottom bar.
+export const FOOTER_PLAY_LINKS = [link("/game"), link("/camera"), link("/polaroid")];
+export const FOOTER_YOURS_LINKS = [
+  link("/gallery"),
+  link("/profile"),
+  link("/leaderboard"),
+  link("/account"),
+];
+export const FOOTER_HELP_LINKS = [
+  link("/how-to-play"),
+  link("/about"),
+  link("/privacy"),
+  link("/terms"),
+];
