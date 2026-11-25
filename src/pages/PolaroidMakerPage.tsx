@@ -8,6 +8,7 @@ import { FilterPicker } from "@/components/FilterPicker";
 import { FramePicker } from "@/components/FramePicker";
 import { PopButton } from "@/components/PopButton";
 import { PrintPreview } from "@/components/PrintPreview";
+import { SamplePrint } from "@/components/SamplePrint";
 import { Seo } from "@/components/Seo";
 import { StickerPicker } from "@/components/StickerPicker";
 import {
@@ -204,21 +205,7 @@ export default function PolaroidMakerPage() {
               onStickersChange={setStickers}
             />
           ) : (
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={busy === "preparing"}
-              className="pop sticker-lg flex aspect-square w-full flex-col items-center justify-center gap-3 rounded-3xl border-[2.5px] border-dashed border-ink bg-white text-ink-soft"
-            >
-              {busy === "preparing" ? (
-                <Chakra spokes={24} className="size-10 animate-spin text-chakra" />
-              ) : (
-                <>
-                  <ImagePlus className="size-10" aria-hidden="true" />
-                  <span className="font-semibold">Choose a photo</span>
-                </>
-              )}
-            </button>
+            <SamplePrint />
           )}
           <input
             ref={fileInputRef}
@@ -231,7 +218,9 @@ export default function PolaroidMakerPage() {
               if (file) void handleFile(file).finally(() => (input.value = ""));
             }}
           />
-          {error ? <p className="mt-3 text-center text-base text-sindoor">{error}</p> : null}
+          {error && photo ? (
+            <p className="mt-3 text-center text-base text-sindoor">{error}</p>
+          ) : null}
           {stickers.length > 0 ? (
             <p className="mt-3 text-center text-sm text-ink-soft">
               Drag a sticker to move it, tap it for a resize handle and remove button.
@@ -333,10 +322,49 @@ export default function PolaroidMakerPage() {
               </p>
             </>
           ) : (
-            <p className="text-lg leading-relaxed text-ink-soft">
-              Pick a photo on the left to start — 22 frames, 12 filters, 24 stickers, custom type
-              and a caption turn it into an instant print you can download or share.
-            </p>
+            <div>
+              <h2 className="font-display text-2xl font-extrabold tracking-tight">
+                Three steps to a print
+              </h2>
+              <ol className="mt-5 flex flex-col gap-4">
+                {[
+                  [
+                    "Choose a photo",
+                    "Any photo from your phone or computer. It stays on your device.",
+                  ],
+                  ["Pick a frame and filter", "Film roll, notebook, lace, ribbon and more."],
+                  [
+                    "Add a caption and stickers",
+                    "Then download it or share it straight to your apps.",
+                  ],
+                ].map(([title, body], i) => (
+                  <li key={title} className="flex gap-4">
+                    <span className="sticker flex size-10 shrink-0 items-center justify-center rounded-full bg-saffron font-display text-lg font-extrabold">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="font-semibold">{title}</p>
+                      <p className="text-base text-ink-soft">{body}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+              <PopButton
+                tone="saffron"
+                size="lg"
+                className="mt-8"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy === "preparing"}
+              >
+                {busy === "preparing" ? (
+                  <Chakra spokes={24} className="size-5 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-5" aria-hidden="true" />
+                )}
+                {busy === "preparing" ? "Preparing…" : "Choose a photo"}
+              </PopButton>
+              {error ? <p className="mt-3 text-base text-sindoor">{error}</p> : null}
+            </div>
           )}
         </div>
       </div>

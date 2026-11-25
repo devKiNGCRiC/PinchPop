@@ -88,14 +88,6 @@ export default function HomePage() {
       />
 
       <section className="relative overflow-hidden bg-chakra pt-32 pb-28 text-white sm:pt-36">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 opacity-25"
-          style={{
-            backgroundImage: "radial-gradient(#ffffff 1.5px, transparent 1.5px)",
-            backgroundSize: "22px 22px",
-          }}
-        />
         {/* A slowly turning wheel: progress, and the aperture of a lens. */}
         <Chakra
           spokes={24}
