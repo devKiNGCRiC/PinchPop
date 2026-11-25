@@ -24,7 +24,7 @@ export function NavBar() {
           <Wordmark />
         </NavLink>
 
-        <nav aria-label="Primary" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Primary" className="hidden items-center gap-0.5 lg:flex xl:gap-1">
           {NAV_LINKS.map((link) => (
             <NavLink
               key={link.to}
@@ -32,7 +32,7 @@ export function NavBar() {
               end={link.end}
               className={({ isActive }) =>
                 cn(
-                  "inline-flex h-10 items-center rounded-full border-2 px-4 text-[15px] font-semibold transition-colors",
+                  "inline-flex h-10 items-center rounded-full border-2 px-2.5 text-sm font-semibold whitespace-nowrap transition-colors xl:px-4 xl:text-[15px]",
                   isActive
                     ? "border-ink bg-chakra text-white"
                     : "border-transparent text-ink-soft hover:border-ink hover:bg-marigold/40 hover:text-ink",
@@ -60,7 +60,7 @@ export function NavBar() {
             <User className="size-4" aria-hidden="true" />
             {session ? "Account" : "Sign in"}
           </PopLink>
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <MobileNavSheet />
           </div>
         </div>

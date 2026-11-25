@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, LoaderCircle, Pencil, Trash2, X } from "lucide-react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
 import { Chakra } from "@/components/Chakra";
 import { CollapsibleSection } from "@/components/CollapsibleSection";
@@ -136,7 +136,6 @@ export default function ResultsPage() {
 
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      {isCloudOnly ? null : <LoginNudge />}
       <Seo
         title={`${art.place} polaroid`}
         description={`Scored ${memory.score} pts in ${memory.moves} moves and ${formatTime(memory.seconds)} — your Speed Run result for ${art.place}.`}
@@ -193,8 +192,9 @@ export default function ResultsPage() {
           </p>
 
           <div className="mt-8">
-            <div className="flex flex-col gap-3">
-              <CollapsibleSection title="Frame" summary={frameFor(frameId).label} defaultOpen>
+            <h2 className="font-display text-xl font-extrabold tracking-tight">Style your print</h2>
+            <div className="mt-3 flex flex-col gap-3">
+              <CollapsibleSection title="Frame" summary={frameFor(frameId).label}>
                 <FramePicker value={frameId} onChange={setFrameId} />
               </CollapsibleSection>
               <CollapsibleSection
@@ -214,7 +214,7 @@ export default function ResultsPage() {
                 />
               </CollapsibleSection>
             </div>
-            <div className="mt-4">
+            <div className="mt-6">
               <PolaroidActions
                 memory={memory}
                 filterId={filterId}
@@ -222,36 +222,67 @@ export default function ResultsPage() {
                 stickers={stickers}
               />
             </div>
+            {isCloudOnly ? null : <LoginNudge />}
             <ReplayDownload memoryId={memory.id} />
             {camera && !isCloudOnly ? <PublicShareToggle memory={memory} /> : null}
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3 border-t-2 border-dashed border-ink/20 pt-6">
             <PopLink to={camera ? "/camera" : `/game?art=${art.id}`} tone="saffron" size="lg">
               Play again
             </PopLink>
-            <PopLink to="/profile" tone="chakra" size="lg">
+            <Link to="/profile" className={textLinkClass}>
               Open passport
-            </PopLink>
-            <PopLink to="/gallery" tone="white" size="lg">
+            </Link>
+            <Link to="/gallery" className={textLinkClass}>
               Open album
-            </PopLink>
-            {isCloudOnly ? null : (
-              <PopButton
-                tone="white"
-                size="lg"
-                onClick={() => {
-                  deleteMemory(memory.id);
-                  navigate("/gallery");
-                }}
-              >
-                <Trash2 className="size-5 text-sindoor" aria-hidden="true" />
-                Delete
-              </PopButton>
-            )}
+            </Link>
           </div>
+          {isCloudOnly ? null : (
+            <DeleteRun memoryId={memory.id} onDeleted={() => navigate("/gallery")} />
+          )}
         </div>
       </div>
+    </div>
+  );
+}
+
+const textLinkClass =
+  "inline-flex min-h-11 items-center text-base font-semibold text-chakra underline underline-offset-4 hover:text-ink";
+
+/** Deleting a polaroid can't be undone, so it asks once before it goes. */
+function DeleteRun({ memoryId, onDeleted }: { memoryId: string; onDeleted: () => void }) {
+  const [confirming, setConfirming] = useState(false);
+
+  if (!confirming) {
+    return (
+      <button
+        type="button"
+        onClick={() => setConfirming(true)}
+        className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-ink-soft hover:text-sindoor"
+      >
+        <Trash2 className="size-4" aria-hidden="true" />
+        Delete this polaroid
+      </button>
+    );
+  }
+
+  return (
+    <div role="alert" className="mt-4 flex flex-wrap items-center gap-3">
+      <p className="text-sm font-semibold">Delete this polaroid? This can't be undone.</p>
+      <PopButton
+        tone="coral"
+        size="sm"
+        onClick={() => {
+          deleteMemory(memoryId);
+          onDeleted();
+        }}
+      >
+        Yes, delete
+      </PopButton>
+      <PopButton tone="white" size="sm" onClick={() => setConfirming(false)}>
+        Keep it
+      </PopButton>
     </div>
   );
 }
@@ -268,7 +299,7 @@ function LoginNudge() {
   return (
     <div
       role="status"
-      className="sticker-lg fixed right-3 bottom-3 z-50 flex w-[min(22rem,calc(100vw-1.5rem))] items-start gap-3 rounded-2xl bg-chakra p-4 text-white animate-in fade-in slide-in-from-bottom-4 motion-reduce:animate-none sm:right-6 sm:bottom-6"
+      className="sticker-lg mt-6 flex w-full max-w-md items-start gap-3 rounded-2xl bg-chakra p-4 text-white"
     >
       <div className="min-w-0 flex-1">
         <p className="font-display text-lg leading-tight font-extrabold tracking-[-0.03em]">
