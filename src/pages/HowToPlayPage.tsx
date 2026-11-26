@@ -92,7 +92,7 @@ const TIPS = [
 const FAQ = [
   {
     q: "Do I need a camera to play?",
-    a: "Only for camera mode. The practice booth works with your mouse, finger or keyboard. When you start camera mode, your browser asks for permission first.",
+    a: "Only for camera mode. The puzzle works with your mouse, finger or keyboard. When you start camera mode, your browser asks for permission first.",
   },
   {
     q: "Where are my polaroids and stamps saved?",
@@ -137,14 +137,14 @@ export default function HowToPlayPage() {
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
         Frame a shot, snap it, then put it back together. Two ways to play: your hands in camera
-        mode, or your mouse and finger in the practice booth.
+        mode, or your mouse and finger on the puzzle page.
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <PopLink to="/camera" tone="saffron" size="lg">
           Start camera mode
         </PopLink>
         <PopLink to="/game" tone="white" size="lg">
-          Practice with mouse
+          Play with your mouse
         </PopLink>
       </div>
 

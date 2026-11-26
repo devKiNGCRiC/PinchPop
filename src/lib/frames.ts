@@ -336,6 +336,16 @@ export const FRAME_PRESETS: FramePreset[] = [
   },
 ];
 
+/** Shown first in the frame picker; every other preset sits behind "More frames". */
+export const FEATURED_FRAME_IDS = [
+  "classic",
+  "film-roll",
+  "notebook",
+  "cassette",
+  "sticky-note",
+  "scarlet-ribbon",
+];
+
 export function frameFor(id: string): FramePreset {
   return FRAME_PRESETS.find((preset) => preset.id === id) ?? FRAME_PRESETS[0];
 }

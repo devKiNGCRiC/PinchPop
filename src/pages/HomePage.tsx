@@ -110,7 +110,26 @@ export default function HomePage() {
               Frame a travel shot with your hands, pinch to snap it, then piece the picture back
               together. A photobooth for the places you have been.
             </p>
-            <div className="mt-9 flex flex-wrap gap-4">
+            {/* Phones get the two experiences that work well on touch; camera mode needs a webcam. */}
+            <div className="mt-9 flex flex-wrap gap-4 md:hidden">
+              <PopLink to="/game" tone="saffron" size="lg">
+                Play the puzzle
+              </PopLink>
+              <PopLink to="/polaroid" tone="white" size="lg">
+                Make a polaroid
+              </PopLink>
+            </div>
+            <p className="mt-6 max-w-md text-base text-white/75 md:hidden">
+              Camera mode works best on a laptop with a webcam.{" "}
+              <Link
+                to="/how-to-play"
+                className="font-semibold text-marigold underline underline-offset-4"
+              >
+                See how to play.
+              </Link>
+            </p>
+
+            <div className="mt-9 hidden flex-wrap gap-4 md:flex">
               <PopLink to="/camera" tone="saffron" size="lg">
                 Start camera mode
               </PopLink>
@@ -118,23 +137,19 @@ export default function HomePage() {
                 Open my album
               </PopLink>
             </div>
-            <p className="mt-6 max-w-md text-base text-white/75">
-              Camera mode uses your webcam and hand gestures. Prefer a mouse or touch? Play the
-              puzzle here. Everything is saved on this device.{" "}
+            <p className="mt-6 hidden max-w-md text-base text-white/75 md:block">
+              No webcam? Play the puzzle right here.{" "}
+              <Link
+                to="/polaroid"
+                className="font-semibold text-marigold underline underline-offset-4"
+              >
+                Or make a polaroid instead.
+              </Link>{" "}
               <Link
                 to="/how-to-play"
                 className="font-semibold text-marigold underline underline-offset-4"
               >
                 New here? See how to play.
-              </Link>
-            </p>
-            <p className="mt-2 max-w-md text-base text-white/75">
-              Not into puzzles?{" "}
-              <Link
-                to="/polaroid"
-                className="font-semibold text-marigold underline underline-offset-4"
-              >
-                Turn any photo into a polaroid instead.
               </Link>
             </p>
           </div>

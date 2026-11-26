@@ -398,7 +398,7 @@ function quickLayout(
     photo = { x: x + 90, y: y + 90, w: photoW, h: photoH };
     captionY = photo.y + photoH + 118;
     tsY = captionY + captionGap;
-    card = { x, y, w: CARD_W, h: 90 + photoH + (hasTs ? 200 : 150) + 40 };
+    card = { x, y, w: CARD_W, h: 90 + photoH + (hasTs ? 240 : 150) + 40 };
   } else if (frame.design === "lace") {
     const inset = 24;
     const pad = 40;
@@ -409,7 +409,7 @@ function quickLayout(
     photo = { x: cardX + pad, y: cardY + pad, w: photoW, h: photoH };
     captionY = photo.y + photoH + 96;
     tsY = captionY + captionGap;
-    card = { x: cardX, y: cardY, w: CARD_W - inset * 2, h: pad + photoH + (hasTs ? 230 : 170) };
+    card = { x: cardX, y: cardY, w: CARD_W - inset * 2, h: pad + photoH + (hasTs ? 300 : 200) };
   } else if (frame.design === "note") {
     const inset = 40;
     const cardX = x + inset;
@@ -426,7 +426,7 @@ function quickLayout(
     photo = { x: x + 44, y: y + 44, w: photoW, h: photoH };
     captionY = photo.y + photoH + 64;
     tsY = captionY + captionGap;
-    card = { x, y, w: CARD_W, h: 44 + photoH + (hasTs ? 260 : 200) };
+    card = { x, y, w: CARD_W, h: 44 + photoH + (hasTs ? 310 : 200) };
   } else {
     const pad = 44;
     const photoW = CARD_W - pad * 2;
@@ -584,7 +584,7 @@ function drawLace(a: DrawArgs): void {
   const captionColor = a.input.captionColor ?? frame.captionColor;
   drawCaptionAndDate(a, captionColor);
   drawBrand(ctx, card.x + 44, card.y + card.h - 30, captionColor, "left");
-  drawKissMark(ctx, card.x + card.w - 136, card.y + card.h - 80, 1.3);
+  drawKissMark(ctx, card.x + card.w - 120, card.y + card.h - 56, 1.1);
 }
 
 const NOTE_CREAM = "#f4e9da";

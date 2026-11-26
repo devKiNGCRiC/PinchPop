@@ -56,12 +56,12 @@ function PracticeBooth({ artId, onPick }: { artId: ArtId; onPick: (id: ArtId) =>
   return (
     <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
       <Seo
-        title="Practice booth"
+        title="Play the puzzle"
         description={`Swap tiles with your mouse, finger or keyboard to solve the ${art.place} puzzle and earn its passport stamp. No camera needed.`}
         path="/game"
       />
       <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
-        Practice booth
+        Play the puzzle
       </h1>
       <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
         Swap the tiles until {art.name} comes back together. Fewer moves and less time means a
