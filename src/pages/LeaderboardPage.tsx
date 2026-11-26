@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Crown, Trophy } from "lucide-react";
+import { ChevronDown, Crown, Globe, Smartphone } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { MemoryImage } from "@/components/MemoryImage";
@@ -16,6 +16,13 @@ import type { Memory } from "@/lib/memories";
 import { formatDate } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
+type Board = "world" | "device";
+
+const BOARDS: { id: Board; label: string; Icon: typeof Globe }[] = [
+  { id: "world", label: "Worldwide", Icon: Globe },
+  { id: "device", label: "Your runs", Icon: Smartphone },
+];
+
 const PERIODS: { id: Period; label: string }[] = [
   { id: "all", label: "All time" },
   { id: "today", label: "Today" },
@@ -29,6 +36,77 @@ const PODIUM = [
 ];
 
 export default function LeaderboardPage() {
+  const [board, setBoard] = useState<Board>("world");
+
+  return (
+    <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
+      <Seo
+        title="Leaderboard"
+        description="The fastest, tidiest PinchPop solves worldwide, plus your own best runs on this device."
+        path="/leaderboard"
+      />
+      <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
+        Leaderboard
+      </h1>
+      <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
+        The fastest, tidiest solves. Fewer moves and a quicker time score higher.
+      </p>
+
+      <div
+        role="tablist"
+        aria-label="Which leaderboard"
+        className="sticker mt-8 inline-flex rounded-full bg-cloud p-1"
+      >
+        {BOARDS.map(({ id, label, Icon }) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            id={`tab-${id}`}
+            aria-selected={board === id}
+            aria-controls={`panel-${id}`}
+            onClick={() => setBoard(id)}
+            className={cn(
+              "inline-flex h-11 items-center gap-2 rounded-full px-5 text-[15px] font-semibold transition-colors",
+              board === id ? "bg-chakra text-white" : "hover:bg-marigold/40",
+            )}
+          >
+            <Icon className="size-4" aria-hidden="true" />
+            {label}
+          </button>
+        ))}
+      </div>
+
+      <div role="tabpanel" id={`panel-${board}`} aria-labelledby={`tab-${board}`} className="mt-8">
+        {board === "world" ? <WorldwideLeaderboard /> : <DeviceBoard />}
+      </div>
+
+      <details className="group mt-14 max-w-2xl rounded-3xl border-2 border-dashed border-ink/25 p-5 sm:p-6">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 font-display text-lg font-extrabold tracking-tight">
+          How scores work
+          <ChevronDown
+            className="size-5 shrink-0 transition-transform group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <div className="mt-3 space-y-3 text-base leading-relaxed text-ink-soft">
+          <p>
+            Every run starts at 2,000 points. Each move takes off 40 points and each second takes
+            off 8, but you never drop below 100.
+          </p>
+          <p>
+            Careful moves keep more of your score: the more of your moves that put a piece in its
+            right spot, the closer you stay to the full amount.
+          </p>
+          <p>For example, 7 moves in 20 seconds with no wasted moves scores 1,560.</p>
+        </div>
+      </details>
+    </div>
+  );
+}
+
+/** Runs saved in this browser, with period and destination filters and a podium. */
+function DeviceBoard() {
   const memories = useMemories();
   const [period, setPeriod] = useState<Period>("all");
   const [place, setPlace] = useState<PlaceFilter>("all");
@@ -46,21 +124,12 @@ export default function LeaderboardPage() {
   );
 
   return (
-    <div className="mx-auto max-w-280 px-5 pt-28 pb-8 sm:px-6 sm:pt-32">
-      <Seo
-        title="Leaderboard"
-        description="See your fastest, tidiest Speed Run solves ranked by score, with a full breakdown of how the scoring formula works."
-        path="/leaderboard"
-      />
-      <h1 className="font-display text-[clamp(32px,6vw,64px)] leading-[0.95] font-extrabold tracking-[-0.05em]">
-        Leaderboard
-      </h1>
-      <p className="mt-4 max-w-xl text-lg leading-relaxed text-ink-soft">
-        The fastest, tidiest solves. The board below ranks your own runs on this device; sign in to
-        also appear on the worldwide board further down.
+    <div>
+      <p className="max-w-xl text-base text-ink-soft">
+        Every run saved on this device, signed in or not.
       </p>
 
-      <div className="mt-8 flex flex-wrap items-center gap-3">
+      <div className="mt-5 flex flex-wrap items-center gap-3">
         <div
           role="group"
           aria-label="Time period"
@@ -81,9 +150,9 @@ export default function LeaderboardPage() {
             </button>
           ))}
         </div>
-        <p className="text-sm text-ink-soft">
-          {period === "today" ? "Today resets at midnight UTC." : "Every run you have saved."}
-        </p>
+        {period === "today" ? (
+          <p className="text-sm text-ink-soft">Today resets at midnight UTC.</p>
+        ) : null}
       </div>
 
       <div role="group" aria-label="Filter by destination" className="mt-5 flex flex-wrap gap-2.5">
@@ -111,26 +180,23 @@ export default function LeaderboardPage() {
 
       {mine ? (
         <p className="sticker mt-6 inline-flex flex-wrap items-center gap-2 rounded-2xl bg-white px-4 py-3 text-base">
-          <span className="font-semibold">Your rank:</span>
+          <span className="font-semibold">Your latest run ranks</span>
           <span className="font-display font-extrabold tabular-nums">
             #{mine.rank} of {mine.total}
           </span>
           {mine.offScreen ? (
-            <>
-              <span className="text-ink-soft">— off the list above,</span>
-              <Link
-                to={`/results?m=${mine.memory.id}`}
-                className="font-semibold text-chakra underline underline-offset-4"
-              >
-                open that run
-              </Link>
-            </>
+            <Link
+              to={`/results?m=${mine.memory.id}`}
+              className="font-semibold text-chakra underline underline-offset-4"
+            >
+              Open that run
+            </Link>
           ) : null}
         </p>
       ) : null}
 
       {runs.length === 0 ? (
-        <div className="mt-16">
+        <div className="mt-12">
           <EmptyState
             title={period === "today" ? "No runs today yet" : "No runs to rank yet"}
             body={
@@ -244,34 +310,6 @@ export default function LeaderboardPage() {
           ) : null}
         </>
       )}
-
-      <section
-        aria-labelledby="scoring-heading"
-        className="sticker-lg mt-14 max-w-2xl rounded-3xl bg-cloud p-6"
-      >
-        <div className="flex items-center gap-3">
-          <span className="flex size-11 items-center justify-center rounded-xl border-2 border-ink bg-marigold">
-            <Trophy className="size-6" aria-hidden="true" />
-          </span>
-          <h2
-            id="scoring-heading"
-            className="font-display text-xl font-extrabold tracking-[-0.03em]"
-          >
-            How scores work
-          </h2>
-        </div>
-        <p className="mt-4 text-lg leading-relaxed text-ink-soft">
-          Every run is a Speed Run. You start at 2000; every move costs 40 and every second costs 8,
-          down to a minimum of 100. Accuracy, the share of your moves that put a piece in the right
-          place, then scales that between 50% and 100%.
-        </p>
-        <p className="mt-3 text-base text-ink-soft">
-          Example: 7 moves in 20 seconds is 2000 − 280 − 160 = 1560. At 100% accuracy that scores
-          1560, at 60% accuracy 1248.
-        </p>
-      </section>
-
-      <WorldwideLeaderboard />
     </div>
   );
 }
