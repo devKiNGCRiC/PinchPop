@@ -27,13 +27,13 @@ export const LINKEDIN_LINK: SocialLink = {
   href: "https://www.linkedin.com/in/rajroy28/",
   path: LINKEDIN_PATH,
 };
-/** The maker's main/travel account — the one that fits this app's audience best. */
+/** The maker's personal travel account. */
 export const INSTAGRAM_LINK: SocialLink = {
   label: "Instagram",
   href: "https://www.instagram.com/king_solotraveller/",
   path: INSTAGRAM_PATH,
 };
-/** The maker's dev-focused account, kept separate so it isn't confused with the main one above. */
+/** The maker's dev account, where PinchPop is promoted — the one the footer links to. */
 export const INSTAGRAM_DEV_LINK: SocialLink = {
   label: "Instagram (dev)",
   href: "https://www.instagram.com/devkingcric/",
@@ -54,7 +54,7 @@ export const EMAIL_LINK: SocialLink = {
 export const CONTACT_EMAIL = EMAIL_LINK.href.replace("mailto:", "");
 
 /** The quiet icon row used site-wide (footer): one link per platform, no duplicates. */
-export const CORE_LINKS: SocialLink[] = [GITHUB_LINK, LINKEDIN_LINK, INSTAGRAM_LINK, X_LINK];
+export const CORE_LINKS: SocialLink[] = [GITHUB_LINK, LINKEDIN_LINK, INSTAGRAM_DEV_LINK, X_LINK];
 
 /** The full set, including both Instagram accounts and email, for the About page. */
 export const ALL_SOCIAL_LINKS: SocialLink[] = [
