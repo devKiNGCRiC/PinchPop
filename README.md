@@ -1,1078 +1,243 @@
-# PinchPop — Gesture-Controlled Photobooth Game
+# PinchPop
 
-> **Capture. Solve. Remember.**
+**Capture. Solve. Remember.**
 
-PinchPop is a cross-platform interactive photobooth experience that combines **real-time hand gesture recognition, photography, puzzle solving, visual effects, gamification, and social photo memories**.
+PinchPop is a photobooth you control with your hands. Frame a shot with your two index fingers on your webcam, pinch to snap it, then solve the photo as a 3×3 puzzle by pinching pieces into place. When you finish, you get a polaroid you can decorate, download and share.
 
-The web application turns a webcam into an interactive camera. Users frame a photo with their hands, pinch to capture it, solve the resulting puzzle using gestures, and transform the completed puzzle into a shareable polaroid-style memory.
+No webcam? You can play the same puzzle with a mouse, a finger or a keyboard, or skip the game and turn any photo into a polaroid.
 
-PinchPop is evolving from its original lightweight browser prototype into a complete **Web + Mobile experience** powered by a shared backend.
+**Live app: [pinchpop.pages.dev](https://pinchpop.pages.dev)** — free, no account needed to play.
+
+![PinchPop home page](docs/screenshots/home.webp)
 
 ---
 
-## ✨ What is PinchPop?
+## Features
 
-Traditional photobooths are built around buttons, touchscreens, and physical controls.
+### Camera mode
 
-PinchPop replaces much of that interaction with **hand gestures**.
+Hand tracking runs entirely in your browser with MediaPipe, so your video never leaves your device.
 
-Instead of clicking a capture button, users interact with the camera and game using their hands.
+| Gesture | What it does |
+| --- | --- |
+| Raise both hands | Starts tracking |
+| Spread your index fingers | Frames the shot |
+| Pinch with both hands and hold | Locks the frame and starts a 3-second countdown |
+| Pinch over a puzzle piece | Picks it up so you can drag it |
+| Release the pinch | Drops the piece; it snaps in if it's in the right spot |
+| Hold a fist | Saves the solved polaroid, or starts over mid-puzzle |
 
-### The core experience
+You can also upload a photo instead of using the webcam. Each solve can be downloaded as a short WebM replay video, kept only until you close the tab.
+
+![Camera mode puzzle](docs/screenshots/camera-puzzle.webp)
+
+### Play the puzzle
+
+Four illustrated Indian destinations (Agra, Jaipur, Kerala, Ladakh) to solve with a mouse, touch or keyboard. A tick marks every tile already in the right place, and **Peek** shows the finished picture.
+
+![Play the puzzle](docs/screenshots/play.webp)
+
+### Make a polaroid
+
+Turn any photo into a print, no puzzle or account needed.
+
+- 30 frames, from a plain classic to designed cards: film roll, notebook, cassette, sticky note, torn note, lace, pink ribbon, pressed flowers and more. Six favourites show first.
+- 12 photo filters
+- 26 stickers you can drag, resize and remove, plus custom text labels
+- Captions with a choice of font, size, colour and a tape background
+- An optional date stamp
+
+What you see in the preview is exactly what you download.
+
+| Before you pick a photo | Styling a print |
+| --- | --- |
+| ![Make a polaroid, empty state](docs/screenshots/polaroid-maker-start.webp) | ![Make a polaroid with a frame](docs/screenshots/polaroid-maker.webp) |
+
+### Results
+
+After each solve you see your score, moves, time and accuracy, and can style the print with the same frames, filters and stickers before downloading it or sending it through your phone's share sheet. Signed-in players can also turn on a public link for a camera photo.
+
+![Results page](docs/screenshots/results.webp)
+
+### Album, Passport and Leaderboard
+
+- **Album:** every polaroid you've saved, sortable by date or score and filterable by destination.
+- **Passport:** a stamp for each destination you solve, your best stats, and six milestones with progress toward the ones still locked.
+- **Leaderboard:** a **Worldwide** board of signed-in players' best runs, and a **Your runs** board for everything saved on this device, filterable by all time or today and by destination.
+
+| Album | Passport |
+| --- | --- |
+| ![Album](docs/screenshots/album.webp) | ![Passport](docs/screenshots/passport.webp) |
+
+![Leaderboard](docs/screenshots/leaderboard.webp)
+
+### Accounts (optional)
+
+Everything works without an account and is saved in your browser. Signing in adds:
+
+- Your runs and camera photos synced across devices
+- A place on the worldwide leaderboard
+- A profile picture, bio and public player page
+- Account deletion that removes every cloud run and photo
+
+### On phones
+
+The home page, puzzle, polaroid maker, album, passport and leaderboard all work on phones. Camera mode works best on a laptop with a webcam.
+
+<img src="docs/screenshots/home-phone.webp" alt="PinchPop on a phone" width="300" />
+
+---
+
+## How scoring works
+
+Every run starts at 2,000 points. Each move takes off 40 points and each second takes off 8, with a floor of 100. Accuracy, the share of your moves that put a piece in its right spot, then scales the result between 50% and 100%.
+
+For example, 7 moves in 20 seconds with no wasted moves scores 2000 − 280 − 160 = 1,560.
+
+---
+
+## Privacy
+
+- Camera video is processed in the browser and is never recorded or uploaded.
+- Without an account, everything stays in your browser's local storage.
+- With an account, runs and photos go to a private Supabase project protected by Row Level Security. Photos are only visible to their owner unless you turn on a public link for that photo.
+- Analytics are Cloudflare's cookieless Web Analytics. There are no ads, trackers or cookies.
+
+Full details are on the [Privacy](https://pinchpop.pages.dev/privacy) and [Terms](https://pinchpop.pages.dev/terms) pages.
+
+---
+
+## Tech stack
+
+| Area | Tools |
+| --- | --- |
+| Frontend | React 19, TypeScript, Vite, React Router |
+| Styling | Tailwind CSS v4, shadcn/ui and Radix primitives, self-hosted fonts via Fontsource |
+| Hand tracking | MediaPipe Tasks Vision (Hand Landmarker), running in the browser |
+| Graphics | Canvas 2D for puzzles and print rendering, generated SVG for frames, patterns and stickers |
+| Audio and video | Web Audio API for sound effects, MediaRecorder for replay videos |
+| Backend | Supabase: Auth, Postgres with Row Level Security, Storage |
+| Testing and quality | Vitest, ESLint, Prettier, TypeScript |
+| Hosting | Cloudflare Pages |
+
+Sticker illustrations that aren't hand-drawn in code come from [openclipart.org](https://openclipart.org) (public domain, CC0); see [`src/assets/stickers/SOURCES.md`](src/assets/stickers/SOURCES.md).
+
+---
+
+## Project structure
 
 ```text
-                         ✋       ✋
-                          \     /
-                           \   /
-                            📷
-                             │
-                             ▼
-                       FRAME PHOTO
-                             │
-                             ▼
-                      🤏 PINCH TO CAPTURE
-                             │
-                             ▼
-                     3 SECOND COUNTDOWN
-                             │
-                             ▼
-                            📸
-                         CAPTURED
-                           PHOTO
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │      3 × 3      │
-                    │     PUZZLE      │
-                    └─────────────────┘
-                             │
-                             ▼
-                       🤏 DRAG PIECES
-                             │
-                             ▼
-                           SOLVE
-                             │
-                             ▼
-                            💥
-                          SHATTER
-                             │
-                             ▼
-                           📸
-                         POLAROID
-                             │
-                             ▼
-                       SAVE / SHARE
-```
-
-The goal is to make **photography itself part of the gameplay**.
-
----
-
-# 🎮 How to Play
-
-| Gesture               | Action                         |
-| --------------------- | ------------------------------ |
-| Raise both hands      | Start hand tracking            |
-| Use index fingers     | Define the photo frame         |
-| Pinch with both hands | Capture the photo              |
-| Pinch one hand        | Select and drag a puzzle piece |
-| Release pinch         | Drop the puzzle piece          |
-| Closed fist           | Complete / save the puzzle     |
-
-### Complete game flow
-
-1. Raise both hands in front of the camera.
-2. Position your index fingers to create the photo frame.
-3. Pinch with both hands.
-4. A 3-second countdown begins.
-5. The camera captures your photo.
-6. The captured image becomes a 3 × 3 puzzle.
-7. Solve the puzzle using hand gestures.
-8. Complete the puzzle.
-9. Puzzle pieces shatter with a visual effect.
-10. The completed photo is presented as a polaroid-style memory.
-11. Save, download, or share the result.
-12. Complete additional puzzles to build a photo strip.
-
----
-
-# 🧩 Core Features
-
-## 📸 Gesture-Controlled Photography
-
-Use your hands instead of traditional camera controls.
-
-* Hand-based photo framing
-* Pinch-to-capture interaction
-* Countdown animation
-* Camera flash effect
-* Webcam integration
-* Gesture-driven interaction
-
----
-
-## 🧩 Gesture-Controlled Puzzle
-
-Every captured photo becomes an interactive puzzle.
-
-* 3 × 3 puzzle
-* Hand-controlled piece dragging
-* Automatic piece snapping
-* Move tracking
-* Puzzle completion detection
-* Gesture-based interaction
-
----
-
-## 🎨 Photo Transformation
-
-PinchPop transforms the puzzle experience into a digital photobooth memory.
-
-* Black-and-white puzzle
-* Full-colour completed photo
-* Polaroid-style presentation
-* Photo numbering
-* Date stamping
-* Puzzle-piece shatter animation
-* Photo strips
-
----
-
-## 🔊 Sound Design
-
-Interactive sounds are generated using the **Web Audio API** rather than relying on external audio files.
-
-* Countdown beeps
-* Capture sound
-* Puzzle-piece snap
-* Shatter effect
-* Completion sound
-* UI interaction sounds
-
----
-
-## 🎥 Gameplay Recording
-
-The web application can use the browser's **MediaRecorder API** to record gameplay sessions.
-
-Recorded sessions can be exported as WebM video.
-
----
-
-# 🌐 + 📱 Cross-Platform Vision
-
-PinchPop is designed as a **Web + Mobile ecosystem** rather than two completely separate products.
-
-The web application is the primary gameplay platform because it provides direct access to desktop and laptop webcams and supports the full gesture-controlled photobooth experience.
-
-The mobile application acts as a companion experience built around the user's PinchPop account, memories, statistics, achievements, and social features.
-
-```text
-                            PINCHPOP
-                               │
-                ┌──────────────┴──────────────┐
-                │                             │
-             WEB APP                      MOBILE APP
-          React + Vite                 React Native + Expo
-                │                             │
-       ┌────────┴────────┐           ┌────────┴─────────┐
-       │                 │           │                  │
-   Full Gameplay      Camera      Profile            Gallery
-   Gesture Capture    Puzzle      Achievements       Statistics
-   Photo Capture     Scoring      Leaderboard        Sharing
-   Game Modes        Recording    History             Notifications
-       │                 │           │                  │
-       └─────────────────┴───────────┴──────────────────┘
-                               │
-                               ▼
-                            SUPABASE
-                    ┌──────────┼──────────┐
-                    │          │          │
-                   AUTH        DB       STORAGE
-```
-
-### Web application
-
-The web application is the primary PinchPop experience.
-
-It focuses on:
-
-* Camera interaction
-* Real-time hand tracking
-* Gesture-controlled photography
-* Puzzle gameplay
-* Game modes
-* Scoring
-* Photo generation
-* Gameplay recording
-* Photo sharing
-
-### Mobile application
-
-The mobile application is designed as a companion to the web experience.
-
-It focuses on:
-
-* Authentication
-* User profile
-* Personal gallery
-* Achievements
-* Leaderboards
-* Game statistics
-* Photo memories
-* Sharing
-* Notifications
-* Account management
-
-Native mobile gesture-controlled gameplay can be explored as a future feature once the core platform is stable.
-
----
-
-# 🚀 Project Vision
-
-PinchPop is being developed beyond the original standalone browser prototype into a complete interactive platform.
-
-The long-term vision is:
-
-```text
-                            PINCHPOP
-                               │
-          ┌────────────────────┼────────────────────┐
-          │                    │                    │
-        GAMEPLAY             USERS                SOCIAL
-          │                    │                    │
-       Gestures             Profiles             Gallery
-       Camera               Auth                 Sharing
-       Puzzles              History              Leaderboard
-       Scoring              Statistics           Achievements
-          │                    │                    │
-          └────────────────────┼────────────────────┘
-                               │
-                        CROSS-PLATFORM
-                               │
-                    ┌──────────┴──────────┐
-                    │                     │
-                   WEB                 MOBILE
-```
-
-The platform combines:
-
-* Computer vision
-* Real-time gesture recognition
-* Interactive image processing
-* Browser-based gaming
-* Mobile application development
-* Cloud storage
-* User profiles
-* Authentication
-* Gamification
-* Social sharing
-* Digital photo memories
-
----
-
-# 🏗️ System Architecture
-
-PinchPop uses a shared backend architecture so that the web and mobile applications can work with the same user accounts, photos, statistics, achievements, and game data.
-
-```text
-                         ┌──────────────────────┐
-                         │       PINCHPOP       │
-                         └──────────┬───────────┘
-                                    │
-                  ┌─────────────────┴─────────────────┐
-                  │                                   │
-         ┌────────▼────────┐                 ┌────────▼────────┐
-         │    WEB APP      │                 │   MOBILE APP    │
-         │                 │                 │                 │
-         │ React           │                 │ React Native    │
-         │ TypeScript      │                 │ Expo            │
-         │ Vite            │                 │ TypeScript      │
-         └────────┬────────┘                 └────────┬────────┘
-                  │                                   │
-                  └─────────────────┬─────────────────┘
-                                    │
-                           ┌────────▼────────┐
-                           │    SUPABASE     │
-                           ├─────────────────┤
-                           │ Authentication  │
-                           │ PostgreSQL      │
-                           │ Storage         │
-                           │ Security / RLS  │
-                           └─────────────────┘
+src/
+├── pages/            One file per route (Home, Game, Camera, Polaroid maker, Results, ...)
+├── components/       Shared UI: nav, footer, polaroid preview, pickers, sticker layer, ...
+├── lib/
+│   ├── camera/       Webcam, MediaPipe tracking, gesture detection and the camera game engine
+│   ├── export.ts     Canvas rendering for every print design, strips and downloads
+│   ├── frames.ts     Frame presets
+│   ├── memories.ts   Local storage for saved runs
+│   ├── cloudRuns.ts  Supabase sync, leaderboard and public share queries
+│   └── ...           Scoring, stats, stickers, filters, auth, SEO
+├── assets/stickers/  Public-domain sticker illustrations
+└── router.tsx        Routes
+supabase/migrations/  Database schema, policies and storage buckets
+public/               Icons, manifest, robots.txt, sitemap and the SPA redirect rule
+docs/screenshots/     Images used in this README
 ```
 
 ---
 
-# 🖥️ Web Application Architecture
+## Getting started
 
-```text
-Web Browser
-     │
-     ├── Camera
-     │
-     ▼
-MediaDevices API
-     │
-     ▼
-MediaPipe
-     │
-     ▼
-Hand Landmarks
-     │
-     ▼
-Gesture Engine
-     │
-     ├── Frame
-     ├── Pinch
-     ├── Release
-     └── Fist
-     │
-     ▼
-Game Controller
-     │
-     ├── Camera Engine
-     ├── Puzzle Engine
-     ├── Scoring Engine
-     └── Audio Engine
-     │
-     ▼
-React UI / Canvas
-     │
-     ▼
-Supabase
+You need Node.js 22.12 or newer and a webcam for camera mode.
+
+```bash
+git clone https://github.com/devKiNGCRiC/PinchPop.git
+cd PinchPop
+npm install
+cp .env.example .env.local   # then fill in the values below
+npm run dev
 ```
 
----
+The game itself works offline in the browser, but the app expects Supabase settings for sign-in, cloud sync and the worldwide leaderboard. Without them, sign-in stays stuck on loading. A free Supabase project is enough; see [Supabase setup](#supabase-setup).
 
-# 📱 Mobile Application Architecture
+### Environment variables
 
-The mobile application will share the same backend and account system as the web application.
+| Variable | Purpose |
+| --- | --- |
+| `VITE_SITE_URL` | Public URL used for canonical links and social previews |
+| `VITE_SUPABASE_URL` | Your Supabase project URL |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Your Supabase publishable key (safe to ship to the browser; access is enforced by Row Level Security) |
 
-```text
-Mobile App
-    │
-    ▼
-React Native + Expo
-    │
-    ├── Authentication
-    ├── Profile
-    ├── Gallery
-    ├── Achievements
-    ├── Leaderboard
-    ├── Statistics
-    └── Sharing
-    │
-    ▼
-Supabase
-    │
-    ├── Auth
-    ├── PostgreSQL
-    └── Storage
-```
+Never put the Supabase secret key or database password in a `VITE_` variable; anything with that prefix ends up in the browser.
 
-This allows a user to capture memories on the web and access their PinchPop account and gallery from mobile.
+### Scripts
 
----
+| Command | What it does |
+| --- | --- |
+| `npm run dev` | Starts the dev server |
+| `npm run build` | Type-checks and builds to `dist/` |
+| `npm run preview` | Serves the production build locally |
+| `npm test` | Runs the Vitest suite |
+| `npm run lint` | Runs ESLint |
+| `npm run typecheck` | Runs the TypeScript compiler without emitting |
+| `npm run format` | Formats the code with Prettier |
 
-# 🧠 Computer Vision & Gesture System
+### Supabase setup
 
-One of the primary technical components of PinchPop is real-time hand tracking.
-
-```text
-Webcam
-   │
-   ▼
-MediaPipe
-   │
-   ▼
-Hand Landmarks
-   │
-   ▼
-Gesture Detection
-   │
-   ▼
-Gesture Engine
-   │
-   ▼
-Game Controller
-   │
-   ▼
-UI / Canvas
-```
-
-The gesture engine interprets hand landmark positions and converts them into game actions.
-
-### Example
-
-```text
-OPEN HAND
-    │
-    ▼
-Frame / Track
-
-PINCH
-    │
-    ▼
-Capture / Drag
-
-RELEASE
-    │
-    ▼
-Drop Piece
-
-FIST
-    │
-    ▼
-Complete / Save
-```
-
-The gesture recognition system is one of the primary computer-vision components of PinchPop.
+1. Create a free Supabase project.
+2. Run the SQL files in `supabase/migrations/` in filename order, in the SQL Editor or with the Supabase CLI. They create the `profiles` and `runs` tables, their policies, the account-deletion function, and the `photos` and `avatars` storage buckets.
+3. Copy the project URL and publishable key into your `.env.local`.
 
 ---
 
-# 🎯 Game Modes
+## Deployment
 
-## Classic Mode
+The live site is deployed on Cloudflare Pages from this repository:
 
-The original PinchPop experience.
+- Build command: `npm run build`
+- Output directory: `dist`
+- Environment variables: the three listed above
+- `public/_redirects` sends every path to `index.html`, so client-side routes work on refresh.
 
-```text
-Capture
-   │
-   ▼
-3 × 3 Puzzle
-   │
-   ▼
-Solve
-   │
-   ▼
-Polaroid
-```
+If the build fails on Node version, set a `NODE_VERSION` environment variable of 22 or newer in the Pages project.
 
 ---
 
-## ⚡ Speed Run
+## Browser support
 
-Solve the puzzle as quickly as possible.
-
-The game can track:
-
-* Completion time
-* Number of moves
-* Incorrect placements
-* Accuracy
-* Final score
-
-Example:
-
-```text
-╔════════════════════╗
-║     YOUR SCORE     ║
-╠════════════════════╣
-║ Time       18.42s  ║
-║ Moves          27  ║
-║ Accuracy       94% ║
-╚════════════════════╝
-```
+| Browser | Support |
+| --- | --- |
+| Chrome, Edge | Recommended |
+| Firefox | Supported |
+| Safari | Limited |
+| Mobile browsers | Everything except camera mode works well |
 
 ---
 
-## 📅 Daily Challenge
+## Roadmap
 
-A shared challenge that changes every day.
-
-Players compete for the best completion time and score.
-
-```text
-       DAILY CHALLENGE
-
-       September 9, 2026
-
-            🧩 3 × 3
-
-          Best Time
-            12.81s
-
-           [ PLAY ]
-```
+- [x] Gesture capture and puzzle (camera mode)
+- [x] Mouse, touch and keyboard puzzle
+- [x] Accounts, cloud sync and public share links
+- [x] Worldwide leaderboard, passport and milestones
+- [x] Polaroid maker with designed frames, filters and stickers
+- [ ] Photo strips
+- [ ] Multi-photo frames
+- [ ] More destinations and a reason to come back each day
+- [ ] Android app
 
 ---
 
-## 🎉 Party Mode
+## License
 
-A future multiplayer-style mode where multiple players compete by completing their own puzzles.
-
-```text
-Player 1
-   │
-   ▼
-Capture → Solve
-
-Player 2
-   │
-   ▼
-Capture → Solve
-
-Player 3
-   │
-   ▼
-Capture → Solve
-
-   │
-   ▼
-🏆 Winner
-```
+No license has been chosen yet, so all rights are reserved for now.
 
 ---
 
-# 👤 User Accounts
+## Author
 
-Users can create a PinchPop account and maintain their own profile.
+Built by **Raj Roy**.
 
-A profile can contain:
-
-```text
-Username
-Avatar
-Photos Captured
-Puzzles Completed
-Best Time
-Total Score
-Achievements
-Streak
-Statistics
-```
-
-Guest mode can remain available so new users can experience the game without creating an account.
-
----
-
-# 📸 Personal Gallery
-
-Completed photos can be stored in the user's personal PinchPop gallery.
-
-```text
-              MY GALLERY
-
-     ┌────────┐ ┌────────┐ ┌────────┐
-     │   📸   │ │   📸   │ │   📸   │
-     │        │ │        │ │        │
-     └────────┘ └────────┘ └────────┘
-
-     ┌────────┐ ┌────────┐
-     │   📸   │ │   📸   │
-     │        │ │        │
-     └────────┘ └────────┘
-```
-
-Users can:
-
-* View photos
-* Download photos
-* Delete photos
-* Share photos
-* View associated game statistics
-* Access their memories from the mobile companion app
-
----
-
-# 🏆 Achievements
-
-PinchPop uses achievements to encourage continued gameplay.
-
-| Achievement       | Requirement                                      |
-| ----------------- | ------------------------------------------------ |
-| 📸 First Snap     | Capture your first photo                         |
-| 🧩 Puzzle Master  | Complete 10 puzzles                              |
-| ⚡ Speed Demon     | Complete a puzzle under 10 seconds               |
-| 📷 Photographer   | Save 25 photos                                   |
-| 🎯 Perfect Solve  | Complete a puzzle without an incorrect placement |
-| 👑 Daily Champion | Finish #1 in a daily challenge                   |
-
-Additional achievements can be introduced as the platform grows.
-
----
-
-# 🏅 Leaderboard
-
-Players can compete through different leaderboard categories.
-
-### Daily
-
-Best scores for the current day.
-
-### Weekly
-
-Best scores for the current week.
-
-### All-Time
-
-Overall best scores.
-
-Example:
-
-```text
-🏆 LEADERBOARD
-
- #     PLAYER        TIME
-────────────────────────────
- 1     Alex          08.42s
- 2     Sarah         09.17s
- 3     King          10.23s
- 4     John          11.84s
- 5     Maya          12.02s
-```
-
----
-
-# ☁️ Backend & Data Architecture
-
-PinchPop uses **Supabase** as the backend platform.
-
-Supabase will provide:
-
-* Authentication
-* PostgreSQL database
-* User profiles
-* Game sessions
-* Scores
-* Achievements
-* Gallery metadata
-* Cloud photo storage
-* Row Level Security
-
-### Planned data model
-
-```text
-profiles
-    │
-    ├── game_sessions
-    │       │
-    │       └── scores
-    │
-    ├── photos
-    │
-    ├── user_achievements
-    │       │
-    │       └── achievements
-    │
-    └── statistics
-```
-
-The same backend can be accessed by both the web and mobile applications.
-
----
-
-# 🗂️ Planned Project Structure
-
-The project is expected to evolve from the current prototype into a modular multi-platform structure.
-
-```text
-pinchpop/
-│
-├── web/
-│   │
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── Camera/
-│   │   │   ├── GestureOverlay/
-│   │   │   ├── PuzzleBoard/
-│   │   │   ├── Polaroid/
-│   │   │   ├── PhotoStrip/
-│   │   │   └── Leaderboard/
-│   │   │
-│   │   ├── pages/
-│   │   │   ├── Landing/
-│   │   │   ├── Home/
-│   │   │   ├── Game/
-│   │   │   ├── Results/
-│   │   │   ├── Gallery/
-│   │   │   ├── Profile/
-│   │   │   └── Share/
-│   │   │
-│   │   ├── game/
-│   │   │   ├── gestureEngine.ts
-│   │   │   ├── puzzleEngine.ts
-│   │   │   ├── scoringEngine.ts
-│   │   │   ├── cameraEngine.ts
-│   │   │   └── audioEngine.ts
-│   │   │
-│   │   ├── lib/
-│   │   │   ├── supabase.ts
-│   │   │   └── storage.ts
-│   │   │
-│   │   ├── store/
-│   │   │   └── gameStore.ts
-│   │   │
-│   │   └── types/
-│   │
-│   ├── public/
-│   ├── package.json
-│   └── vite.config.ts
-│
-├── mobile/
-│   │
-│   ├── app/
-│   │   ├── index.tsx
-│   │   ├── login.tsx
-│   │   ├── gallery.tsx
-│   │   ├── profile.tsx
-│   │   ├── achievements.tsx
-│   │   └── leaderboard.tsx
-│   │
-│   ├── components/
-│   ├── lib/
-│   ├── store/
-│   ├── types/
-│   └── package.json
-│
-├── supabase/
-│   ├── migrations/
-│   └── seed/
-│
-├── README.md
-└── .gitignore
-```
-
-This structure represents the **planned architecture** and may evolve during development.
-
-The existing vanilla JavaScript prototype remains the foundation for the web gameplay migration.
-
----
-
-# 🛠️ Technology Stack
-
-## Web
-
-| Technology        | Purpose                             |
-| ----------------- | ----------------------------------- |
-| React             | Frontend UI                         |
-| TypeScript        | Type-safe development               |
-| Vite              | Development and build tooling       |
-| CSS               | Application styling                 |
-| MediaPipe         | Real-time hand tracking             |
-| Canvas API        | Puzzle rendering and visual effects |
-| Web Audio API     | Procedural sound effects            |
-| MediaRecorder API | Gameplay recording                  |
-| MediaDevices API  | Webcam access                       |
-| Zustand           | Client-side state management        |
-
-## Mobile
-
-| Technology   | Purpose                      |
-| ------------ | ---------------------------- |
-| React Native | Mobile application           |
-| Expo         | Mobile development platform  |
-| TypeScript   | Type-safe development        |
-| Expo Router  | Application navigation       |
-| Zustand      | Client-side state management |
-
-## Backend
-
-| Technology         | Purpose              |
-| ------------------ | -------------------- |
-| Supabase           | Backend platform     |
-| PostgreSQL         | Application database |
-| Supabase Auth      | Authentication       |
-| Supabase Storage   | Photo storage        |
-| Row Level Security | Data protection      |
-
-## Development & Deployment
-
-| Technology | Purpose                             |
-| ---------- | ----------------------------------- |
-| Git        | Version control                     |
-| GitHub     | Source code hosting                 |
-| Vercel     | Web deployment                      |
-| Expo       | Mobile development and distribution |
-
----
-
-# 🌐 Web Browser Support
-
-The full gesture-controlled PinchPop experience requires a device with a working camera.
-
-| Browser         | Support           |
-| --------------- | ----------------- |
-| Chrome          | Recommended       |
-| Edge            | Recommended       |
-| Firefox         | Supported         |
-| Safari          | Limited / Testing |
-| Mobile browsers | Limited           |
-
-Camera and microphone permissions may be requested by the browser depending on the features being used.
-
-The web application remains the primary platform for the complete gesture-controlled experience.
-
----
-
-# 📱 Mobile Platform
-
-The mobile application is intended to provide a companion experience for PinchPop users.
-
-Initial mobile functionality focuses on:
-
-* Account management
-* Profile
-* Gallery
-* Achievements
-* Leaderboard
-* Statistics
-* Photo sharing
-* Notifications
-
-Native mobile gesture gameplay is considered a future enhancement rather than a requirement for the initial mobile release.
-
----
-
-# 🔐 Privacy & Security
-
-PinchPop is designed around privacy-conscious camera interaction.
-
-The application should:
-
-* Request camera access only when required.
-* Clearly communicate when the camera is active.
-* Allow users to control whether photos are saved.
-* Protect authenticated resources through Supabase Auth.
-* Use Row Level Security for database access.
-* Restrict private gallery data to its owner.
-* Use explicitly generated public resources for shared photos.
-
-Privacy and secure data handling remain important parts of the platform.
-
----
-
-# 🗺️ Development Roadmap
-
-## Phase 1 — Core Game
-
-* [x] Webcam integration
-* [x] Hand tracking
-* [x] Gesture-based framing
-* [x] Pinch capture
-* [x] Countdown
-* [x] Photo capture
-* [x] 3 × 3 puzzle
-* [x] Gesture-based puzzle interaction
-* [x] Puzzle completion
-* [x] Polaroid presentation
-* [x] Sound effects
-* [x] Shatter animation
-
----
-
-## Phase 2 — Web Product Experience
-
-* [ ] React + Vite migration
-* [ ] TypeScript migration
-* [ ] Production landing page
-* [ ] Home screen
-* [ ] Game screen
-* [ ] Results screen
-* [ ] Gallery
-* [ ] Profile
-* [ ] Responsive design
-* [ ] Loading states
-* [ ] Error handling
-* [ ] Camera permission handling
-* [ ] Accessibility improvements
-* [ ] Performance optimization
-
----
-
-## Phase 3 — Backend
-
-* [ ] Supabase integration
-* [ ] Authentication
-* [ ] User profiles
-* [ ] Game sessions
-* [ ] Score storage
-* [ ] Photo storage
-* [ ] Personal gallery
-* [ ] Row Level Security
-* [ ] Cloud photo management
-
----
-
-## Phase 4 — Gamification
-
-* [ ] Scoring system
-* [ ] Leaderboard
-* [ ] Achievements
-* [ ] Daily Challenge
-* [ ] Speed Run mode
-* [ ] Player statistics
-* [ ] Streak system
-* [ ] Score history
-
----
-
-## Phase 5 — Social & Sharing
-
-* [ ] Shareable photo pages
-* [ ] Public photo links
-* [ ] Downloadable photo strips
-* [ ] Social sharing
-* [ ] Public profiles
-* [ ] Photo reactions
-* [ ] Privacy controls for shared content
-
----
-
-## Phase 6 — Mobile Companion
-
-* [ ] React Native + Expo application
-* [ ] Shared Supabase authentication
-* [ ] Mobile profile
-* [ ] Mobile gallery
-* [ ] Achievements
-* [ ] Leaderboard
-* [ ] Game statistics
-* [ ] Photo sharing
-* [ ] Notifications
-* [ ] Mobile-optimized UI
-* [ ] Cross-platform account synchronization
-
----
-
-## Phase 7 — Production
-
-* [ ] Production web deployment
-* [ ] Mobile application testing
-* [ ] Performance optimization
-* [ ] Security review
-* [ ] Database optimization
-* [ ] Error monitoring
-* [ ] Cross-browser testing
-* [ ] Cross-device testing
-* [ ] Production documentation
-
----
-
-# 🔮 Future Ideas
-
-Possible future additions include:
-
-* [ ] AI-based photo categorization
-* [ ] AI-powered photo enhancements
-* [ ] Additional puzzle sizes
-* [ ] Custom photo frames
-* [ ] Themes
-* [ ] Seasonal events
-* [ ] Party mode
-* [ ] Multiplayer
-* [ ] Native mobile gesture capture
-* [ ] Mobile camera gameplay
-* [ ] Public profiles
-* [ ] Social reactions
-* [ ] Friend system
-* [ ] Photo challenges
-* [ ] Community events
-
-These ideas are intentionally separated from the core roadmap so that the primary experience remains focused.
-
----
-
-# 📊 Project Goals
-
-PinchPop is designed to demonstrate the practical combination of:
-
-* Real-time computer vision
-* Hand gesture recognition
-* Interactive image processing
-* Browser APIs
-* Game mechanics
-* State management
-* Full-stack web development
-* Mobile application development
-* Authentication
-* Database design
-* Cloud storage
-* Gamification
-* Social sharing
-* Cross-platform architecture
-* Web deployment
-
-The goal is to evolve PinchPop from a simple browser experiment into a polished interactive product.
-
----
-
-# 🧪 Development & Testing
-
-PinchPop uses a combination of automated and manual testing during development.
-
-Testing areas include:
-
-* Gesture recognition
-* Camera permissions
-* Puzzle interactions
-* Puzzle completion
-* Score calculation
-* Authentication
-* Gallery operations
-* Photo uploads
-* Sharing
-* Responsive layouts
-* Browser compatibility
-* Mobile application behaviour
-
-Automated browser testing will be introduced as the web application architecture stabilizes.
-
----
-
-# 🚀 Deployment
-
-The planned production architecture is:
-
-```text
-                         GitHub
-                           │
-             ┌─────────────┴─────────────┐
-             │                           │
-          Vercel                       Expo
-             │                           │
-             ▼                           ▼
-       PinchPop Web              PinchPop Mobile
-             │                           │
-             └─────────────┬─────────────┘
-                           │
-                           ▼
-                        Supabase
-                    ┌──────┼──────┐
-                    │      │      │
-                   Auth     DB   Storage
-```
-
-The web application can be deployed independently from the mobile application while both continue using the same backend.
-
----
-
-# 🤝 Development
-
-PinchPop is an evolving project.
-
-Features, architecture, technologies, and implementation details may change as development progresses.
-
-The repository documents the evolution from the original browser prototype toward a larger cross-platform PinchPop application.
-
----
-
-# 📄 License
-
-PinchPop's licensing will be finalized as the project approaches release.
-
----
-
-# 👨‍💻 PinchPop
-
-**PinchPop — Gesture-Controlled Photobooth Game**
-
-> **Capture • Solve • Remember**
-
-A camera becomes a game.
-
-Your hands become the controls.
-
-Your photos become the memories.
+- GitHub: [@devKiNGCRiC](https://github.com/devKiNGCRiC)
+- Instagram: [@devkingcric](https://www.instagram.com/devkingcric/)
+- X: [@KiNGCRiC28](https://x.com/KiNGCRiC28)
