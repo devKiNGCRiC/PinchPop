@@ -205,7 +205,27 @@ export default function PolaroidMakerPage() {
               onStickersChange={setStickers}
             />
           ) : (
-            <SamplePrint />
+            <>
+              <SamplePrint />
+              {/* On narrow screens the steps sit far below, so the button goes right under the example. */}
+              <PopButton
+                tone="saffron"
+                size="lg"
+                className="mt-8 w-full lg:hidden"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={busy === "preparing"}
+              >
+                {busy === "preparing" ? (
+                  <Chakra spokes={24} className="size-5 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-5" aria-hidden="true" />
+                )}
+                {busy === "preparing" ? "Preparing…" : "Choose a photo"}
+              </PopButton>
+              {error ? (
+                <p className="mt-3 text-center text-base text-sindoor lg:hidden">{error}</p>
+              ) : null}
+            </>
           )}
           <input
             ref={fileInputRef}
@@ -352,7 +372,7 @@ export default function PolaroidMakerPage() {
               <PopButton
                 tone="saffron"
                 size="lg"
-                className="mt-8"
+                className="mt-8 hidden lg:inline-flex"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={busy === "preparing"}
               >
@@ -363,7 +383,9 @@ export default function PolaroidMakerPage() {
                 )}
                 {busy === "preparing" ? "Preparing…" : "Choose a photo"}
               </PopButton>
-              {error ? <p className="mt-3 text-base text-sindoor">{error}</p> : null}
+              {error ? (
+                <p className="mt-3 hidden text-base text-sindoor lg:block">{error}</p>
+              ) : null}
             </div>
           )}
         </div>

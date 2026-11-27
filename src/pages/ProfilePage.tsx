@@ -151,6 +151,7 @@ export default function ProfilePage() {
         <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {BADGES.map((badge, i) => {
             const earned = badge.earned(memories);
+            const progress = earned ? null : (badge.progress?.(memories) ?? null);
             return (
               <li
                 key={badge.id}
@@ -173,12 +174,32 @@ export default function ProfilePage() {
                     <Lock className="size-6" aria-hidden="true" />
                   )}
                 </span>
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="font-display text-lg leading-tight font-extrabold tracking-[-0.03em]">
                     {badge.name}
                     <span className="sr-only">{earned ? " (earned)" : " (locked)"}</span>
                   </p>
                   <p className={cn("text-base", !earned && "text-ink-soft")}>{badge.hint}</p>
+                  {progress ? (
+                    <div className="mt-2">
+                      {progress.fraction !== undefined ? (
+                        <div
+                          role="progressbar"
+                          aria-label={`${badge.name} progress`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={Math.round(progress.fraction * 100)}
+                          className="h-2.5 overflow-hidden rounded-full border-2 border-ink bg-ivory"
+                        >
+                          <div
+                            className="h-full bg-leaf"
+                            style={{ width: `${progress.fraction * 100}%` }}
+                          />
+                        </div>
+                      ) : null}
+                      <p className="mt-1 text-sm font-semibold text-ink">{progress.label}</p>
+                    </div>
+                  ) : null}
                 </div>
               </li>
             );

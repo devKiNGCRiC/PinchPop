@@ -1,6 +1,7 @@
 import { ART_LIST, isCameraId, normalizeArtId } from "@/lib/art";
 import type { ArtId } from "@/lib/art";
 import type { Memory } from "@/lib/memories";
+import { formatTime } from "@/lib/puzzle";
 
 export interface Stats {
   solved: number;
@@ -23,11 +24,19 @@ export function visitedPlaces(memories: Memory[]): Set<ArtId> {
   return new Set(memories.filter((m) => !isCameraId(m.artId)).map((m) => normalizeArtId(m.artId)));
 }
 
+export interface BadgeProgress {
+  label: string;
+  /** 0–1, for milestones that count toward a total; omitted for "your best" ones. */
+  fraction?: number;
+}
+
 export interface BadgeDef {
   id: string;
   name: string;
   hint: string;
   earned: (memories: Memory[]) => boolean;
+  /** How close a locked milestone is, or null when there's nothing useful to show yet. */
+  progress?: (memories: Memory[]) => BadgeProgress | null;
 }
 
 export const BADGES: BadgeDef[] = [
@@ -42,18 +51,26 @@ export const BADGES: BadgeDef[] = [
     name: "Express rail",
     hint: "Solve one in 20 seconds or less",
     earned: (m) => m.some((x) => x.seconds <= 20),
+    progress: (m) =>
+      m.length ? { label: `Your best: ${formatTime(Math.min(...m.map((x) => x.seconds)))}` } : null,
   },
   {
     id: "light",
     name: "Packed light",
     hint: "Solve one in 12 moves or fewer",
     earned: (m) => m.some((x) => x.moves <= 12),
+    progress: (m) =>
+      m.length ? { label: `Your best: ${Math.min(...m.map((x) => x.moves))} moves` } : null,
   },
   {
     id: "album",
     name: "Album full",
     hint: "Pin 5 polaroids",
     earned: (m) => m.length >= 5,
+    progress: (m) => ({
+      label: `${Math.min(m.length, 5)} of 5 polaroids`,
+      fraction: Math.min(m.length, 5) / 5,
+    }),
   },
   {
     id: "cheese",
@@ -68,6 +85,13 @@ export const BADGES: BadgeDef[] = [
     earned: (m) => {
       const visited = visitedPlaces(m);
       return ART_LIST.every((art) => visited.has(art.id));
+    },
+    progress: (m) => {
+      const count = ART_LIST.filter((art) => visitedPlaces(m).has(art.id)).length;
+      return {
+        label: `${count} of ${ART_LIST.length} destinations`,
+        fraction: count / ART_LIST.length,
+      };
     },
   },
 ];
