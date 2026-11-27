@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session, SupabaseClient } from "@supabase/supabase-js";
 
 import { setActiveUser } from "@/lib/memories";
+import { isSupabaseConfigured, NOT_CONFIGURED_MESSAGE } from "@/lib/supabaseConfig";
 
 export interface AuthState {
   session: Session | null;
@@ -15,23 +16,31 @@ export interface AuthState {
  * rather than bundled into every page via the NavBar, which checks this on every route.
  */
 export function useSession(): AuthState {
-  const [state, setState] = useState<AuthState>({ session: null, loading: true });
+  // Without Supabase settings there is no session to wait for: start out "signed out".
+  const [state, setState] = useState<AuthState>({ session: null, loading: isSupabaseConfigured });
 
   useEffect(() => {
+    if (!isSupabaseConfigured) return;
     let active = true;
     let unsubscribe: (() => void) | undefined;
-    import("@/lib/supabase").then(({ supabase }) => {
-      if (!active) return;
-      supabase.auth.getSession().then(({ data }) => {
-        if (active) setState({ session: data.session, loading: false });
+    import("@/lib/supabase")
+      .then(({ supabase }) => {
+        if (!active) return;
+        supabase.auth.getSession().then(({ data }) => {
+          if (active) setState({ session: data.session, loading: false });
+        });
+        // Only synchronous state updates here — an async Supabase call made inside this callback
+        // can deadlock the client (a known supabase-js issue).
+        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+          if (active) setState({ session, loading: false });
+        });
+        unsubscribe = () => listener.subscription.unsubscribe();
+      })
+      .catch((error: unknown) => {
+        // Never leave the app stuck on "loading" if the client can't load (e.g. a dropped connection).
+        console.warn("[PinchPop] Could not load sign-in:", error);
+        if (active) setState({ session: null, loading: false });
       });
-      // Only synchronous state updates here — an async Supabase call made inside this callback
-      // can deadlock the client (a known supabase-js issue).
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-        if (active) setState({ session, loading: false });
-      });
-      unsubscribe = () => listener.subscription.unsubscribe();
-    });
     return () => {
       active = false;
       unsubscribe?.();
@@ -142,6 +151,7 @@ export async function signUp(
   password: string,
   username: string,
 ): Promise<AuthResult> {
+  if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED_MESSAGE };
   const { supabase } = await import("@/lib/supabase");
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -156,6 +166,7 @@ export async function signUp(
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
+  if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED_MESSAGE };
   const { supabase } = await import("@/lib/supabase");
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, message: describeAuthError(error) };

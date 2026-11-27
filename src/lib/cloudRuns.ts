@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { claimMemory } from "@/lib/memories";
 import type { Memory } from "@/lib/memories";
+import { isSupabaseConfigured } from "@/lib/supabaseConfig";
 
 /** Converts the saved JPEG data URL to a Blob and uploads it to the player's own photo folder. */
 async function uploadPhoto(
@@ -33,6 +34,7 @@ export interface SyncResult {
  * the unique (user_id, local_id) index from the runs_followups migration.
  */
 export async function syncMemoryToCloud(memory: Memory): Promise<SyncResult> {
+  if (!isSupabaseConfigured) return { ok: true, skipped: true };
   const { supabase } = await import("@/lib/supabase");
   const {
     data: { session },
@@ -346,6 +348,7 @@ export async function fetchWorldwideLeaderboard(limit = 50): Promise<CloudRun[]>
 }
 
 async function deleteRunsWhere(column: "id" | "local_id" | "all", value?: string): Promise<void> {
+  if (!isSupabaseConfigured) return;
   const { supabase } = await import("@/lib/supabase");
   const {
     data: { session },

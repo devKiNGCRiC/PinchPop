@@ -158,7 +158,7 @@ cp .env.example .env.local   # then fill in the values below
 npm run dev
 ```
 
-The game itself works offline in the browser, but the app expects Supabase settings for sign-in, cloud sync and the worldwide leaderboard. Without them, sign-in stays stuck on loading. A free Supabase project is enough; see [Supabase setup](#supabase-setup).
+Supabase settings are only needed for sign-in, cloud sync and the worldwide leaderboard. Without them the app still runs: you can play, and runs are saved in the browser, while the sign-in form explains that accounts aren't set up. A free Supabase project is enough; see [Supabase setup](#supabase-setup).
 
 ### Environment variables
 
