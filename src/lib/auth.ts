@@ -139,6 +139,7 @@ function describeAuthError(error: unknown): string {
     return "That email already has an account. Try signing in instead.";
   }
   if (code === "weak_password") return "Choose a longer, less guessable password.";
+  if (code === "same_password") return "That's your current password. Choose a new one.";
   if (code === "over_request_rate_limit" || code === "over_email_send_rate_limit") {
     return "Too many attempts — wait a minute and try again.";
   }
@@ -171,6 +172,36 @@ export async function signIn(email: string, password: string): Promise<AuthResul
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, message: describeAuthError(error) };
   return { ok: true, message: "Signed in." };
+}
+
+/**
+ * Emails a password-reset link that opens /reset-password. The reply is the same whether or not
+ * the email has an account, so the form can't be used to find out who has signed up.
+ */
+export async function requestPasswordReset(email: string): Promise<AuthResult> {
+  if (!isSupabaseConfigured) return { ok: false, message: NOT_CONFIGURED_MESSAGE };
+  const { supabase } = await import("@/lib/supabase");
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+  const code = error && "code" in error ? error.code : undefined;
+  if (code === "over_request_rate_limit" || code === "over_email_send_rate_limit") {
+    return { ok: false, message: describeAuthError(error) };
+  }
+  if (error) console.warn("[PinchPop] Password reset request failed:", error);
+  return {
+    ok: true,
+    message:
+      "If there's an account for that email, a reset link is on its way. Check your inbox and spam folder.",
+  };
+}
+
+/** Sets a new password for the signed-in player (after they open a reset link). */
+export async function updatePassword(password: string): Promise<AuthResult> {
+  const { supabase } = await import("@/lib/supabase");
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { ok: false, message: describeAuthError(error) };
+  return { ok: true, message: "Password updated." };
 }
 
 export async function signOut(): Promise<void> {

@@ -54,6 +54,10 @@ const router = createBrowserRouter([
         lazy: async () => ({ Component: (await import("@/pages/AccountPage")).default }),
       },
       {
+        path: "reset-password",
+        lazy: async () => ({ Component: (await import("@/pages/ResetPasswordPage")).default }),
+      },
+      {
         path: "share/:username/:localId",
         // Loaded on demand so @supabase/supabase-js only downloads when someone opens a share link.
         lazy: async () => ({ Component: (await import("@/pages/SharePage")).default }),

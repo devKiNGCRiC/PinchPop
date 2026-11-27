@@ -20,6 +20,7 @@ import { PopButton, PopLink } from "@/components/PopButton";
 import { Seo } from "@/components/Seo";
 import {
   deleteAccount,
+  requestPasswordReset,
   signIn,
   signOut,
   signUp,
@@ -35,6 +36,62 @@ const inputClass =
 
 type Mode = "signIn" | "signUp";
 
+function ForgotPassword({ initialEmail, onBack }: { initialEmail: string; onBack: () => void }) {
+  const [email, setEmail] = useState(initialEmail);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+
+  async function handleSubmit(event: FormEvent) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    const result = await requestPasswordReset(email);
+    setMessage(result.message);
+    setBusy(false);
+  }
+
+  return (
+    <div className="sticker-lg mx-auto max-w-md rounded-3xl bg-white p-6 sm:p-8">
+      <h2 className="font-display text-2xl font-extrabold tracking-tight">Reset your password</h2>
+      <p className="mt-2 text-base leading-snug text-ink-soft">
+        Enter the email you signed up with and we'll send you a link to choose a new password.
+      </p>
+      <form onSubmit={(e) => void handleSubmit(e)} className="mt-6 flex flex-col gap-4">
+        <label className="flex flex-col gap-1.5 text-sm font-semibold text-ink-soft">
+          Email
+          <input
+            type="email"
+            required
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className={inputClass}
+          />
+        </label>
+        <PopButton type="submit" tone="saffron" size="lg" disabled={busy} className="mt-2">
+          {busy ? (
+            <LoaderCircle className="size-5 animate-spin" aria-hidden="true" />
+          ) : (
+            "Send reset link"
+          )}
+        </PopButton>
+      </form>
+      {message ? (
+        <p role="status" className="mt-4 text-base leading-snug text-ink-soft">
+          {message}
+        </p>
+      ) : null}
+      <button
+        type="button"
+        onClick={onBack}
+        className="mt-5 text-sm font-semibold text-chakra underline underline-offset-4"
+      >
+        Back to sign in
+      </button>
+    </div>
+  );
+}
+
 function AuthForms() {
   const [mode, setMode] = useState<Mode>("signIn");
   const [username, setUsername] = useState("");
@@ -44,6 +101,7 @@ function AuthForms() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [forgot, setForgot] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -53,6 +111,18 @@ function AuthForms() {
       mode === "signUp" ? await signUp(email, password, username) : await signIn(email, password);
     setMessage(result.message);
     setBusy(false);
+  }
+
+  if (forgot) {
+    return (
+      <ForgotPassword
+        initialEmail={email}
+        onBack={() => {
+          setForgot(false);
+          setMessage("");
+        }}
+      />
+    );
   }
 
   return (
@@ -142,6 +212,15 @@ function AuthForms() {
             </button>
           </div>
         </label>
+        {mode === "signIn" ? (
+          <button
+            type="button"
+            onClick={() => setForgot(true)}
+            className="-mt-2 self-end text-sm font-semibold text-chakra underline underline-offset-4"
+          >
+            Forgot password?
+          </button>
+        ) : null}
 
         {mode === "signUp" ? (
           <label className="flex items-start gap-2 text-sm leading-snug text-ink-soft">
