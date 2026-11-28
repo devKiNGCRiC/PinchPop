@@ -7,7 +7,13 @@ import {
   pinchPoint,
   toPixel,
 } from "@/lib/camera/gestures";
-import { createPuzzle, handleDrag, reconcile, stepTweens } from "@/lib/camera/pieces";
+import {
+  createPuzzle,
+  findNearestPiece,
+  handleDrag,
+  reconcile,
+  stepTweens,
+} from "@/lib/camera/pieces";
 import type { Puzzle, PuzzleEvent, Rand } from "@/lib/camera/pieces";
 import type { Box, Hand, Point } from "@/lib/camera/types";
 
@@ -28,6 +34,8 @@ export const MIN_FRAME_SIZE = 260;
 export const CURSOR_SMOOTHING = 0.45;
 /** Frames a pinch must stay open before a held piece is let go, so one noisy frame can't drop it. */
 export const RELEASE_FRAMES = 3;
+/** Frames a pinch must stay closed before it counts, so fingers brushing past can't grab. */
+export const GRAB_FRAMES = 2;
 /** How long a hand can vanish from tracking (a blink of the detector) and keep its piece. */
 export const HAND_LOST_GRACE_MS = 300;
 /** A hand further than this (share of canvas width) from every known hand is treated as new. */
@@ -42,6 +50,8 @@ interface TrackedHand {
   pinching: boolean;
   /** Consecutive frames the pinch has looked open while still holding. */
   openFrames: number;
+  /** Consecutive frames the pinch has looked closed before it counts. */
+  closedFrames: number;
   /** When this hand was last detected. */
   at: number;
 }
@@ -82,6 +92,17 @@ export interface EngineView {
   fistProgress: number;
   /** Mirrored index fingertips in canvas pixels, for the framing markers. */
   fingertips: Point[];
+  /** One pointer per hand while solving: where a pinch would grab, and what it would grab. */
+  cursors: HandCursor[];
+}
+
+export interface HandCursor {
+  point: Point;
+  pinching: boolean;
+  /** This hand is carrying a piece. */
+  holding: boolean;
+  /** The piece a pinch here would pick up, or null. */
+  hoverPieceId: number | null;
 }
 
 export interface RunStats {
@@ -107,6 +128,7 @@ export function createEngine() {
   let handsSeen = 0;
   let armed = false;
   let fingertips: Point[] = [];
+  let cursors: HandCursor[] = [];
   let moves = 0;
   let cleanDrops = 0;
   let puzzleStartedAt = 0;
@@ -203,19 +225,37 @@ export function createEngine() {
           y: match.point.y + (raw.y - match.point.y) * CURSOR_SMOOTHING,
         };
       } else {
-        match = { id: `hand${nextHandId++}`, point: raw, pinching: false, openFrames: 0, at: now };
+        // A hand that arrives already pinched has to open first: it never grabs on the way in.
+        const closed = isPinching(hand);
+        match = {
+          id: `hand${nextHandId++}`,
+          point: raw,
+          pinching: closed,
+          openFrames: 0,
+          closedFrames: closed ? GRAB_FRAMES : 0,
+          at: now,
+        };
       }
       match.at = now;
+      const wasPinching = match.pinching;
       if (isPinching(hand, match.pinching)) {
-        match.pinching = true;
         match.openFrames = 0;
-      } else if (match.pinching) {
-        match.openFrames += 1;
-        if (match.openFrames >= RELEASE_FRAMES) match.pinching = false;
+        match.closedFrames += 1;
+        if (match.closedFrames >= GRAB_FRAMES) match.pinching = true;
+      } else {
+        match.closedFrames = 0;
+        if (match.pinching) {
+          match.openFrames += 1;
+          if (match.openFrames >= RELEASE_FRAMES) match.pinching = false;
+        }
       }
       seen.push(match);
+      // Only the moment a pinch closes can pick a piece up. Moving a hand that is already pinched
+      // (or half-closed) over other pieces never grabs them on the way.
+      const holding = board.drag?.handId === match.id;
+      const justClosed = match.pinching && !wasPinching;
       applyPuzzleEvents(
-        handleDrag(board, match.id, match.pinching, match.point, now, rand),
+        handleDrag(board, match.id, holding ? match.pinching : justClosed, match.point, now, rand),
         now,
         events,
       );
@@ -236,6 +276,14 @@ export function createEngine() {
     }
     tracked = [...seen, ...kept];
     fingertips = seen.map((t) => t.point);
+    cursors = seen.map((t) => {
+      const holding = board.drag?.handId === t.id;
+      const hover =
+        holding || board.drag || board.solved
+          ? null
+          : findNearestPiece(board, t.point.x, t.point.y);
+      return { point: t.point, pinching: t.pinching, holding, hoverPieceId: hover?.id ?? null };
+    });
     if (!board.drag) reconcile(board);
   }
 
@@ -245,6 +293,7 @@ export function createEngine() {
     const events: EngineEvent[] = [];
     lastNow = now;
     handsSeen = hands.length;
+    cursors = [];
     fingertips = hands.map((h) => toPixel(mirrorX(h[LM.INDEX_TIP]), width, height));
 
     if (phase === "saving") return events;
@@ -387,6 +436,7 @@ export function createEngine() {
       puzzle,
       fistProgress: Math.min(1, fistFrames / FIST_HOLD_FRAMES),
       fingertips,
+      cursors: phase === "puzzle" ? cursors : [],
     };
   }
 

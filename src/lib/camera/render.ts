@@ -204,6 +204,33 @@ function drawFingertip(ctx: CanvasRenderingContext2D, x: number, y: number, acti
   ctx.restore();
 }
 
+/** While solving: outline the piece each hand would grab, and mark the exact grab point. */
+function drawCursors(ctx: CanvasRenderingContext2D, view: EngineView) {
+  const puzzle = view.puzzle;
+  if (!puzzle) return;
+  for (const cursor of view.cursors) {
+    if (cursor.hoverPieceId !== null) {
+      const piece = puzzle.pieces[cursor.hoverPieceId];
+      ctx.save();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = MARIGOLD;
+      ctx.setLineDash([10, 6]);
+      ctx.strokeRect(piece.x + 2, piece.y + 2, piece.w - 4, piece.h - 4);
+      ctx.restore();
+    }
+    const { x, y } = cursor.point;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(x, y, cursor.pinching ? 8 : 12, 0, Math.PI * 2);
+    ctx.fillStyle = cursor.pinching ? SAFFRON : "rgba(255,255,255,0.9)";
+    ctx.fill();
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = INK;
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
 function drawSkeleton(ctx: CanvasRenderingContext2D, hand: Hand) {
   const { width, height } = ctx.canvas;
   const points = hand.map((p) => toPixel(mirrorX(p), width, height));
@@ -317,7 +344,10 @@ export function renderScene(ctx: CanvasRenderingContext2D, args: SceneArgs): voi
     drawShatter(ctx, args.shatter, now);
   } else if (view.phase === "puzzle" || view.phase === "saving") {
     drawPuzzle(ctx, args);
-    if (view.phase === "puzzle") hands.forEach((hand) => drawSkeleton(ctx, hand));
+    if (view.phase === "puzzle") {
+      hands.forEach((hand) => drawSkeleton(ctx, hand));
+      drawCursors(ctx, view);
+    }
   }
 
   if (flashAt !== null) {

@@ -5,6 +5,8 @@ import {
   createEngine,
   FIST_HOLD_FRAMES,
   FREEZE_HOLD_MS,
+  GRAB_FRAMES,
+  RELEASE_FRAMES,
 } from "@/lib/camera/engine";
 import type { EngineEvent } from "@/lib/camera/engine";
 import { computeHandFrame, isFist, isPinching, LM, mirrorX } from "@/lib/camera/gestures";
@@ -333,22 +335,36 @@ describe("steady hand control", () => {
     expect(findNearestPiece(puzzle, 5, 5)).toBeNull();
   });
 
+  /** Open hands for one frame, then pinched for GRAB_FRAMES frames: a deliberate grab. */
+  function grab(
+    engine: ReturnType<typeof createEngine>,
+    rand: () => number,
+    at: Point,
+    extra: Hand[] = [],
+  ): number {
+    let now = 0;
+    engine.update({ hands: [handAt(at, { pinch: false }), ...extra], now, width, height }, rand);
+    for (let i = 0; i < GRAB_FRAMES; i++) {
+      now += 33;
+      engine.update({ hands: [handAt(at), ...extra], now, width, height }, rand);
+    }
+    return now;
+  }
+
   it("keeps the same piece when the detector swaps the order of two hands", () => {
     const engine = createEngine();
     const rand = seeded(6);
     const puzzle = engine.beginPuzzle(box, 0, rand);
     const target = puzzle.pieces[0];
-    const grab = centre(target);
-    const other = { x: 60, y: 560 };
-    engine.update(
-      { hands: [handAt(grab), handAt(other, { pinch: false })], now: 0, width, height },
-      rand,
-    );
+    const at = centre(target);
+    const idle = handAt({ x: 60, y: 560 }, { pinch: false });
+    let now = grab(engine, rand, at, [idle]);
     expect(puzzle.drag?.pieceId).toBe(target.id);
     for (let i = 1; i <= 6; i++) {
-      const hands = [handAt(grab), handAt(other, { pinch: false })];
+      const hands = [handAt(at), handAt({ x: 60, y: 560 }, { pinch: false })];
       if (i % 2) hands.reverse();
-      engine.update({ hands, now: i * 33, width, height }, rand);
+      now += 33;
+      engine.update({ hands, now, width, height }, rand);
     }
     expect(puzzle.drag?.pieceId).toBe(target.id);
     expect(engine.stats().moves).toBe(0);
@@ -359,18 +375,18 @@ describe("steady hand control", () => {
     const rand = seeded(8);
     const puzzle = engine.beginPuzzle(box, 0, rand);
     const target = puzzle.pieces[2];
-    const grab = centre(target);
-    engine.update({ hands: [handAt(grab)], now: 0, width, height }, rand);
+    const at = centre(target);
+    let now = grab(engine, rand, at);
     expect(puzzle.drag?.pieceId).toBe(target.id);
-    engine.update({ hands: [handAt(grab, { pinch: false })], now: 33, width, height }, rand);
-    engine.update({ hands: [], now: 66, width, height }, rand);
-    engine.update({ hands: [handAt(grab)], now: 99, width, height }, rand);
+    engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height }, rand);
+    engine.update({ hands: [], now: (now += 33), width, height }, rand);
+    engine.update({ hands: [handAt(at)], now: (now += 33), width, height }, rand);
     expect(puzzle.drag?.pieceId).toBe(target.id);
 
     // A real release (open for several frames) does drop it.
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < RELEASE_FRAMES + 1; i++) {
       engine.update(
-        { hands: [handAt(grab, { pinch: false })], now: 132 + i * 33, width, height },
+        { hands: [handAt(at, { pinch: false })], now: (now += 33), width, height },
         rand,
       );
     }
@@ -382,11 +398,42 @@ describe("steady hand control", () => {
     const engine = createEngine();
     const rand = seeded(10);
     const puzzle = engine.beginPuzzle(box, 0, rand);
-    engine.update({ hands: [handAt(centre(puzzle.pieces[1]))], now: 0, width, height }, rand);
+    const now = grab(engine, rand, centre(puzzle.pieces[1]));
     expect(puzzle.drag).not.toBeNull();
-    engine.update({ hands: [], now: 100, width, height }, rand);
+    engine.update({ hands: [], now: now + 100, width, height }, rand);
     expect(puzzle.drag).not.toBeNull();
-    engine.update({ hands: [], now: 1000, width, height }, rand);
+    engine.update({ hands: [], now: now + 1000, width, height }, rand);
     expect(puzzle.drag).toBeNull();
+  });
+
+  it("never grabs a piece by moving an already-pinched hand over it", () => {
+    const engine = createEngine();
+    const rand = seeded(12);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    // Pinch on empty space outside the board, then sweep across every piece while still pinched.
+    let now = grab(engine, rand, { x: 900, y: 550 });
+    expect(puzzle.drag).toBeNull();
+    for (const piece of puzzle.pieces) {
+      now += 33;
+      engine.update({ hands: [handAt(centre(piece))], now, width, height }, rand);
+      now += 33;
+      engine.update({ hands: [handAt(centre(piece))], now, width, height }, rand);
+    }
+    expect(puzzle.drag).toBeNull();
+    expect(engine.stats().moves).toBe(0);
+  });
+
+  it("shows which piece an open hand would grab", () => {
+    const engine = createEngine();
+    const rand = seeded(14);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const target = puzzle.pieces[4];
+    const at = centre(target);
+    for (let i = 0; i < 8; i++) {
+      engine.update({ hands: [handAt(at, { pinch: false })], now: i * 33, width, height }, rand);
+    }
+    const [cursor] = engine.view().cursors;
+    expect(cursor.hoverPieceId).toBe(findNearestPiece(puzzle, at.x, at.y)?.id);
+    expect(cursor.pinching).toBe(false);
   });
 });
