@@ -1,4 +1,12 @@
-import { computeHandFrame, isFist, isPinching, LM, mirrorX, toPixel } from "@/lib/camera/gestures";
+import {
+  computeHandFrame,
+  isFist,
+  isPinching,
+  LM,
+  mirrorX,
+  pinchPoint,
+  toPixel,
+} from "@/lib/camera/gestures";
 import { createPuzzle, handleDrag, reconcile, stepTweens } from "@/lib/camera/pieces";
 import type { Puzzle, PuzzleEvent, Rand } from "@/lib/camera/pieces";
 import type { Box, Hand, Point } from "@/lib/camera/types";
@@ -15,8 +23,28 @@ export const FRAME_GRACE_MS = 450;
  * printed or downloaded at a fixed print size later.
  */
 export const MIN_FRAME_SIZE = 260;
+/** How much of each new hand position the puzzle cursor moves toward per frame (0..1). Lower is
+ * steadier but laggier; this takes the shake out of hand tracking without feeling slow. */
+export const CURSOR_SMOOTHING = 0.45;
+/** Frames a pinch must stay open before a held piece is let go, so one noisy frame can't drop it. */
+export const RELEASE_FRAMES = 3;
+/** How long a hand can vanish from tracking (a blink of the detector) and keep its piece. */
+export const HAND_LOST_GRACE_MS = 300;
+/** A hand further than this (share of canvas width) from every known hand is treated as new. */
+const HAND_MATCH_RATIO = 0.3;
 /** Drag id used by the mouse or a finger on the canvas, as opposed to hands "A" and "B". */
 const POINTER_ID = "pointer";
+
+interface TrackedHand {
+  id: string;
+  /** Smoothed pinch point in canvas pixels. */
+  point: Point;
+  pinching: boolean;
+  /** Consecutive frames the pinch has looked open while still holding. */
+  openFrames: number;
+  /** When this hand was last detected. */
+  at: number;
+}
 
 export type Phase = "tracking" | "countdown" | "puzzle" | "saving";
 export type Status =
@@ -84,8 +112,13 @@ export function createEngine() {
   let puzzleStartedAt = 0;
   let solvedAt: number | null = null;
   let lastNow = 0;
+  // Hands in the puzzle, tracked by position across frames. The detector's list order can swap
+  // between frames, so "first hand in the list" is not a stable identity.
+  let tracked: TrackedHand[] = [];
+  let nextHandId = 0;
 
   function resetToTracking(): void {
+    tracked = [];
     phase = "tracking";
     puzzle = null;
     frameBox = null;
@@ -141,6 +174,71 @@ export function createEngine() {
     events.push({ type: "reset" });
   }
 
+  /** Matches this frame's hands to the tracked ones, then drags with each. */
+  function updatePuzzleHands(
+    board: Puzzle,
+    hands: Hand[],
+    frame: { now: number; width: number; height: number },
+    rand: Rand,
+    events: EngineEvent[],
+  ): void {
+    const { now, width, height } = frame;
+    const unmatched = [...tracked];
+    const seen: TrackedHand[] = [];
+    for (const hand of hands) {
+      const raw = toPixel(mirrorX(pinchPoint(hand)), width, height);
+      let match: TrackedHand | null = null;
+      let best = width * HAND_MATCH_RATIO;
+      for (const t of unmatched) {
+        const d = Math.hypot(raw.x - t.point.x, raw.y - t.point.y);
+        if (d < best) {
+          best = d;
+          match = t;
+        }
+      }
+      if (match) {
+        unmatched.splice(unmatched.indexOf(match), 1);
+        match.point = {
+          x: match.point.x + (raw.x - match.point.x) * CURSOR_SMOOTHING,
+          y: match.point.y + (raw.y - match.point.y) * CURSOR_SMOOTHING,
+        };
+      } else {
+        match = { id: `hand${nextHandId++}`, point: raw, pinching: false, openFrames: 0, at: now };
+      }
+      match.at = now;
+      if (isPinching(hand, match.pinching)) {
+        match.pinching = true;
+        match.openFrames = 0;
+      } else if (match.pinching) {
+        match.openFrames += 1;
+        if (match.openFrames >= RELEASE_FRAMES) match.pinching = false;
+      }
+      seen.push(match);
+      applyPuzzleEvents(
+        handleDrag(board, match.id, match.pinching, match.point, now, rand),
+        now,
+        events,
+      );
+    }
+    // Keep briefly lost hands (and their piece); let go once they've been gone too long.
+    const kept = unmatched.filter((t) => now - t.at < HAND_LOST_GRACE_MS);
+    const active = board.drag;
+    if (active && active.handId !== POINTER_ID) {
+      const holder = [...seen, ...kept].find((t) => t.id === active.handId);
+      if (!holder) {
+        const held = board.pieces[active.pieceId];
+        applyPuzzleEvents(
+          handleDrag(board, active.handId, false, { x: held.x, y: held.y }, now, rand),
+          now,
+          events,
+        );
+      }
+    }
+    tracked = [...seen, ...kept];
+    fingertips = seen.map((t) => t.point);
+    if (!board.drag) reconcile(board);
+  }
+
   /** Process one camera frame. Returns what happened, in order. */
   function update(frame: EngineFrame, rand: Rand): EngineEvent[] {
     const { hands, now, width, height } = frame;
@@ -158,17 +256,8 @@ export function createEngine() {
       freeze.holding = false;
       armed = false;
       if (phase === "puzzle" && puzzle) {
-        // A hand that vanishes mid-drag lets go of its piece where it was. The mouse is not a hand.
-        if (puzzle.drag && puzzle.drag.handId !== POINTER_ID) {
-          const held = puzzle.pieces[puzzle.drag.pieceId];
-          applyPuzzleEvents(
-            handleDrag(puzzle, puzzle.drag.handId, false, { x: held.x, y: held.y }, now, rand),
-            now,
-            events,
-          );
-        } else {
-          reconcile(puzzle);
-        }
+        // A hand that vanishes mid-drag keeps its piece for a moment, then lets go where it was.
+        updatePuzzleHands(puzzle, hands, frame, rand, events);
       } else if (phase === "countdown") {
         tickCountdown(now, events);
       } else if (phase === "tracking") {
@@ -224,24 +313,7 @@ export function createEngine() {
     }
 
     if (phase === "puzzle" && puzzle) {
-      const board = puzzle;
-      const present = new Set<string>();
-      hands.forEach((hand, i) => {
-        const id = i === 0 ? "A" : "B";
-        present.add(id);
-        const tip = toPixel(mirrorX(hand[LM.INDEX_TIP]), width, height);
-        applyPuzzleEvents(handleDrag(board, id, isPinching(hand), tip, now, rand), now, events);
-      });
-      const active = board.drag;
-      if (active && active.handId !== POINTER_ID && !present.has(active.handId)) {
-        const held = board.pieces[active.pieceId];
-        applyPuzzleEvents(
-          handleDrag(board, active.handId, false, { x: held.x, y: held.y }, now, rand),
-          now,
-          events,
-        );
-      }
-      if (!board.drag) reconcile(board);
+      updatePuzzleHands(puzzle, hands, frame, rand, events);
     }
     return events;
   }
@@ -259,6 +331,7 @@ export function createEngine() {
     puzzle = createPuzzle(box, rand);
     phase = "puzzle";
     fistFrames = 0;
+    tracked = [];
     moves = 0;
     cleanDrops = 0;
     puzzleStartedAt = now;

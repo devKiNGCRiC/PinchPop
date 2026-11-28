@@ -4,6 +4,8 @@ export const GRID = 3;
 /** A dropped piece within this fraction of a tile from its own cell snaps into place. */
 export const SNAP_DISTANCE_RATIO = 0.75;
 export const DISPLACE_ANIM_MS = 220;
+/** How far outside a piece's edge a pinch still grabs it, as a share of the tile size. */
+export const PICKUP_MARGIN_RATIO = 0.12;
 
 export type Rand = () => number;
 
@@ -210,15 +212,25 @@ export function stepTweens(puzzle: Puzzle, now: number): void {
   }
 }
 
+/**
+ * The piece under the point. When pieces overlap, the one whose centre is closest wins. Just off a
+ * piece's edge (a small margin for hand jitter) still counts, but never as far as its neighbours.
+ */
 export function findNearestPiece(puzzle: Puzzle, px: number, py: number): Piece | null {
   let best: Piece | null = null;
-  let bestDistance = Infinity;
+  let bestScore = Infinity;
   for (const piece of puzzle.pieces) {
     if (piece.displacing) continue;
-    const d = Math.hypot(px - (piece.x + piece.w / 2), py - (piece.y + piece.h / 2));
-    if (d < Math.max(piece.w, piece.h) * 0.75 && d < bestDistance) {
+    const margin = Math.min(piece.w, piece.h) * PICKUP_MARGIN_RATIO;
+    const outsideX = Math.max(piece.x - px, 0, px - (piece.x + piece.w));
+    const outsideY = Math.max(piece.y - py, 0, py - (piece.y + piece.h));
+    if (outsideX > margin || outsideY > margin) continue;
+    const centre = Math.hypot(px - (piece.x + piece.w / 2), py - (piece.y + piece.h / 2));
+    // Anything actually under the point beats anything merely near it.
+    const score = (outsideX > 0 || outsideY > 0 ? 1e6 : 0) + centre;
+    if (score < bestScore) {
       best = piece;
-      bestDistance = d;
+      bestScore = score;
     }
   }
   return best;

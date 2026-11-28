@@ -14,8 +14,14 @@ export const LM = {
   PINKY_TIP: 20,
 } as const;
 
-/** Thumb tip and index tip closer than this (in normalised units) count as a pinch. */
-export const PINCH_THRESHOLD = 0.055;
+/**
+ * A pinch closes when the thumb-to-index gap drops below this share of the hand's size, and only
+ * opens again above the larger value. Measuring against hand size keeps it the same whether the
+ * hand is near the camera or far away; the gap between the two values (hysteresis) stops a hand
+ * hovering near the line from flickering between "grab" and "let go".
+ */
+export const PINCH_CLOSE_RATIO = 0.32;
+export const PINCH_OPEN_RATIO = 0.5;
 /** Extra pixels added around the two fingertips when framing a shot. */
 export const FRAME_PADDING = 28;
 
@@ -23,8 +29,23 @@ function dist(a: Landmark, b: Landmark): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-export function isPinching(hand: Hand): boolean {
-  return dist(hand[LM.THUMB_TIP], hand[LM.INDEX_TIP]) < PINCH_THRESHOLD;
+/** Thumb-to-index gap divided by hand size (wrist to middle knuckle). */
+export function pinchRatio(hand: Hand): number {
+  const size = dist(hand[LM.WRIST], hand[LM.MIDDLE_MCP]);
+  return dist(hand[LM.THUMB_TIP], hand[LM.INDEX_TIP]) / Math.max(size, 1e-6);
+}
+
+/** Pass `wasPinching` for a hand already holding a pinch, so it needs to open wider to let go. */
+export function isPinching(hand: Hand, wasPinching = false): boolean {
+  return pinchRatio(hand) < (wasPinching ? PINCH_OPEN_RATIO : PINCH_CLOSE_RATIO);
+}
+
+/** Where a pinch grabs: midway between thumb and index tips, which stays put as the fingers close
+ * (the index tip alone slides toward the thumb, dragging the aim onto a neighbouring piece). */
+export function pinchPoint(hand: Hand): Landmark {
+  const thumb = hand[LM.THUMB_TIP];
+  const index = hand[LM.INDEX_TIP];
+  return { x: (thumb.x + index.x) / 2, y: (thumb.y + index.y) / 2 };
 }
 
 /** A fist: all four fingertips are closer to the wrist than their knuckles are. */

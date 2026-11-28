@@ -10,6 +10,7 @@ import type { EngineEvent } from "@/lib/camera/engine";
 import { computeHandFrame, isFist, isPinching, LM, mirrorX } from "@/lib/camera/gestures";
 import {
   createPuzzle,
+  findNearestPiece,
   handleDrag,
   isNearOwnCell,
   reconcile,
@@ -284,5 +285,108 @@ describe("camera engine", () => {
     const stats = engine.stats();
     expect(stats.moves).toBe(1);
     expect(stats.accuracy).toBe(0);
+  });
+});
+
+describe("steady hand control", () => {
+  const width = 1000;
+  const height = 600;
+  const box = { x: 200, y: 100, width: 450, height: 300 };
+
+  /** A hand whose pinch point (midway between thumb and index) lands on canvas pixel `at`. */
+  function handAt(at: Point, { pinch = true, gap }: { pinch?: boolean; gap?: number } = {}): Hand {
+    // Canvas is mirrored, so canvas x maps back to 1 - x in camera space.
+    const cx = 1 - at.x / width;
+    const cy = at.y / height;
+    const spread = gap ?? (pinch ? 0.01 : 0.2);
+    const hand = makeHand({ tip: { x: cx - spread / 2, y: cy }, pinch: false });
+    hand[LM.THUMB_TIP] = { x: cx + spread / 2, y: cy };
+    return hand;
+  }
+
+  function centre(p: { x: number; y: number; w: number; h: number }): Point {
+    return { x: p.x + p.w / 2, y: p.y + p.h / 2 };
+  }
+
+  it("needs a wider opening to let go than to grab (hysteresis)", () => {
+    // Hand size is 0.2 here; a 0.08 gap is a ratio of 0.4, between the two thresholds.
+    const halfOpen = handAt({ x: 500, y: 300 }, { gap: 0.08 });
+    expect(isPinching(halfOpen)).toBe(false);
+    expect(isPinching(halfOpen, true)).toBe(true);
+  });
+
+  it("picks the piece under the pinch, not a neighbour whose centre is closer", () => {
+    const puzzle = createPuzzle(box, seeded(4));
+    const [a, b, ...rest] = puzzle.pieces;
+    for (const p of rest) {
+      p.x = 2000;
+      p.y = 2000;
+    }
+    // Put two pieces side by side, then pinch just inside a's right edge.
+    a.x = 300;
+    a.y = 150;
+    b.x = 300 + a.w;
+    b.y = 150;
+    const hit = findNearestPiece(puzzle, a.x + a.w - 3, a.y + a.h / 2);
+    expect(hit?.id).toBe(a.id);
+    // Far outside every piece grabs nothing.
+    expect(findNearestPiece(puzzle, 5, 5)).toBeNull();
+  });
+
+  it("keeps the same piece when the detector swaps the order of two hands", () => {
+    const engine = createEngine();
+    const rand = seeded(6);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const target = puzzle.pieces[0];
+    const grab = centre(target);
+    const other = { x: 60, y: 560 };
+    engine.update(
+      { hands: [handAt(grab), handAt(other, { pinch: false })], now: 0, width, height },
+      rand,
+    );
+    expect(puzzle.drag?.pieceId).toBe(target.id);
+    for (let i = 1; i <= 6; i++) {
+      const hands = [handAt(grab), handAt(other, { pinch: false })];
+      if (i % 2) hands.reverse();
+      engine.update({ hands, now: i * 33, width, height }, rand);
+    }
+    expect(puzzle.drag?.pieceId).toBe(target.id);
+    expect(engine.stats().moves).toBe(0);
+  });
+
+  it("ignores a single frame where the pinch looks open or the hand disappears", () => {
+    const engine = createEngine();
+    const rand = seeded(8);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const target = puzzle.pieces[2];
+    const grab = centre(target);
+    engine.update({ hands: [handAt(grab)], now: 0, width, height }, rand);
+    expect(puzzle.drag?.pieceId).toBe(target.id);
+    engine.update({ hands: [handAt(grab, { pinch: false })], now: 33, width, height }, rand);
+    engine.update({ hands: [], now: 66, width, height }, rand);
+    engine.update({ hands: [handAt(grab)], now: 99, width, height }, rand);
+    expect(puzzle.drag?.pieceId).toBe(target.id);
+
+    // A real release (open for several frames) does drop it.
+    for (let i = 0; i < 4; i++) {
+      engine.update(
+        { hands: [handAt(grab, { pinch: false })], now: 132 + i * 33, width, height },
+        rand,
+      );
+    }
+    expect(puzzle.drag).toBeNull();
+    expect(engine.stats().moves).toBe(1);
+  });
+
+  it("lets go of a piece once its hand has been gone for a while", () => {
+    const engine = createEngine();
+    const rand = seeded(10);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    engine.update({ hands: [handAt(centre(puzzle.pieces[1]))], now: 0, width, height }, rand);
+    expect(puzzle.drag).not.toBeNull();
+    engine.update({ hands: [], now: 100, width, height }, rand);
+    expect(puzzle.drag).not.toBeNull();
+    engine.update({ hands: [], now: 1000, width, height }, rand);
+    expect(puzzle.drag).toBeNull();
   });
 });
