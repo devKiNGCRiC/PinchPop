@@ -60,6 +60,9 @@ const INITIAL: CameraUi = {
   canSave: false,
 };
 
+/** Framing time kept in the recording: longer framing before the shot is trimmed to its end. */
+const MAX_FRAMING_RECORD_MS = 45_000;
+
 function fitBox(box: Box, width: number, height: number): Box {
   const x = Math.max(0, Math.round(box.x));
   const y = Math.max(0, Math.round(box.y));
@@ -100,6 +103,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
   const lastVideoTimeRef = useRef(-1);
   const lastHandsRef = useRef<Hand[]>([]);
   const recorderRef = useRef<CanvasRecorder | null>(null);
+  const recordingSinceRef = useRef(0);
   const shatterRef = useRef<Shatter | null>(null);
   const saveTimerRef = useRef<number | undefined>(undefined);
   const onSavedRef = useRef(onSaved);
@@ -156,6 +160,16 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
     setUi((prev) => ({ ...prev, ...next }));
   }, [engine]);
 
+  /** Throws away any current recording and starts a fresh take of the live canvas, with sound. */
+  const restartRecording = useCallback(() => {
+    recorderRef.current?.discard();
+    recorderRef.current = null;
+    const canvas = canvasRef.current;
+    if (!canvas || !runningRef.current) return;
+    recorderRef.current = startCanvasRecording(canvas, sound.recordingStream());
+    recordingSinceRef.current = performance.now();
+  }, [sound]);
+
   const finishSave = useCallback(() => {
     const assets = assetsRef.current;
     if (!assets || saveTimerRef.current !== undefined) return;
@@ -197,9 +211,9 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
       const frame = fitBox(box, canvas.width, canvas.height);
       const photo = capturePhoto(video, frame);
       const puzzle = engine.beginPuzzle(frame, now, Math.random);
-      // Record the puzzle-solving as a WebM replay the player can download afterwards.
-      recorderRef.current?.discard();
-      recorderRef.current = startCanvasRecording(canvas);
+      // The recording usually started with tracking (framing and countdown included); start one
+      // now only if it didn't.
+      recorderRef.current ??= startCanvasRecording(canvas, sound.recordingStream());
       assetsRef.current = { pieces: slicePieces(photo.blackAndWhite, puzzle), color: photo.color };
       flashAtRef.current = now;
       solvedAtRef.current = puzzle.solved ? now : null;
@@ -235,8 +249,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
             finishSave();
             break;
           case "reset":
-            recorderRef.current?.discard();
-            recorderRef.current = null;
+            restartRecording();
             assetsRef.current = null;
             flashAtRef.current = null;
             solvedAtRef.current = null;
@@ -246,7 +259,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
         }
       }
     },
-    [doCapture, finishSave, sound],
+    [doCapture, finishSave, restartRecording, sound],
   );
 
   const start = useCallback(async () => {
@@ -294,10 +307,19 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
 
       const ctx = canvas.getContext("2d");
       if (!ctx) throw new Error("Canvas is not available in this browser.");
+      // Record the whole run, framing and countdown included, for a shareable video.
+      restartRecording();
 
       const tick = () => {
         if (!runningRef.current) return;
         const now = performance.now();
+        // Long framing before the shot only keeps its last stretch, so the file stays small.
+        if (
+          engine.view().phase === "tracking" &&
+          now - recordingSinceRef.current > MAX_FRAMING_RECORD_MS
+        ) {
+          restartRecording();
+        }
         if (video.readyState >= 2) {
           // Detect only when the webcam delivered a new frame; reuse the last hands otherwise.
           let fresh = false;
@@ -340,7 +362,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
       teardown();
       setUi((prev) => ({ ...prev, stage: "error", error: describeCameraError(error) }));
     }
-  }, [engine, handleEvents, sound, syncUi, teardown]);
+  }, [engine, handleEvents, restartRecording, sound, syncUi, teardown]);
 
   /** Starts straight on the puzzle from an uploaded photo instead of the webcam — no hand
    * framing or countdown, since there is no live feed to frame. */
@@ -393,7 +415,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
           Math.random,
         );
         recorderRef.current?.discard();
-        recorderRef.current = startCanvasRecording(canvas);
+        recorderRef.current = startCanvasRecording(canvas, sound.recordingStream());
         assetsRef.current = {
           pieces: slicePieces(photo.blackAndWhite, puzzle),
           color: photo.color,
@@ -464,13 +486,12 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
   }, [engine]);
 
   const reset = useCallback(() => {
-    recorderRef.current?.discard();
-    recorderRef.current = null;
+    restartRecording();
     engine.reset();
     assetsRef.current = null;
     flashAtRef.current = null;
     solvedAtRef.current = null;
-  }, [engine]);
+  }, [engine, restartRecording]);
 
   const save = useCallback(() => {
     if (engine.requestSave()) finishSave();

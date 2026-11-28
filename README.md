@@ -27,7 +27,7 @@ Hand tracking runs entirely in your browser with MediaPipe, so your video never 
 | Pinch a second piece | Swaps the two; a piece in its right spot turns green and locks |
 | Hold a fist | Saves the solved polaroid, or starts over mid-puzzle |
 
-You can also upload a photo instead of using the webcam. Each solve can be downloaded as a short WebM replay video, kept only until you close the tab.
+You can also upload a photo instead of using the webcam. Each camera run is recorded, from framing the shot to the solve, with the game's sounds, and can be downloaded from the results page as an MP4 (WebM in browsers that can't record MP4). It's kept only until you close the tab.
 
 ![Camera mode puzzle](docs/screenshots/camera-puzzle.webp)
 
@@ -115,7 +115,7 @@ Full details are on the [Privacy](https://pinchpop.pages.dev/privacy) and [Terms
 | Styling | Tailwind CSS v4, shadcn/ui and Radix primitives, self-hosted fonts via Fontsource |
 | Hand tracking | MediaPipe Tasks Vision (Hand Landmarker), running in the browser |
 | Graphics | Canvas 2D for puzzles and print rendering, generated SVG for frames, patterns and stickers |
-| Audio and video | Web Audio API for sound effects, MediaRecorder for replay videos |
+| Audio and video | Web Audio API for sound effects, MediaRecorder for run videos |
 | Backend | Supabase: Auth, Postgres with Row Level Security, Storage |
 | Testing and quality | Vitest, ESLint, Prettier, TypeScript |
 | Hosting | Cloudflare Pages |

@@ -34,12 +34,28 @@ export function useRecording(): Recording | null {
   );
 }
 
-/** The best WebM flavour this browser can record, or undefined if it cannot record at all. */
-export function pickMimeType(): string | undefined {
+/**
+ * The best format this browser can record, or undefined if it cannot record at all. MP4 first:
+ * Instagram, X and most phones take it directly, while WebM usually needs converting.
+ */
+export function pickMimeType(withAudio: boolean): string | undefined {
   if (typeof MediaRecorder === "undefined") return undefined;
-  return ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"].find((type) =>
-    MediaRecorder.isTypeSupported(type),
-  );
+  const candidates = withAudio
+    ? [
+        "video/mp4;codecs=avc1.42E01F,mp4a.40.2",
+        "video/mp4;codecs=avc1,mp4a",
+        "video/mp4",
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+      ]
+    : ["video/mp4;codecs=avc1.42E01F", "video/mp4", "video/webm;codecs=vp9", "video/webm"];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type));
+}
+
+/** "mp4" or "webm", for the downloaded file's name. */
+export function recordingExtension(mimeType: string): string {
+  return mimeType.startsWith("video/mp4") ? "mp4" : "webm";
 }
 
 export interface CanvasRecorder {
@@ -49,14 +65,27 @@ export interface CanvasRecorder {
   discard(): void;
 }
 
-/** Starts recording a canvas (the live camera view, pieces and all) to WebM. Free and in-browser. */
-export function startCanvasRecording(canvas: HTMLCanvasElement): CanvasRecorder | null {
-  const mimeType = pickMimeType();
+/**
+ * Starts recording a canvas (the live camera view, pieces and all), plus the game's sounds when
+ * given an audio stream. Free and entirely in the browser.
+ */
+export function startCanvasRecording(
+  canvas: HTMLCanvasElement,
+  audio: MediaStream | null = null,
+): CanvasRecorder | null {
+  const audioTracks = audio?.getAudioTracks() ?? [];
+  const mimeType = pickMimeType(audioTracks.length > 0);
   if (!mimeType || typeof canvas.captureStream !== "function") return null;
 
   try {
-    const stream = canvas.captureStream(30);
-    const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 2_500_000 });
+    const video = canvas.captureStream(30);
+    const stream = new MediaStream([...video.getVideoTracks(), ...audioTracks]);
+    // A high bitrate so the clip still looks sharp after social apps re-compress it.
+    const recorder = new MediaRecorder(stream, {
+      mimeType,
+      videoBitsPerSecond: 8_000_000,
+      audioBitsPerSecond: 128_000,
+    });
     const chunks: Blob[] = [];
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunks.push(event.data);
@@ -70,7 +99,8 @@ export function startCanvasRecording(canvas: HTMLCanvasElement): CanvasRecorder 
           return;
         }
         recorder.onstop = () => {
-          stream.getTracks().forEach((track) => track.stop());
+          // Only the canvas track: the audio track is shared and reused by the next recording.
+          video.getTracks().forEach((track) => track.stop());
           resolve(chunks.length ? new Blob(chunks, { type: mimeType }) : null);
         };
         recorder.stop();

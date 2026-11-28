@@ -28,6 +28,18 @@ function readPreference(): boolean {
 export function createSound() {
   let context: AudioContext | null = null;
   let enabled = readPreference();
+  // Every sound goes through `master`, which feeds the speakers and, once a recording asks for
+  // it, a stream the video recorder can mix in.
+  let master: GainNode | null = null;
+  let recordTap: MediaStreamAudioDestinationNode | null = null;
+
+  function output(ctx: AudioContext): AudioNode {
+    if (!master) {
+      master = ctx.createGain();
+      master.connect(ctx.destination);
+    }
+    return master;
+  }
 
   function unlock(): void {
     if (!context) {
@@ -56,7 +68,7 @@ export function createSound() {
     amp.gain.setValueAtTime(0.0001, start);
     amp.gain.exponentialRampToValueAtTime(gain, start + 0.008);
     amp.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-    osc.connect(amp).connect(context.destination);
+    osc.connect(amp).connect(output(context));
     osc.start(start);
     osc.stop(start + duration + 0.02);
   }
@@ -71,12 +83,21 @@ export function createSound() {
     const amp = context.createGain();
     source.buffer = buffer;
     amp.gain.value = gain;
-    source.connect(amp).connect(context.destination);
+    source.connect(amp).connect(output(context));
     source.start();
   }
 
   return {
     unlock,
+    /** The game's sound effects as a live audio stream, for recording, or null without audio. */
+    recordingStream(): MediaStream | null {
+      if (!context) return null;
+      if (!recordTap) {
+        recordTap = context.createMediaStreamDestination();
+        output(context).connect(recordTap);
+      }
+      return recordTap.stream;
+    },
     isEnabled: () => enabled,
     setEnabled(value: boolean) {
       enabled = value;
@@ -115,6 +136,8 @@ export function createSound() {
     close() {
       void context?.close();
       context = null;
+      master = null;
+      recordTap = null;
     },
   };
 }
