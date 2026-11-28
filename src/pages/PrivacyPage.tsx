@@ -17,7 +17,7 @@ interface Section {
 const SECTIONS: Section[] = [
   {
     title: "Your camera video never leaves your browser",
-    body: "Hand tracking (MediaPipe) runs entirely on your device. PinchPop has no server to send video to, and never records or uploads your camera feed.",
+    body: "Hand tracking (MediaPipe) runs entirely on your device. Your camera feed is never uploaded. The video of your run is recorded only inside this browser tab so you can download it, and it is discarded when you close the tab.",
     Icon: ShieldCheck,
   },
   {

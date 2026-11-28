@@ -102,7 +102,7 @@ For example, 7 moves in 20 seconds with no wasted moves scores 2000 − 280 − 
 
 ## Privacy
 
-- Camera video is processed in the browser and is never recorded or uploaded.
+- Camera video is processed in the browser and is never uploaded. The run video is recorded only inside your browser tab for you to download, and is discarded when you close the tab.
 - Without an account, everything stays in your browser's local storage.
 - With an account, runs and photos go to a private Supabase project protected by Row Level Security. Photos are only visible to their owner unless you turn on a public link for that photo.
 - Analytics are Cloudflare's cookieless Web Analytics. There are no ads, trackers or cookies.
