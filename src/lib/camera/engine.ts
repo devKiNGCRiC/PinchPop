@@ -17,7 +17,7 @@ import {
   stepTweens,
   swapPieces,
 } from "@/lib/camera/pieces";
-import { createSmoother, smoothPoint } from "@/lib/camera/smoothing";
+import { createSmoother, leadPoint, smoothPoint } from "@/lib/camera/smoothing";
 import type { Smoother } from "@/lib/camera/smoothing";
 import type { Puzzle, PuzzleEvent, Rand } from "@/lib/camera/pieces";
 import type { Box, Hand, Point } from "@/lib/camera/types";
@@ -47,11 +47,14 @@ export const RELEASE_MS = 80;
  * closing the fingers pulls the fingertip toward the thumb, often onto the next piece. */
 export const AIM_LOOKBACK_MS = 150;
 /** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
-export const DWELL_MS = 800;
+export const DWELL_MS = 1300;
+/** Fingers closer than this (but not yet a pinch) mean a pinch is on its way: the hover ring
+ * starts over instead of racing it. */
+const DWELL_PAUSE_RATIO = 0.7;
 /** A pinch reading below this counts as "trying to pinch" for the ?debug log. */
 const DIP_START_RATIO = 0.6;
 /** Two taps closer together than this are one gesture seen twice, so the second is ignored. */
-export const TAP_DEBOUNCE_MS = 250;
+export const TAP_DEBOUNCE_MS = 180;
 /** A tap can't cancel a selection younger than this: the usual cause is the hover ring
  * selecting a piece just before the player's own pinch on the same piece lands. */
 export const CANCEL_GUARD_MS = 800;
@@ -376,7 +379,8 @@ export function createEngine() {
       }
       if (match) {
         unmatched.splice(unmatched.indexOf(match), 1);
-        match.point = smoothPoint(match.smoother, raw, now);
+        smoothPoint(match.smoother, raw, now);
+        match.point = leadPoint(match.smoother);
       } else {
         // A hand that arrives already pinched has to open first: it never grabs on the way in.
         match = {
@@ -473,6 +477,7 @@ export function createEngine() {
         match.dwellSince = now;
         match.dwellSpent = false;
       }
+      if (ratio < DWELL_PAUSE_RATIO) match.dwellSince = now;
       const resting = !match.pinching && match.closedSince === null;
       const ready = cell !== null && match.hoverId !== null && resting && !match.dwellSpent;
       if (ready && now - match.dwellSince >= DWELL_MS) {

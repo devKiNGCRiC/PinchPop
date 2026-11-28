@@ -221,6 +221,9 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
           case "pickup":
             sound.pickup();
             break;
+          case "drop":
+            sound.swap();
+            break;
           case "snap":
             sound.snap();
             break;

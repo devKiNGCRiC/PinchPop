@@ -97,6 +97,8 @@ export function createSound() {
       tone({ freq: 880, slideTo: 110, type: "sawtooth", gain: 0.08, duration: 0.4 });
     },
     pickup: () => tone({ freq: 660, duration: 0.06, gain: 0.1 }),
+    /** Every swap gets a quick rising blip, so a move that doesn't land a piece still answers. */
+    swap: () => tone({ freq: 520, slideTo: 820, duration: 0.08, gain: 0.1 }),
     snap() {
       tone({ freq: 880, type: "triangle", duration: 0.07 });
       tone({ freq: 1320, type: "triangle", duration: 0.09, delay: 0.06 });

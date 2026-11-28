@@ -734,4 +734,15 @@ describe("steady hand control", () => {
     expect(saved).toBe(true);
     expect(now).toBeLessThan(FIST_HOLD_MS + 200);
   });
+
+  it("holds the hover ring while the fingers are closing, so it never races a pinch", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(42));
+    const [a] = twoLoosePieces(puzzle);
+    // A ratio of 0.6: fingers coming together, not yet a pinch.
+    for (let t = 0; t < DWELL_MS * 2; t += 33) {
+      engine.update({ hands: [handAt(centre(a), { gap: 0.12 })], now: t, width, height });
+    }
+    expect(engine.view().selectedPieceId).toBeNull();
+  });
 });
