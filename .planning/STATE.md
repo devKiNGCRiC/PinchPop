@@ -81,6 +81,7 @@ None yet.
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260909-m96 | Reconcile stale attribution instruction in root CLAUDE.md with PROJECT.md | 2026-09-09 | (pending) | [260909-m96-claude-md-attribution-fix](./quick/260909-m96-claude-md-attribution-fix/) |
+| fast | Privacy page + README: run video recorded only in the tab, never uploaded | 2026-11-28 | 5712069 | — |
 | 260910-mug | Reconcile 01-UI-SPEC.md Landing Page Treatment with DESIGN.md's page arc (Hero → How PinchPop Works → deferred proof content → Closing CTA → Footer) | 2026-09-10 | bfdf1a1 | [260910-mug-reconcile-ui-spec-page-arc](./quick/260910-mug-reconcile-ui-spec-page-arc/) |
 | 261004-ngi | Single-photo frame redesign: Film Roll, Notebook, Cassette, Sticky Note designs; canvas preview | 2026-10-04 | (uncommitted) | [261004-ngi-redesign-single-photo-polaroid-frames-to](./quick/261004-ngi-redesign-single-photo-polaroid-frames-to/) |
 
