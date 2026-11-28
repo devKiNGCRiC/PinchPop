@@ -308,8 +308,8 @@ describe("steady hand control", () => {
   }
 
   it("needs a wider opening to let go than to grab (hysteresis)", () => {
-    // Hand size is 0.2 here; a 0.1 gap is a ratio of 0.5, between the two thresholds.
-    const halfOpen = handAt({ x: 500, y: 300 }, { gap: 0.1 });
+    // Hand size is 0.2 here; a 0.12 gap is a ratio of 0.6, between the two thresholds.
+    const halfOpen = handAt({ x: 500, y: 300 }, { gap: 0.12 });
     expect(isPinching(halfOpen)).toBe(false);
     expect(isPinching(halfOpen, true)).toBe(true);
   });

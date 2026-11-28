@@ -4,9 +4,9 @@ import type { Point } from "@/lib/camera/types";
 // speed. A still hand gets heavy smoothing (no shake); a moving hand gets almost none (no lag).
 
 /** Cutoff (Hz) when the hand is still. Lower is steadier. */
-export const SMOOTH_MIN_CUTOFF = 1.2;
+export const SMOOTH_MIN_CUTOFF = 2;
 /** How fast the cutoff rises with speed (per canvas pixel per second). Higher is snappier. */
-export const SMOOTH_BETA = 0.02;
+export const SMOOTH_BETA = 0.04;
 const DERIVATIVE_CUTOFF = 1;
 
 export interface Smoother {

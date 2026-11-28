@@ -3,7 +3,7 @@ import type { Box, Point } from "@/lib/camera/types";
 export const GRID = 3;
 /** A dropped piece within this fraction of a tile from its own cell snaps into place. */
 export const SNAP_DISTANCE_RATIO = 0.75;
-export const DISPLACE_ANIM_MS = 220;
+export const DISPLACE_ANIM_MS = 180;
 /** How far outside a piece's edge a pinch still grabs it, as a share of the tile size. */
 export const PICKUP_MARGIN_RATIO = 0.12;
 

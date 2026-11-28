@@ -25,7 +25,7 @@ import type { Box, Hand, Point } from "@/lib/camera/types";
 export const FREEZE_HOLD_MS = 250;
 export const COUNTDOWN_SECONDS = 3;
 /** How long a fist must be held to save (or start over). */
-export const FIST_HOLD_MS = 600;
+export const FIST_HOLD_MS = 500;
 /** A held fist survives the tracker missing it for this long (a blink, not a let-go). */
 export const FIST_GAP_MS = 250;
 /** How long the last frame keeps showing after a hand briefly drops out of view. */
@@ -42,19 +42,19 @@ export const MIN_FRAME_SIZE = 260;
 export const GRAB_MS = 0;
 /** How long the fingers must stay open before the next pinch can count, so one noisy reading
  * can't turn a single pinch into two. */
-export const RELEASE_MS = 130;
+export const RELEASE_MS = 80;
 /** A pinch is aimed at the piece the fingertip was on this long before the fingers closed:
  * closing the fingers pulls the fingertip toward the thumb, often onto the next piece. */
 export const AIM_LOOKBACK_MS = 150;
 /** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
-export const DWELL_MS = 1000;
+export const DWELL_MS = 800;
 /** A pinch reading below this counts as "trying to pinch" for the ?debug log. */
 const DIP_START_RATIO = 0.6;
 /** Two taps closer together than this are one gesture seen twice, so the second is ignored. */
-export const TAP_DEBOUNCE_MS = 350;
+export const TAP_DEBOUNCE_MS = 250;
 /** A tap can't cancel a selection younger than this: the usual cause is the hover ring
  * selecting a piece just before the player's own pinch on the same piece lands. */
-export const CANCEL_GUARD_MS = 1000;
+export const CANCEL_GUARD_MS = 800;
 /** How long a hand can vanish from tracking (a blink of the detector) and keep its piece. */
 export const HAND_LOST_GRACE_MS = 300;
 /** A hand further than this (share of canvas width) from every known hand is treated as new. */
