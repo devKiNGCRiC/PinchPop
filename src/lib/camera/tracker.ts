@@ -65,7 +65,12 @@ export async function loadTracker(onStage?: (text: string) => void): Promise<Tra
   return {
     detect(video, nowMs) {
       const result = tracker.detectForVideo(video, nowMs);
-      return result.landmarks.map((hand) => hand.map((p) => ({ x: p.x, y: p.y })));
+      return result.landmarks.map((hand, i) => {
+        const out: Hand = hand.map((p) => ({ x: p.x, y: p.y }));
+        const world = result.worldLandmarks?.[i];
+        if (world) out.world = world.map((p) => ({ x: p.x, y: p.y, z: p.z }));
+        return out;
+      });
     },
     close() {
       tracker.close();

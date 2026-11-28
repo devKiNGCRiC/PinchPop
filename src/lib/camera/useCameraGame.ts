@@ -297,7 +297,9 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
         const now = performance.now();
         if (video.readyState >= 2) {
           // Detect only when the webcam delivered a new frame; reuse the last hands otherwise.
+          let fresh = false;
           if (video.currentTime !== lastVideoTimeRef.current) {
+            fresh = true;
             lastVideoTimeRef.current = video.currentTime;
             try {
               lastHandsRef.current = tracker.detect(video, now);
@@ -307,7 +309,7 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
           }
           const hands = lastHandsRef.current;
           const events = engine.update(
-            { hands, now, width: canvas.width, height: canvas.height },
+            { hands, now, width: canvas.width, height: canvas.height, fresh },
             Math.random,
           );
           handleEvents(events, now);

@@ -6,6 +6,9 @@ const INK = "#111426";
 const MARIGOLD = "#ffc61a";
 const SAFFRON = "#ff9933";
 const LEAF = "#138808";
+/** Add ?debug to the camera page URL to see each hand's pinch reading next to its pointer. */
+const DEBUG =
+  typeof window !== "undefined" && new URLSearchParams(window.location.search).has("debug");
 
 const HAND_CONNECTIONS: [number, number][] = [
   [0, 1],
@@ -227,6 +230,15 @@ function drawCursors(ctx: CanvasRenderingContext2D, view: EngineView) {
     ctx.lineWidth = 3;
     ctx.strokeStyle = INK;
     ctx.stroke();
+    if (DEBUG) {
+      ctx.font = "bold 16px sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = 4;
+      const label = cursor.ratio.toFixed(2);
+      ctx.strokeText(label, x + 16, y - 12);
+      ctx.fillText(label, x + 16, y - 12);
+    }
     ctx.restore();
   }
 }

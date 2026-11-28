@@ -1,4 +1,4 @@
-import type { Box, Hand, Landmark, Point } from "@/lib/camera/types";
+import type { Box, Hand, Landmark, Point, WorldLandmark } from "@/lib/camera/types";
 
 // Landmark indices into MediaPipe's 21-point hand model.
 export const LM = {
@@ -20,8 +20,8 @@ export const LM = {
  * hand is near the camera or far away; the gap between the two values (hysteresis) stops a hand
  * hovering near the line from flickering between "grab" and "let go".
  */
-export const PINCH_CLOSE_RATIO = 0.32;
-export const PINCH_OPEN_RATIO = 0.5;
+export const PINCH_CLOSE_RATIO = 0.35;
+export const PINCH_OPEN_RATIO = 0.55;
 /** Extra pixels added around the two fingertips when framing a shot. */
 export const FRAME_PADDING = 28;
 
@@ -29,8 +29,18 @@ function dist(a: Landmark, b: Landmark): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-/** Thumb-to-index gap divided by hand size (wrist to middle knuckle). */
+function dist3(a: WorldLandmark, b: WorldLandmark): number {
+  return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
+}
+
+/** Thumb-to-index gap divided by hand size (wrist to middle knuckle). Uses the 3D landmarks when
+ * the tracker provides them, so turning the hand doesn't change the reading. */
 export function pinchRatio(hand: Hand): number {
+  const w = hand.world;
+  if (w && w.length > LM.PINKY_TIP) {
+    const size = dist3(w[LM.WRIST], w[LM.MIDDLE_MCP]);
+    return dist3(w[LM.THUMB_TIP], w[LM.INDEX_TIP]) / Math.max(size, 1e-6);
+  }
   const size = dist(hand[LM.WRIST], hand[LM.MIDDLE_MCP]);
   return dist(hand[LM.THUMB_TIP], hand[LM.INDEX_TIP]) / Math.max(size, 1e-6);
 }

@@ -3,10 +3,10 @@ import { describe, expect, it } from "vitest";
 import {
   COUNTDOWN_SECONDS,
   createEngine,
-  FIST_HOLD_FRAMES,
+  FIST_HOLD_MS,
   FREEZE_HOLD_MS,
-  GRAB_FRAMES,
-  RELEASE_FRAMES,
+  GRAB_MS,
+  RELEASE_MS,
 } from "@/lib/camera/engine";
 import type { EngineEvent } from "@/lib/camera/engine";
 import { computeHandFrame, isFist, isPinching, LM, mirrorX } from "@/lib/camera/gestures";
@@ -233,7 +233,7 @@ describe("camera engine", () => {
     expect(engine.view().status).toBe("solved");
 
     let saved = false;
-    for (let i = 0; i < FIST_HOLD_FRAMES + 2 && !saved; i++) {
+    for (let i = 0; i < FIST_HOLD_MS / 33 + 3 && !saved; i++) {
       t += 33;
       saved = engine
         .update({ hands: [makeHand({ fist: true })], now: t, width, height }, rand)
@@ -249,7 +249,7 @@ describe("camera engine", () => {
     const box = { x: 200, y: 100, width: 450, height: 300 };
     engine.beginPuzzle(box, 0, rand);
     let reset = false;
-    for (let i = 0; i < FIST_HOLD_FRAMES + 2 && !reset; i++) {
+    for (let i = 0; i < FIST_HOLD_MS / 33 + 3 && !reset; i++) {
       reset = engine
         .update({ hands: [makeHand({ fist: true })], now: i * 33, width, height }, rand)
         .some((e) => e.type === "reset");
@@ -335,7 +335,7 @@ describe("steady hand control", () => {
     expect(findNearestPiece(puzzle, 5, 5)).toBeNull();
   });
 
-  /** Open hands for one frame, then pinched for GRAB_FRAMES frames: a deliberate grab. */
+  /** Open hand for one detection, then pinched until GRAB_MS has passed: a deliberate grab. */
   function grab(
     engine: ReturnType<typeof createEngine>,
     rand: () => number,
@@ -344,7 +344,7 @@ describe("steady hand control", () => {
   ): number {
     let now = 0;
     engine.update({ hands: [handAt(at, { pinch: false }), ...extra], now, width, height }, rand);
-    for (let i = 0; i < GRAB_FRAMES; i++) {
+    for (let i = 0; i <= Math.ceil(GRAB_MS / 33); i++) {
       now += 33;
       engine.update({ hands: [handAt(at), ...extra], now, width, height }, rand);
     }
@@ -384,7 +384,7 @@ describe("steady hand control", () => {
     expect(puzzle.drag?.pieceId).toBe(target.id);
 
     // A real release (open for several frames) does drop it.
-    for (let i = 0; i < RELEASE_FRAMES + 1; i++) {
+    for (let i = 0; i <= Math.ceil(RELEASE_MS / 33) + 1; i++) {
       engine.update(
         { hands: [handAt(at, { pinch: false })], now: (now += 33), width, height },
         rand,
@@ -435,5 +435,59 @@ describe("steady hand control", () => {
     const [cursor] = engine.view().cursors;
     expect(cursor.hoverPieceId).toBe(findNearestPiece(puzzle, at.x, at.y)?.id);
     expect(cursor.pinching).toBe(false);
+  });
+
+  it("does not count a repeated detection as a new reading", () => {
+    const engine = createEngine();
+    const rand = seeded(16);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const at = centre(puzzle.pieces[3]);
+    let now = grab(engine, rand, at);
+    expect(puzzle.drag).not.toBeNull();
+    // One open reading, then the screen redraws many times with that same reading.
+    engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height }, rand);
+    for (let i = 0; i < 20; i++) {
+      engine.update(
+        { hands: [handAt(at, { pinch: false })], now: (now += 8), width, height, fresh: false },
+        rand,
+      );
+    }
+    // The next real reading is pinched again: the piece was never dropped.
+    engine.update({ hands: [handAt(at)], now: now + 33, width, height }, rand);
+    expect(puzzle.drag).not.toBeNull();
+    expect(engine.stats().moves).toBe(0);
+  });
+
+  it("grabs the piece aimed at when the fingers began to close, even if the pinch drifts", () => {
+    const engine = createEngine();
+    const rand = seeded(18);
+    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const [a, b, ...rest] = puzzle.pieces;
+    for (const p of rest) {
+      p.x = 2000;
+      p.y = 2000;
+    }
+    a.x = 300;
+    a.y = 150;
+    b.x = 300 + a.w;
+    b.y = 150;
+    const onA = { x: a.x + a.w - 10, y: a.y + a.h / 2 };
+    const onB = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+    let now = 0;
+    for (let i = 0; i < 4; i++) {
+      engine.update(
+        { hands: [handAt(onA, { pinch: false })], now: (now += 33), width, height },
+        rand,
+      );
+    }
+    expect(engine.view().cursors[0].hoverPieceId).toBe(a.id);
+    // Fingers close while the pinch point slides over onto b.
+    for (let i = 0; i <= Math.ceil(GRAB_MS / 33); i++) {
+      engine.update(
+        { hands: [handAt(i === 0 ? onA : onB)], now: (now += 33), width, height },
+        rand,
+      );
+    }
+    expect(puzzle.drag?.pieceId).toBe(a.id);
   });
 });

@@ -216,6 +216,17 @@ export function stepTweens(puzzle: Puzzle, now: number): void {
  * The piece under the point. When pieces overlap, the one whose centre is closest wins. Just off a
  * piece's edge (a small margin for hand jitter) still counts, but never as far as its neighbours.
  */
+/** Whether the point is on the piece, or within the small pickup margin around it. */
+export function isOverPiece(piece: Piece, px: number, py: number): boolean {
+  const margin = Math.min(piece.w, piece.h) * PICKUP_MARGIN_RATIO;
+  return (
+    px >= piece.x - margin &&
+    px <= piece.x + piece.w + margin &&
+    py >= piece.y - margin &&
+    py <= piece.y + piece.h + margin
+  );
+}
+
 export function findNearestPiece(puzzle: Puzzle, px: number, py: number): Piece | null {
   let best: Piece | null = null;
   let bestScore = Infinity;
@@ -247,13 +258,17 @@ export function handleDrag(
   point: Point,
   now: number,
   rand: Rand,
+  /** The piece to pick up, when the caller already knows what the player aimed at. */
+  aimedPieceId: number | null = null,
 ): PuzzleEvent[] {
   const events: PuzzleEvent[] = [];
   const drag = puzzle.drag;
 
   if (pinching) {
     if (drag === null) {
-      const candidate = findNearestPiece(puzzle, point.x, point.y);
+      const aimed = aimedPieceId === null ? null : puzzle.pieces[aimedPieceId];
+      const candidate =
+        aimed && !aimed.displacing ? aimed : findNearestPiece(puzzle, point.x, point.y);
       if (candidate) {
         puzzle.drag = {
           handId,
