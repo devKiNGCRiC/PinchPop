@@ -468,8 +468,9 @@ describe("steady hand control", () => {
     b.y = 150;
     a.placed = false;
     b.placed = false;
-    const onA = { x: a.x + a.w - 10, y: a.y + a.h / 2 };
-    const onB = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
+    // Closing the fingers drags the tip a few pixels across the shared edge.
+    const onA = { x: a.x + a.w - 8, y: a.y + a.h / 2 };
+    const onB = { x: b.x + 8, y: b.y + b.h / 2 };
     let now = 0;
     for (let i = 0; i < 6; i++) {
       engine.update({ hands: [handAt(onA, { pinch: false })], now: (now += 33), width, height });
@@ -744,5 +745,40 @@ describe("steady hand control", () => {
       engine.update({ hands: [handAt(centre(a), { gap: 0.12 })], now: t, width, height });
     }
     expect(engine.view().selectedPieceId).toBeNull();
+  });
+
+  it("aims at the new piece when the hand moves there quickly and pinches straight away", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(44));
+    const [a, b, ...rest] = puzzle.pieces;
+    for (const p of rest) {
+      p.x = 2000;
+      p.y = 2000;
+    }
+    a.x = 300;
+    a.y = 150;
+    b.x = 300;
+    b.y = 150 + a.h;
+    a.placed = false;
+    b.placed = false;
+    let now = 0;
+    for (let i = 0; i < 8; i++) {
+      engine.update({
+        hands: [handAt(centre(a), { pinch: false })],
+        now: (now += 33),
+        width,
+        height,
+      });
+    }
+    // One quick move down onto b, then an immediate pinch.
+    engine.update({
+      hands: [handAt(centre(b), { pinch: false })],
+      now: (now += 33),
+      width,
+      height,
+    });
+    engine.update({ hands: [handAt(centre(b))], now: (now += 33), width, height });
+    engine.update({ hands: [handAt(centre(b))], now: now + 33, width, height });
+    expect(engine.view().selectedPieceId).toBe(b.id);
   });
 });

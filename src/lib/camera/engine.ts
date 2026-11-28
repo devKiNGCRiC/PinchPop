@@ -46,6 +46,9 @@ export const RELEASE_MS = 80;
 /** A pinch is aimed at the piece the fingertip was on this long before the fingers closed:
  * closing the fingers pulls the fingertip toward the thumb, often onto the next piece. */
 export const AIM_LOOKBACK_MS = 150;
+/** ...but only when the hand barely moved in that time (closing-the-fingers drift), as a share
+ * of a tile. A bigger move means the player went to a new piece on purpose: aim at that one. */
+const AIM_DRIFT_RATIO = 0.3;
 /** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
 export const DWELL_MS = 1300;
 /** Fingers closer than this (but not yet a pinch) mean a pinch is on its way: the hover ring
@@ -88,7 +91,11 @@ interface TrackedHand {
    * fingers moves the fingertip, so this, not where it ends up, is what the player aimed at. */
   aimId: number | null;
   /** Recent hover targets, newest last, for AIM_LOOKBACK_MS. */
-  hoverHistory: { at: number; id: number | null }[];
+  hoverHistory: { at: number; id: number | null; x: number; y: number }[];
+  /** Smoothed fingertip without the look-ahead: what hovering and aiming use. The look-ahead
+   * `point` is only for drawing the dot; aiming with it overshoots onto the next piece when the
+   * hand slows down to pinch. */
+  aim: Point;
   /** The board cell the pointer is resting on for a hover-select, and since when. */
   dwellCell: number | null;
   dwellSince: number;
@@ -286,21 +293,28 @@ export function createEngine() {
     return row * 3 + col;
   }
 
-  /** What the pointer was on about AIM_LOOKBACK_MS ago (or the oldest reading we have). */
-  function hoverBefore(hand: TrackedHand, now: number): number | null {
-    const target = now - AIM_LOOKBACK_MS;
-    let pick: number | null = hand.hoverId;
+  /**
+   * What a pinch starting now is aimed at. Closing the fingers drags the fingertip a little, so if
+   * the hand barely moved over the last AIM_LOOKBACK_MS, the piece it was on then wins. If it moved
+   * further, the player went to a new piece on purpose and pinched straight away: aim at that one.
+   */
+  function aimFor(board: Puzzle, hand: TrackedHand, now: number): number | null {
+    const current = hoverAt(board, hand.hoverId, hand.aim);
+    let earlier: TrackedHand["hoverHistory"][number] | null = null;
     for (const entry of hand.hoverHistory) {
-      if (entry.at > target) break;
-      pick = entry.id;
+      if (entry.at > now - AIM_LOOKBACK_MS) break;
+      earlier = entry;
     }
-    // The pointer only just arrived on a piece: aim at where it is now, not at nothing.
-    return pick ?? hand.hoverId;
+    if (earlier && earlier.id !== null) {
+      const moved = Math.hypot(hand.aim.x - earlier.x, hand.aim.y - earlier.y);
+      if (moved < Math.min(board.tileW, board.tileH) * AIM_DRIFT_RATIO) return earlier.id;
+    }
+    return current;
   }
 
   /** "hand 3 (412,288)": a hand's id and pointer position, for the ?debug log. */
   function handLabel(hand: TrackedHand): string {
-    return `${hand.id.replace("hand", "hand ")} (${Math.round(hand.point.x)},${Math.round(hand.point.y)})`;
+    return `${hand.id.replace("hand", "hand ")} (${Math.round(hand.aim.x)},${Math.round(hand.aim.y)})`;
   }
 
   /** Adds a line to the ?debug gesture log. */
@@ -319,12 +333,12 @@ export function createEngine() {
   ) {
     if (board.drag || board.solved) return;
     // The remembered aim can be empty (the pointer only just got there): use what's under it now.
-    const target = aimed ?? hoverAt(board, null, hand.point);
+    const target = aimed ?? hoverAt(board, null, hand.aim);
     const who = handLabel(hand);
     if (target === null) {
-      const cell = cellIndexAt(board, hand.point);
+      const cell = cellIndexAt(board, hand.aim);
       if (cell === null) return note(now, `${who}: ignored, pointer off the board`);
-      const under = findNearestPiece(board, hand.point.x, hand.point.y);
+      const under = findNearestPiece(board, hand.aim.x, hand.aim.y);
       if (under?.placed) return note(now, `${who}: ignored, piece ${under.id + 1} is locked`);
       return note(now, `${who}: ignored, no piece under pointer`);
     }
@@ -379,7 +393,7 @@ export function createEngine() {
       }
       if (match) {
         unmatched.splice(unmatched.indexOf(match), 1);
-        smoothPoint(match.smoother, raw, now);
+        match.aim = smoothPoint(match.smoother, raw, now);
         match.point = leadPoint(match.smoother);
       } else {
         // A hand that arrives already pinched has to open first: it never grabs on the way in.
@@ -387,6 +401,7 @@ export function createEngine() {
           id: `hand${nextHandId++}`,
           smoother: createSmoother(raw, now),
           point: raw,
+          aim: raw,
           pinching: isPinching(hand),
           closedSince: null,
           closedMisses: 0,
@@ -427,7 +442,7 @@ export function createEngine() {
         if (!match.pinching) {
           if (match.closedSince === null) {
             match.closedSince = now;
-            match.aimId = hoverBefore(match, now);
+            match.aimId = aimFor(board, match, now);
           }
           if (now - match.closedSince >= GRAB_MS) {
             match.pinching = true;
@@ -458,8 +473,8 @@ export function createEngine() {
         match.dwellSpent = true;
       }
       if (!match.pinching && match.closedSince === null) match.aimId = null;
-      if (match.closedSince === null) match.hoverId = hoverAt(board, match.hoverId, match.point);
-      match.hoverHistory.push({ at: now, id: match.hoverId });
+      if (match.closedSince === null) match.hoverId = hoverAt(board, match.hoverId, match.aim);
+      match.hoverHistory.push({ at: now, id: match.hoverId, x: match.aim.x, y: match.aim.y });
       while (
         match.hoverHistory.length > 0 &&
         now - match.hoverHistory[0].at > AIM_LOOKBACK_MS * 3
@@ -471,7 +486,7 @@ export function createEngine() {
       // to the board cell, so the piece that slides in after a swap doesn't start a new one.
       // The cell comes from the pointer, not the hover target: a piece sliding through mid-swap
       // has no hover target for a moment, and that must not re-arm the same cell.
-      const cell = cellIndexAt(board, match.point);
+      const cell = cellIndexAt(board, match.aim);
       if (cell !== match.dwellCell) {
         match.dwellCell = cell;
         match.dwellSince = now;
