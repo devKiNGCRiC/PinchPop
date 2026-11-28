@@ -4,7 +4,6 @@ import {
   isPinching,
   LM,
   mirrorX,
-  pinchPoint,
   pinchRatio,
   toPixel,
 } from "@/lib/camera/gestures";
@@ -41,6 +40,11 @@ export const GRAB_MS = 60;
 /** How long the fingers must stay open before the next pinch can count, so one noisy reading
  * can't turn a single pinch into two. */
 export const RELEASE_MS = 130;
+/** A pinch is aimed at the piece the fingertip was on this long before the fingers closed:
+ * closing the fingers pulls the fingertip toward the thumb, often onto the next piece. */
+export const AIM_LOOKBACK_MS = 150;
+/** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
+export const DWELL_MS = 1000;
 /** How long a hand can vanish from tracking (a blink of the detector) and keep its piece. */
 export const HAND_LOST_GRACE_MS = 300;
 /** A hand further than this (share of canvas width) from every known hand is treated as new. */
@@ -51,7 +55,7 @@ const POINTER_ID = "pointer";
 interface TrackedHand {
   id: string;
   smoother: Smoother;
-  /** Smoothed pinch point in canvas pixels. */
+  /** Smoothed index fingertip in canvas pixels: the pointer. */
   point: Point;
   pinching: boolean;
   /** When the fingers started looking closed (not yet a pinch), or null. */
@@ -60,9 +64,16 @@ interface TrackedHand {
   openSince: number | null;
   /** The piece under the pointer, kept until the pointer clearly leaves it. */
   hoverId: number | null;
-  /** The piece that was under the pointer when the fingers began to close. Closing the fingers
-   * moves the pointer a little, so this, not where it ends up, is what the player aimed at. */
+  /** The piece that was under the pointer just before the fingers began to close. Closing the
+   * fingers moves the fingertip, so this, not where it ends up, is what the player aimed at. */
   aimId: number | null;
+  /** Recent hover targets, newest last, for AIM_LOOKBACK_MS. */
+  hoverHistory: { at: number; id: number | null }[];
+  /** The board cell the pointer is resting on for a hover-select, and since when. */
+  dwellCell: number | null;
+  dwellSince: number;
+  /** A hover-select (or a pinch) already happened on this cell; move off it to arm again. */
+  dwellSpent: boolean;
   ratio: number;
   /** When this hand was last detected. */
   at: number;
@@ -122,6 +133,8 @@ export interface HandCursor {
   hoverPieceId: number | null;
   /** Thumb-to-index gap relative to hand size, for the ?debug overlay. */
   ratio: number;
+  /** How far a hover-select has filled, from 0 to 1. */
+  dwell: number;
 }
 
 export interface RunStats {
@@ -235,6 +248,26 @@ export function createEngine() {
     return piece && !piece.placed ? piece.id : null;
   }
 
+  /** The board cell (0-8) under a point, or null outside the board. */
+  function cellIndexAt(board: Puzzle, point: Point): number | null {
+    const col = Math.floor((point.x - board.box.x) / board.tileW);
+    const row = Math.floor((point.y - board.box.y) / board.tileH);
+    if (col < 0 || row < 0 || col > 2 || row > 2) return null;
+    return row * 3 + col;
+  }
+
+  /** What the pointer was on about AIM_LOOKBACK_MS ago (or the oldest reading we have). */
+  function hoverBefore(hand: TrackedHand, now: number): number | null {
+    const target = now - AIM_LOOKBACK_MS;
+    let pick: number | null = hand.hoverId;
+    for (const entry of hand.hoverHistory) {
+      if (entry.at > target) break;
+      pick = entry.id;
+    }
+    if (pick === null) pick = hand.hoverHistory.find((e) => e.id !== null)?.id ?? hand.hoverId;
+    return pick;
+  }
+
   /** One deliberate pinch on `target`: select it, cancel the selection, or swap with it. */
   function pinchTap(board: Puzzle, target: number | null, now: number, events: EngineEvent[]) {
     if (board.drag || board.solved || target === null) return;
@@ -265,7 +298,8 @@ export function createEngine() {
     const unmatched = [...tracked];
     const seen: TrackedHand[] = [];
     for (const hand of hands) {
-      const raw = toPixel(mirrorX(pinchPoint(hand)), width, height);
+      // The pointer is the index fingertip: that's what people point with.
+      const raw = toPixel(mirrorX(hand[LM.INDEX_TIP]), width, height);
       const ratio = pinchRatio(hand);
       let match: TrackedHand | null = null;
       let best = width * HAND_MATCH_RATIO;
@@ -290,6 +324,10 @@ export function createEngine() {
           openSince: null,
           hoverId: null,
           aimId: null,
+          hoverHistory: [],
+          dwellCell: null,
+          dwellSince: now,
+          dwellSpent: false,
           ratio,
           at: now,
         };
@@ -303,7 +341,7 @@ export function createEngine() {
         if (!match.pinching) {
           if (match.closedSince === null) {
             match.closedSince = now;
-            match.aimId = match.hoverId;
+            match.aimId = hoverBefore(match, now);
           }
           if (now - match.closedSince >= GRAB_MS) match.pinching = true;
         }
@@ -321,9 +359,37 @@ export function createEngine() {
 
       // Only the moment a pinch closes counts, aimed where the fingers began to close. Moving a
       // hand that is already pinched (or half-closed) over pieces never selects them.
-      if (match.pinching && !wasPinching) pinchTap(board, match.aimId, now, events);
+      if (match.pinching && !wasPinching) {
+        pinchTap(board, match.aimId, now, events);
+        // Don't let the hover-select fire on the same cell right after a pinch.
+        match.dwellSpent = true;
+      }
       if (!match.pinching && match.closedSince === null) match.aimId = null;
       if (match.closedSince === null) match.hoverId = hoverAt(board, match.hoverId, match.point);
+      match.hoverHistory.push({ at: now, id: match.hoverId });
+      while (
+        match.hoverHistory.length > 0 &&
+        now - match.hoverHistory[0].at > AIM_LOOKBACK_MS * 3
+      ) {
+        match.hoverHistory.shift();
+      }
+
+      // Hover-select: resting the pointer on a piece fills a ring, then acts like a pinch. Keyed
+      // to the board cell, so the piece that slides in after a swap doesn't start a new one.
+      // The cell comes from the pointer, not the hover target: a piece sliding through mid-swap
+      // has no hover target for a moment, and that must not re-arm the same cell.
+      const cell = cellIndexAt(board, match.point);
+      if (cell !== match.dwellCell) {
+        match.dwellCell = cell;
+        match.dwellSince = now;
+        match.dwellSpent = false;
+      }
+      const resting = !match.pinching && match.closedSince === null;
+      const ready = cell !== null && match.hoverId !== null && resting && !match.dwellSpent;
+      if (ready && now - match.dwellSince >= DWELL_MS) {
+        match.dwellSpent = true;
+        pinchTap(board, match.hoverId, now, events);
+      }
     }
     // Keep briefly lost hands, so a blink of the tracker doesn't reset their pinch state.
     const kept = unmatched.filter((t) => now - t.at < HAND_LOST_GRACE_MS);
@@ -332,7 +398,18 @@ export function createEngine() {
     cursors = seen.map((t) => {
       const holding = board.drag?.handId === t.id;
       const hoverPieceId = holding || board.drag || board.solved ? null : (t.aimId ?? t.hoverId);
-      return { point: t.point, pinching: t.pinching, holding, hoverPieceId, ratio: t.ratio };
+      const dwell =
+        t.dwellCell === null || t.dwellSpent || t.pinching || hoverPieceId === null
+          ? 0
+          : Math.min(1, (now - t.dwellSince) / DWELL_MS);
+      return {
+        point: t.point,
+        pinching: t.pinching,
+        holding,
+        hoverPieceId,
+        ratio: t.ratio,
+        dwell,
+      };
     });
     if (!board.drag) reconcile(board);
   }

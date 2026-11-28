@@ -20,8 +20,8 @@ export const LM = {
  * hand is near the camera or far away; the gap between the two values (hysteresis) stops a hand
  * hovering near the line from flickering between "grab" and "let go".
  */
-export const PINCH_CLOSE_RATIO = 0.35;
-export const PINCH_OPEN_RATIO = 0.55;
+export const PINCH_CLOSE_RATIO = 0.42;
+export const PINCH_OPEN_RATIO = 0.62;
 /** Extra pixels added around the two fingertips when framing a shot. */
 export const FRAME_PADDING = 28;
 
@@ -48,14 +48,6 @@ export function pinchRatio(hand: Hand): number {
 /** Pass `wasPinching` for a hand already holding a pinch, so it needs to open wider to let go. */
 export function isPinching(hand: Hand, wasPinching = false): boolean {
   return pinchRatio(hand) < (wasPinching ? PINCH_OPEN_RATIO : PINCH_CLOSE_RATIO);
-}
-
-/** Where a pinch grabs: midway between thumb and index tips, which stays put as the fingers close
- * (the index tip alone slides toward the thumb, dragging the aim onto a neighbouring piece). */
-export function pinchPoint(hand: Hand): Landmark {
-  const thumb = hand[LM.THUMB_TIP];
-  const index = hand[LM.INDEX_TIP];
-  return { x: (thumb.x + index.x) / 2, y: (thumb.y + index.y) / 2 };
 }
 
 /** A fist: all four fingertips are closer to the wrist than their knuckles are. */

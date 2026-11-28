@@ -50,7 +50,8 @@ const STATUS: Record<Status, StatusInfo> = {
   armed: { label: "Hold the pinch…", Icon: Aperture, tone: "bg-saffron text-ink", step: 1 },
   countdown: { label: "Hold still, capturing…", Icon: Timer, tone: "bg-saffron text-ink", step: 1 },
   puzzle: {
-    label: "Pinch a piece to select it, then pinch another to swap them",
+    label:
+      "Point at a piece and pinch (or hold still) to select it, then do the same on another to swap",
     Icon: Puzzle,
     tone: "bg-chakra text-white",
     step: 2,

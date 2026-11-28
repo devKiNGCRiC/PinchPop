@@ -4,6 +4,7 @@ import {
   COUNTDOWN_SECONDS,
   createEngine,
   FIST_HOLD_MS,
+  DWELL_MS,
   FREEZE_HOLD_MS,
   GRAB_MS,
 } from "@/lib/camera/engine";
@@ -290,14 +291,14 @@ describe("steady hand control", () => {
   const height = 600;
   const box = { x: 200, y: 100, width: 450, height: 300 };
 
-  /** A hand whose pinch point (midway between thumb and index) lands on canvas pixel `at`. */
+  /** A hand whose index fingertip (the pointer) lands on canvas pixel `at`. */
   function handAt(at: Point, { pinch = true, gap }: { pinch?: boolean; gap?: number } = {}): Hand {
     // Canvas is mirrored, so canvas x maps back to 1 - x in camera space.
     const cx = 1 - at.x / width;
     const cy = at.y / height;
     const spread = gap ?? (pinch ? 0.01 : 0.2);
-    const hand = makeHand({ tip: { x: cx - spread / 2, y: cy }, pinch: false });
-    hand[LM.THUMB_TIP] = { x: cx + spread / 2, y: cy };
+    const hand = makeHand({ tip: { x: cx, y: cy }, pinch: false });
+    hand[LM.THUMB_TIP] = { x: cx + spread, y: cy };
     return hand;
   }
 
@@ -306,8 +307,8 @@ describe("steady hand control", () => {
   }
 
   it("needs a wider opening to let go than to grab (hysteresis)", () => {
-    // Hand size is 0.2 here; a 0.08 gap is a ratio of 0.4, between the two thresholds.
-    const halfOpen = handAt({ x: 500, y: 300 }, { gap: 0.08 });
+    // Hand size is 0.2 here; a 0.1 gap is a ratio of 0.5, between the two thresholds.
+    const halfOpen = handAt({ x: 500, y: 300 }, { gap: 0.1 });
     expect(isPinching(halfOpen)).toBe(false);
     expect(isPinching(halfOpen, true)).toBe(true);
   });
@@ -549,5 +550,51 @@ describe("steady hand control", () => {
     const [cursor] = engine.view().cursors;
     expect(cursor.hoverPieceId).toBe(a.id);
     expect(cursor.pinching).toBe(false);
+  });
+
+  it("selects a piece by resting the pointer on it, then swaps the same way", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(26));
+    const [a, b] = twoLoosePieces(puzzle);
+    const cellB = cellOf(puzzle, b);
+    let now = 0;
+    const rest = (at: Point, ms: number) => {
+      for (let t = 0; t < ms; t += 33) {
+        engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height });
+      }
+    };
+    rest(centre(a), DWELL_MS / 2);
+    expect(engine.view().selectedPieceId).toBeNull();
+    expect(engine.view().cursors[0].dwell).toBeGreaterThan(0.3);
+    rest(centre(a), DWELL_MS / 2 + 100);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    // Staying put doesn't fire again (that would cancel the selection).
+    rest(centre(a), DWELL_MS * 2);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    // Rest on b: they swap.
+    const atB = centre(b);
+    rest(atB, DWELL_MS + 500);
+    expect(cellOf(puzzle, a)).toEqual(cellB);
+    expect(engine.stats().moves).toBe(1);
+    // The piece that slid into that cell is not picked up just because the pointer is still there.
+    rest(atB, DWELL_MS * 2);
+    expect(engine.view().selectedPieceId).toBeNull();
+  });
+
+  it("does not hover-select a piece right after pinching it", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(28));
+    const [a] = twoLoosePieces(puzzle);
+    let now = tap(engine, centre(a), 0);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    for (let t = 0; t < DWELL_MS * 2; t += 33) {
+      engine.update({
+        hands: [handAt(centre(a), { pinch: false })],
+        now: (now += 33),
+        width,
+        height,
+      });
+    }
+    expect(engine.view().selectedPieceId).toBe(a.id);
   });
 });

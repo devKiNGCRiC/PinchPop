@@ -23,7 +23,7 @@ Hand tracking runs entirely in your browser with MediaPipe, so your video never 
 | Raise both hands | Starts tracking |
 | Spread your index fingers | Frames the shot |
 | Pinch with both hands and hold | Locks the frame and starts a 3-second countdown |
-| Point at a piece and pinch | Selects it (it lights up); pinch it again to cancel |
+| Point at a piece and pinch, or hold still for a second | Selects it (it lights up); do it again to cancel |
 | Pinch a second piece | Swaps the two; a piece in its right spot turns green and locks |
 | Hold a fist | Saves the solved polaroid, or starts over mid-puzzle |
 

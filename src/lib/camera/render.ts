@@ -222,6 +222,17 @@ function drawCursors(ctx: CanvasRenderingContext2D, view: EngineView) {
       ctx.restore();
     }
     const { x, y } = cursor.point;
+    if (cursor.dwell > 0.05) {
+      // Hover-select progress: a ring that fills while the pointer rests on a piece.
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, 22, -Math.PI / 2, -Math.PI / 2 + cursor.dwell * Math.PI * 2);
+      ctx.lineWidth = 6;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = MARIGOLD;
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.save();
     ctx.beginPath();
     ctx.arc(x, y, cursor.pinching ? 8 : 12, 0, Math.PI * 2);

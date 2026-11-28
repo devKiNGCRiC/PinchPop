@@ -39,7 +39,7 @@ const GESTURES: Gesture[] = [
   },
   {
     title: "Pinch a piece to select it",
-    body: "Point at a piece until it's outlined, then pinch quickly. It lights up to show it's selected. Pinch it again to cancel.",
+    body: "Point at a piece with your index finger until it's outlined, then pinch quickly. Or just hold still for a second. It lights up to show it's selected. Do it again to cancel.",
     Icon: Grab,
     color: "bg-marigold",
   },
