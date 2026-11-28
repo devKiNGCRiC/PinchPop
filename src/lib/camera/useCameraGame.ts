@@ -308,10 +308,13 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
             }
           }
           const hands = lastHandsRef.current;
-          const events = engine.update(
-            { hands, now, width: canvas.width, height: canvas.height, fresh },
-            Math.random,
-          );
+          const events = engine.update({
+            hands,
+            now,
+            width: canvas.width,
+            height: canvas.height,
+            fresh,
+          });
           handleEvents(events, now);
           if (!runningRef.current) return;
           renderScene(ctx, {
@@ -405,10 +408,12 @@ export function useCameraGame(onSaved: (memoryId: string) => void) {
           const tickNow = performance.now();
           // No camera and no hands in this mode: only tweens, drag reconciliation and the
           // save/shatter animation need driving each frame.
-          const events = engine.update(
-            { hands: [], now: tickNow, width: canvas.width, height: canvas.height },
-            Math.random,
-          );
+          const events = engine.update({
+            hands: [],
+            now: tickNow,
+            width: canvas.width,
+            height: canvas.height,
+          });
           handleEvents(events, tickNow);
           if (!runningRef.current) return;
           renderScene(ctx, {

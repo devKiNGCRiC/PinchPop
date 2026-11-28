@@ -6,11 +6,11 @@ import {
   FIST_HOLD_MS,
   FREEZE_HOLD_MS,
   GRAB_MS,
-  RELEASE_MS,
 } from "@/lib/camera/engine";
 import type { EngineEvent } from "@/lib/camera/engine";
 import { computeHandFrame, isFist, isPinching, LM, mirrorX } from "@/lib/camera/gestures";
 import {
+  cellOf,
   createPuzzle,
   findNearestPiece,
   handleDrag,
@@ -151,10 +151,9 @@ describe("camera engine", () => {
 
   it("arms the shutter on a held two-hand pinch, counts down, then asks for a capture", () => {
     const engine = createEngine();
-    const rand = seeded(1);
-    engine.update({ hands: pinchingHands(), now: 0, width, height }, rand);
+    engine.update({ hands: pinchingHands(), now: 0, width, height });
     expect(engine.view().status).toBe("armed");
-    engine.update({ hands: pinchingHands(), now: FREEZE_HOLD_MS + 50, width, height }, rand);
+    engine.update({ hands: pinchingHands(), now: FREEZE_HOLD_MS + 50, width, height });
     expect(engine.view().phase).toBe("countdown");
 
     const ticks: number[] = [];
@@ -164,7 +163,7 @@ describe("camera engine", () => {
       t < FREEZE_HOLD_MS + 50 + (COUNTDOWN_SECONDS + 1) * 1000;
       t += 100
     ) {
-      const out = engine.update({ hands: [], now: t, width, height }, rand);
+      const out = engine.update({ hands: [], now: t, width, height });
       for (const e of events(out, "countdown")) if (e.type === "countdown") ticks.push(e.n);
       capture ??= events(out, "capture")[0];
     }
@@ -179,18 +178,14 @@ describe("camera engine", () => {
 
   it("does not arm with one hand, or with two open hands", () => {
     const engine = createEngine();
-    const rand = seeded(1);
-    engine.update({ hands: [makeHand({ pinch: true })], now: 0, width, height }, rand);
+    engine.update({ hands: [makeHand({ pinch: true })], now: 0, width, height });
     expect(engine.view().armed).toBe(false);
-    engine.update(
-      {
-        hands: [makeHand({ tip: { x: 0.7, y: 0.3 } }), makeHand({ tip: { x: 0.3, y: 0.7 } })],
-        now: 50,
-        width,
-        height,
-      },
-      rand,
-    );
+    engine.update({
+      hands: [makeHand({ tip: { x: 0.7, y: 0.3 } }), makeHand({ tip: { x: 0.3, y: 0.7 } })],
+      now: 50,
+      width,
+      height,
+    });
     expect(engine.view().armed).toBe(false);
     expect(engine.view().frameBox).not.toBeNull();
   });
@@ -207,7 +202,7 @@ describe("camera engine", () => {
     while (!captured && t < 5000) {
       t += 100;
       captured = engine
-        .update({ hands: [], now: t, width, height }, rand)
+        .update({ hands: [], now: t, width, height })
         .some((e) => e.type === "capture");
     }
     expect(captured).toBe(true);
@@ -225,7 +220,7 @@ describe("camera engine", () => {
       engine.pointer(true, { x: piece.x + piece.w / 2, y: piece.y + piece.h / 2 }, t, rand);
       engine.pointer(true, to, t, rand);
       for (const e of engine.pointer(false, to, t, rand)) seen.push(e.type);
-      engine.update({ hands: [], now: t, width, height }, rand);
+      engine.update({ hands: [], now: t, width, height });
     }
     expect(puzzle.solved).toBe(true);
     expect(seen).toContain("complete");
@@ -236,7 +231,7 @@ describe("camera engine", () => {
     for (let i = 0; i < FIST_HOLD_MS / 33 + 3 && !saved; i++) {
       t += 33;
       saved = engine
-        .update({ hands: [makeHand({ fist: true })], now: t, width, height }, rand)
+        .update({ hands: [makeHand({ fist: true })], now: t, width, height })
         .some((e) => e.type === "save");
     }
     expect(saved).toBe(true);
@@ -251,7 +246,7 @@ describe("camera engine", () => {
     let reset = false;
     for (let i = 0; i < FIST_HOLD_MS / 33 + 3 && !reset; i++) {
       reset = engine
-        .update({ hands: [makeHand({ fist: true })], now: i * 33, width, height }, rand)
+        .update({ hands: [makeHand({ fist: true })], now: i * 33, width, height })
         .some((e) => e.type === "reset");
     }
     expect(reset).toBe(true);
@@ -335,133 +330,127 @@ describe("steady hand control", () => {
     expect(findNearestPiece(puzzle, 5, 5)).toBeNull();
   });
 
-  /** Open hand for one detection, then pinched until GRAB_MS has passed: a deliberate grab. */
-  function grab(
-    engine: ReturnType<typeof createEngine>,
-    rand: () => number,
-    at: Point,
-    extra: Hand[] = [],
-  ): number {
-    let now = 0;
-    engine.update({ hands: [handAt(at, { pinch: false }), ...extra], now, width, height }, rand);
+  type Engine = ReturnType<typeof createEngine>;
+
+  /** A deliberate pinch tap at `at`: fingers open long enough to re-arm (pointer settles there),
+   * then closed long enough to count. Returns the time after the tap. */
+  function tap(engine: Engine, at: Point, now: number, extra: Hand[] = []): number {
+    for (let i = 0; i < 10; i++) {
+      now += 33;
+      engine.update({ hands: [handAt(at, { pinch: false }), ...extra], now, width, height });
+    }
     for (let i = 0; i <= Math.ceil(GRAB_MS / 33); i++) {
       now += 33;
-      engine.update({ hands: [handAt(at), ...extra], now, width, height }, rand);
+      engine.update({ hands: [handAt(at), ...extra], now, width, height });
     }
     return now;
   }
 
-  it("keeps the same piece when the detector swaps the order of two hands", () => {
+  function cellCentre(row: number, col: number, puzzle: ReturnType<typeof createPuzzle>): Point {
+    return {
+      x: box.x + col * puzzle.tileW + puzzle.tileW / 2,
+      y: box.y + row * puzzle.tileH + puzzle.tileH / 2,
+    };
+  }
+
+  /** Two unplaced pieces of a fresh puzzle. */
+  function twoLoosePieces(puzzle: ReturnType<typeof createPuzzle>) {
+    const loose = puzzle.pieces.filter((p) => !p.placed);
+    return [loose[0], loose[1]] as const;
+  }
+
+  it("swaps two pieces with one pinch on each", () => {
     const engine = createEngine();
     const rand = seeded(6);
     const puzzle = engine.beginPuzzle(box, 0, rand);
-    const target = puzzle.pieces[0];
-    const at = centre(target);
-    const idle = handAt({ x: 60, y: 560 }, { pinch: false });
-    let now = grab(engine, rand, at, [idle]);
-    expect(puzzle.drag?.pieceId).toBe(target.id);
-    for (let i = 1; i <= 6; i++) {
-      const hands = [handAt(at), handAt({ x: 60, y: 560 }, { pinch: false })];
-      if (i % 2) hands.reverse();
-      now += 33;
-      engine.update({ hands, now, width, height }, rand);
-    }
-    expect(puzzle.drag?.pieceId).toBe(target.id);
-    expect(engine.stats().moves).toBe(0);
-  });
+    const [a, b] = twoLoosePieces(puzzle);
+    const cellA = cellOf(puzzle, a);
+    const cellB = cellOf(puzzle, b);
 
-  it("ignores a single frame where the pinch looks open or the hand disappears", () => {
-    const engine = createEngine();
-    const rand = seeded(8);
-    const puzzle = engine.beginPuzzle(box, 0, rand);
-    const target = puzzle.pieces[2];
-    const at = centre(target);
-    let now = grab(engine, rand, at);
-    expect(puzzle.drag?.pieceId).toBe(target.id);
-    engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height }, rand);
-    engine.update({ hands: [], now: (now += 33), width, height }, rand);
-    engine.update({ hands: [handAt(at)], now: (now += 33), width, height }, rand);
-    expect(puzzle.drag?.pieceId).toBe(target.id);
-
-    // A real release (open for several frames) does drop it.
-    for (let i = 0; i <= Math.ceil(RELEASE_MS / 33) + 1; i++) {
-      engine.update(
-        { hands: [handAt(at, { pinch: false })], now: (now += 33), width, height },
-        rand,
-      );
-    }
-    expect(puzzle.drag).toBeNull();
+    let now = tap(engine, centre(a), 0);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    now = tap(engine, centre(b), now);
+    expect(engine.view().selectedPieceId).toBeNull();
+    engine.update({ hands: [], now: now + 500, width, height });
+    expect(cellOf(puzzle, a)).toEqual(cellB);
+    expect(cellOf(puzzle, b)).toEqual(cellA);
     expect(engine.stats().moves).toBe(1);
   });
 
-  it("lets go of a piece once its hand has been gone for a while", () => {
+  it("cancels a selection by pinching the same piece again", () => {
     const engine = createEngine();
-    const rand = seeded(10);
-    const puzzle = engine.beginPuzzle(box, 0, rand);
-    const now = grab(engine, rand, centre(puzzle.pieces[1]));
-    expect(puzzle.drag).not.toBeNull();
-    engine.update({ hands: [], now: now + 100, width, height }, rand);
-    expect(puzzle.drag).not.toBeNull();
-    engine.update({ hands: [], now: now + 1000, width, height }, rand);
-    expect(puzzle.drag).toBeNull();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(8));
+    const [a] = twoLoosePieces(puzzle);
+    const now = tap(engine, centre(a), 0);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    tap(engine, centre(a), now);
+    expect(engine.view().selectedPieceId).toBeNull();
+    expect(engine.stats().moves).toBe(0);
   });
 
-  it("never grabs a piece by moving an already-pinched hand over it", () => {
+  it("keeps working when the detector swaps the order of two hands", () => {
     const engine = createEngine();
-    const rand = seeded(12);
-    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const puzzle = engine.beginPuzzle(box, 0, seeded(10));
+    const [a] = twoLoosePieces(puzzle);
+    const idle = () => handAt({ x: 60, y: 560 }, { pinch: false });
+    let now = 0;
+    for (let i = 0; i < 12; i++) {
+      const hands = [handAt(centre(a), { pinch: false }), idle()];
+      if (i % 2) hands.reverse();
+      engine.update({ hands, now: (now += 33), width, height });
+    }
+    for (let i = 0; i <= Math.ceil(GRAB_MS / 33); i++) {
+      const hands = [handAt(centre(a)), idle()];
+      if (i % 2) hands.reverse();
+      engine.update({ hands, now: (now += 33), width, height });
+    }
+    expect(engine.view().selectedPieceId).toBe(a.id);
+  });
+
+  it("never selects a piece by moving an already-pinched hand over it", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(12));
     // Pinch on empty space outside the board, then sweep across every piece while still pinched.
-    let now = grab(engine, rand, { x: 900, y: 550 });
-    expect(puzzle.drag).toBeNull();
+    let now = tap(engine, { x: 900, y: 550 }, 0);
     for (const piece of puzzle.pieces) {
-      now += 33;
-      engine.update({ hands: [handAt(centre(piece))], now, width, height }, rand);
-      now += 33;
-      engine.update({ hands: [handAt(centre(piece))], now, width, height }, rand);
+      for (let i = 0; i < 3; i++) {
+        engine.update({ hands: [handAt(centre(piece))], now: (now += 33), width, height });
+      }
     }
-    expect(puzzle.drag).toBeNull();
+    expect(engine.view().selectedPieceId).toBeNull();
     expect(engine.stats().moves).toBe(0);
   });
 
-  it("shows which piece an open hand would grab", () => {
+  it("does not turn a flicker of open fingers into a second pinch", () => {
     const engine = createEngine();
-    const rand = seeded(14);
-    const puzzle = engine.beginPuzzle(box, 0, rand);
-    const target = puzzle.pieces[4];
-    const at = centre(target);
-    for (let i = 0; i < 8; i++) {
-      engine.update({ hands: [handAt(at, { pinch: false })], now: i * 33, width, height }, rand);
-    }
-    const [cursor] = engine.view().cursors;
-    expect(cursor.hoverPieceId).toBe(findNearestPiece(puzzle, at.x, at.y)?.id);
-    expect(cursor.pinching).toBe(false);
-  });
-
-  it("does not count a repeated detection as a new reading", () => {
-    const engine = createEngine();
-    const rand = seeded(16);
-    const puzzle = engine.beginPuzzle(box, 0, rand);
-    const at = centre(puzzle.pieces[3]);
-    let now = grab(engine, rand, at);
-    expect(puzzle.drag).not.toBeNull();
-    // One open reading, then the screen redraws many times with that same reading.
-    engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height }, rand);
+    const puzzle = engine.beginPuzzle(box, 0, seeded(14));
+    const [a] = twoLoosePieces(puzzle);
+    let now = tap(engine, centre(a), 0);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    // One open reading, repeated by many screen redraws, then pinched again.
+    engine.update({
+      hands: [handAt(centre(a), { pinch: false })],
+      now: (now += 33),
+      width,
+      height,
+    });
     for (let i = 0; i < 20; i++) {
-      engine.update(
-        { hands: [handAt(at, { pinch: false })], now: (now += 8), width, height, fresh: false },
-        rand,
-      );
+      engine.update({
+        hands: [handAt(centre(a), { pinch: false })],
+        now: (now += 8),
+        width,
+        height,
+        fresh: false,
+      });
     }
-    // The next real reading is pinched again: the piece was never dropped.
-    engine.update({ hands: [handAt(at)], now: now + 33, width, height }, rand);
-    expect(puzzle.drag).not.toBeNull();
-    expect(engine.stats().moves).toBe(0);
+    engine.update({ hands: [handAt(centre(a))], now: now + 33, width, height });
+    // Still selected: that was the same pinch, not a second one that would cancel it.
+    expect(engine.view().selectedPieceId).toBe(a.id);
   });
 
-  it("grabs the piece aimed at when the fingers began to close, even if the pinch drifts", () => {
+  it("selects the piece aimed at when the fingers began to close, even if the pinch drifts", () => {
     const engine = createEngine();
-    const rand = seeded(18);
-    const puzzle = engine.beginPuzzle(box, 0, rand);
+    const puzzle = engine.beginPuzzle(box, 0, seeded(18));
     const [a, b, ...rest] = puzzle.pieces;
     for (const p of rest) {
       p.x = 2000;
@@ -471,23 +460,94 @@ describe("steady hand control", () => {
     a.y = 150;
     b.x = 300 + a.w;
     b.y = 150;
+    a.placed = false;
+    b.placed = false;
     const onA = { x: a.x + a.w - 10, y: a.y + a.h / 2 };
     const onB = { x: b.x + b.w / 2, y: b.y + b.h / 2 };
     let now = 0;
-    for (let i = 0; i < 4; i++) {
-      engine.update(
-        { hands: [handAt(onA, { pinch: false })], now: (now += 33), width, height },
-        rand,
-      );
+    for (let i = 0; i < 6; i++) {
+      engine.update({ hands: [handAt(onA, { pinch: false })], now: (now += 33), width, height });
     }
     expect(engine.view().cursors[0].hoverPieceId).toBe(a.id);
     // Fingers close while the pinch point slides over onto b.
     for (let i = 0; i <= Math.ceil(GRAB_MS / 33); i++) {
-      engine.update(
-        { hands: [handAt(i === 0 ? onA : onB)], now: (now += 33), width, height },
-        rand,
-      );
+      engine.update({ hands: [handAt(i === 0 ? onA : onB)], now: (now += 33), width, height });
     }
-    expect(puzzle.drag?.pieceId).toBe(a.id);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+  });
+
+  it("locks pieces already in their right spot", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(20));
+    const [a] = twoLoosePieces(puzzle);
+    const home = cellCentre(a.row, a.col, puzzle);
+    // Put a straight into its home cell by swapping with whatever sits there.
+    const occupant = puzzle.pieces.find(
+      (p) => p !== a && cellOf(puzzle, p).row === a.row && cellOf(puzzle, p).col === a.col,
+    );
+    if (!occupant) throw new Error("expected a piece in a's home cell");
+    let now = tap(engine, centre(a), 0);
+    now = tap(engine, centre(occupant), now);
+    engine.update({ hands: [], now: (now += 500), width, height });
+    expect(a.placed).toBe(true);
+    // Pinching the placed piece does nothing.
+    tap(engine, home, now);
+    expect(engine.view().selectedPieceId).toBeNull();
+    expect(engine.view().cursors[0].hoverPieceId).toBeNull();
+  });
+
+  it("solves a whole puzzle with pinch swaps", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(22));
+    let now = 0;
+    let completed = false;
+    for (let guard = 0; guard < 12 && !puzzle.solved; guard++) {
+      const piece = puzzle.pieces.find((p) => !p.placed);
+      if (!piece) break;
+      const occupant = puzzle.pieces.find(
+        (p) =>
+          p !== piece && cellOf(puzzle, p).row === piece.row && cellOf(puzzle, p).col === piece.col,
+      );
+      if (!occupant) throw new Error("expected an occupant");
+      now = tap(engine, centre(piece), now);
+      const before = engine.stats().moves;
+      const out: string[] = [];
+      for (let i = 0; i < 10; i++) {
+        const events = engine.update({
+          hands: [handAt(centre(occupant), { pinch: false })],
+          now: (now += 33),
+          width,
+          height,
+        });
+        out.push(...events.map((e) => e.type));
+      }
+      for (let i = 0; i <= Math.ceil(GRAB_MS / 33); i++) {
+        const events = engine.update({
+          hands: [handAt(centre(occupant))],
+          now: (now += 33),
+          width,
+          height,
+        });
+        out.push(...events.map((e) => e.type));
+      }
+      if (out.includes("complete")) completed = true;
+      expect(engine.stats().moves).toBe(before + 1);
+      engine.update({ hands: [], now: (now += 500), width, height });
+    }
+    expect(puzzle.solved).toBe(true);
+    expect(completed).toBe(true);
+    expect(engine.stats().accuracy).toBe(1);
+  });
+
+  it("shows which piece an open hand would pick", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(24));
+    const [a] = twoLoosePieces(puzzle);
+    for (let i = 0; i < 8; i++) {
+      engine.update({ hands: [handAt(centre(a), { pinch: false })], now: i * 33, width, height });
+    }
+    const [cursor] = engine.view().cursors;
+    expect(cursor.hoverPieceId).toBe(a.id);
+    expect(cursor.pinching).toBe(false);
   });
 });

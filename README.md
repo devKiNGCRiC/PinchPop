@@ -2,7 +2,7 @@
 
 **Capture. Solve. Remember.**
 
-PinchPop is a photobooth you control with your hands. Frame a shot with your two index fingers on your webcam, pinch to snap it, then solve the photo as a 3×3 puzzle by pinching pieces into place. When you finish, you get a polaroid you can decorate, download and share.
+PinchPop is a photobooth you control with your hands. Frame a shot with your two index fingers on your webcam, pinch to snap it, then solve the photo as a 3×3 puzzle by pinching pieces to swap them. When you finish, you get a polaroid you can decorate, download and share.
 
 No webcam? You can play the same puzzle with a mouse, a finger or a keyboard, or skip the game and turn any photo into a polaroid.
 
@@ -23,8 +23,8 @@ Hand tracking runs entirely in your browser with MediaPipe, so your video never 
 | Raise both hands | Starts tracking |
 | Spread your index fingers | Frames the shot |
 | Pinch with both hands and hold | Locks the frame and starts a 3-second countdown |
-| Pinch over a puzzle piece | Picks it up so you can drag it |
-| Release the pinch | Drops the piece; it snaps in if it's in the right spot |
+| Point at a piece and pinch | Selects it (it lights up); pinch it again to cancel |
+| Pinch a second piece | Swaps the two; a piece in its right spot turns green and locks |
 | Hold a fist | Saves the solved polaroid, or starts over mid-puzzle |
 
 You can also upload a photo instead of using the webcam. Each solve can be downloaded as a short WebM replay video, kept only until you close the tab.

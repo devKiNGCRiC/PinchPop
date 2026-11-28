@@ -50,7 +50,7 @@ const STATUS: Record<Status, StatusInfo> = {
   armed: { label: "Hold the pinch…", Icon: Aperture, tone: "bg-saffron text-ink", step: 1 },
   countdown: { label: "Hold still, capturing…", Icon: Timer, tone: "bg-saffron text-ink", step: 1 },
   puzzle: {
-    label: "Pinch a piece to pick it up, release it in the right spot",
+    label: "Pinch a piece to select it, then pinch another to swap them",
     Icon: Puzzle,
     tone: "bg-chakra text-white",
     step: 2,
@@ -67,7 +67,7 @@ const STATUS: Record<Status, StatusInfo> = {
 const STEPS = [
   { title: "Frame", body: "Both index fingers make the corners." },
   { title: "Pinch to snap", body: "Pinch with both hands and hold." },
-  { title: "Solve", body: "Pinch a piece, drag it home." },
+  { title: "Solve", body: "Pinch two pieces to swap them." },
   { title: "Save", body: "Hold a fist to keep your polaroid." },
 ];
 

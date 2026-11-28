@@ -303,17 +303,25 @@ function drawPuzzle(ctx: CanvasRenderingContext2D, args: SceneArgs) {
   }
   ctx.restore();
 
-  const drawOrder = [...puzzle.pieces].sort((a, b) => Number(a.dragging) - Number(b.dragging));
+  const lifted = (p: (typeof puzzle.pieces)[number]) => p.dragging || p.id === view.selectedPieceId;
+  const drawOrder = [...puzzle.pieces].sort((a, b) => Number(lifted(a)) - Number(lifted(b)));
   for (const piece of drawOrder) {
+    const up = lifted(piece);
+    // A selected piece pops up a little so it reads as "picked", waiting for its swap partner.
+    const grow = piece.id === view.selectedPieceId ? 6 : 0;
+    const x = piece.x - grow;
+    const y = piece.y - grow;
+    const w = piece.w + grow * 2;
+    const h = piece.h + grow * 2;
     ctx.save();
-    if (piece.dragging) {
+    if (up) {
       ctx.shadowColor = MARIGOLD;
-      ctx.shadowBlur = 18;
+      ctx.shadowBlur = 22;
     }
-    ctx.drawImage(assets.pieces[piece.id], piece.x, piece.y, piece.w, piece.h);
-    ctx.lineWidth = piece.dragging ? 4 : 2;
-    ctx.strokeStyle = piece.placed ? LEAF : piece.dragging ? MARIGOLD : "rgba(255,255,255,0.55)";
-    ctx.strokeRect(piece.x, piece.y, piece.w, piece.h);
+    ctx.drawImage(assets.pieces[piece.id], x, y, w, h);
+    ctx.lineWidth = up ? 5 : 2;
+    ctx.strokeStyle = piece.placed ? LEAF : up ? MARIGOLD : "rgba(255,255,255,0.55)";
+    ctx.strokeRect(x, y, w, h);
     ctx.restore();
   }
 

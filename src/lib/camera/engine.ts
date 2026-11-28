@@ -15,6 +15,7 @@ import {
   isOverPiece,
   reconcile,
   stepTweens,
+  swapPieces,
 } from "@/lib/camera/pieces";
 import { createSmoother, smoothPoint } from "@/lib/camera/smoothing";
 import type { Smoother } from "@/lib/camera/smoothing";
@@ -34,9 +35,11 @@ export const FRAME_GRACE_MS = 450;
  * printed or downloaded at a fixed print size later.
  */
 export const MIN_FRAME_SIZE = 260;
-/** How long a pinch must stay closed before it counts, so fingers brushing past can't grab. */
+/** How long a pinch must stay closed before it counts as a tap, so fingers brushing past can't
+ * select anything. */
 export const GRAB_MS = 60;
-/** How long a pinch must stay open before a held piece is let go, so a noisy reading can't drop it. */
+/** How long the fingers must stay open before the next pinch can count, so one noisy reading
+ * can't turn a single pinch into two. */
 export const RELEASE_MS = 130;
 /** How long a hand can vanish from tracking (a blink of the detector) and keep its piece. */
 export const HAND_LOST_GRACE_MS = 300;
@@ -106,6 +109,8 @@ export interface EngineView {
   fingertips: Point[];
   /** One pointer per hand while solving: where a pinch would grab, and what it would grab. */
   cursors: HandCursor[];
+  /** The piece picked by a first pinch, waiting for a second pinch on the piece to swap with. */
+  selectedPieceId: number | null;
 }
 
 export interface HandCursor {
@@ -113,7 +118,7 @@ export interface HandCursor {
   pinching: boolean;
   /** This hand is carrying a piece. */
   holding: boolean;
-  /** The piece a pinch here would pick up, or null. */
+  /** The piece a pinch here would select or swap with, or null. */
   hoverPieceId: number | null;
   /** Thumb-to-index gap relative to hand size, for the ?debug overlay. */
   ratio: number;
@@ -153,9 +158,11 @@ export function createEngine() {
   // between frames, so "first hand in the list" is not a stable identity.
   let tracked: TrackedHand[] = [];
   let nextHandId = 0;
+  let selectedId: number | null = null;
 
   function resetToTracking(): void {
     tracked = [];
+    selectedId = null;
     phase = "tracking";
     puzzle = null;
     frameBox = null;
@@ -219,9 +226,32 @@ export function createEngine() {
     if (board.drag || board.solved) return null;
     if (current !== null) {
       const piece = board.pieces[current];
-      if (!piece.displacing && isOverPiece(piece, point.x, point.y)) return current;
+      if (!piece.displacing && !piece.placed && isOverPiece(piece, point.x, point.y)) {
+        return current;
+      }
     }
-    return findNearestPiece(board, point.x, point.y)?.id ?? null;
+    const piece = findNearestPiece(board, point.x, point.y);
+    // Pieces already in their right spot are locked, so they never light up.
+    return piece && !piece.placed ? piece.id : null;
+  }
+
+  /** One deliberate pinch on `target`: select it, cancel the selection, or swap with it. */
+  function pinchTap(board: Puzzle, target: number | null, now: number, events: EngineEvent[]) {
+    if (board.drag || board.solved || target === null) return;
+    const piece = board.pieces[target];
+    if (piece.placed || piece.displacing) return;
+    if (selectedId === null) {
+      selectedId = target;
+      events.push({ type: "pickup" });
+      return;
+    }
+    if (selectedId === target) {
+      selectedId = null;
+      return;
+    }
+    const first = board.pieces[selectedId];
+    selectedId = null;
+    applyPuzzleEvents(swapPieces(board, first, piece, now), now, events);
   }
 
   /** Matches this detection's hands to the tracked ones, then drags with each. */
@@ -229,7 +259,6 @@ export function createEngine() {
     board: Puzzle,
     hands: Hand[],
     frame: { now: number; width: number; height: number },
-    rand: Rand,
     events: EngineEvent[],
   ): void {
     const { now, width, height } = frame;
@@ -290,40 +319,14 @@ export function createEngine() {
       }
       seen.push(match);
 
-      // Only the moment a pinch closes can pick a piece up. Moving a hand that is already pinched
-      // (or half-closed) over other pieces never grabs them on the way.
-      const holding = board.drag?.handId === match.id;
-      const justClosed = match.pinching && !wasPinching;
-      applyPuzzleEvents(
-        handleDrag(
-          board,
-          match.id,
-          holding ? match.pinching : justClosed,
-          match.point,
-          now,
-          rand,
-          justClosed ? match.aimId : null,
-        ),
-        now,
-        events,
-      );
+      // Only the moment a pinch closes counts, aimed where the fingers began to close. Moving a
+      // hand that is already pinched (or half-closed) over pieces never selects them.
+      if (match.pinching && !wasPinching) pinchTap(board, match.aimId, now, events);
       if (!match.pinching && match.closedSince === null) match.aimId = null;
       if (match.closedSince === null) match.hoverId = hoverAt(board, match.hoverId, match.point);
     }
-    // Keep briefly lost hands (and their piece); let go once they've been gone too long.
+    // Keep briefly lost hands, so a blink of the tracker doesn't reset their pinch state.
     const kept = unmatched.filter((t) => now - t.at < HAND_LOST_GRACE_MS);
-    const active = board.drag;
-    if (active && active.handId !== POINTER_ID) {
-      const holder = [...seen, ...kept].find((t) => t.id === active.handId);
-      if (!holder) {
-        const held = board.pieces[active.pieceId];
-        applyPuzzleEvents(
-          handleDrag(board, active.handId, false, { x: held.x, y: held.y }, now, rand),
-          now,
-          events,
-        );
-      }
-    }
     tracked = [...seen, ...kept];
     fingertips = seen.map((t) => t.point);
     cursors = seen.map((t) => {
@@ -335,7 +338,7 @@ export function createEngine() {
   }
 
   /** Process one camera frame. Returns what happened, in order. */
-  function update(frame: EngineFrame, rand: Rand): EngineEvent[] {
+  function update(frame: EngineFrame): EngineEvent[] {
     const { hands, now, width, height } = frame;
     const events: EngineEvent[] = [];
     lastNow = now;
@@ -362,7 +365,7 @@ export function createEngine() {
       armed = false;
       if (phase === "puzzle" && puzzle) {
         // A hand that vanishes mid-drag keeps its piece for a moment, then lets go where it was.
-        updatePuzzleHands(puzzle, hands, frame, rand, events);
+        updatePuzzleHands(puzzle, hands, frame, events);
       } else if (phase === "countdown") {
         tickCountdown(now, events);
       } else if (phase === "tracking") {
@@ -421,7 +424,7 @@ export function createEngine() {
     }
 
     if (phase === "puzzle" && puzzle) {
-      updatePuzzleHands(puzzle, hands, frame, rand, events);
+      updatePuzzleHands(puzzle, hands, frame, events);
     }
     return events;
   }
@@ -441,6 +444,7 @@ export function createEngine() {
     fistSince = null;
     fistProgress = 0;
     tracked = [];
+    selectedId = null;
     moves = 0;
     cleanDrops = 0;
     puzzleStartedAt = now;
@@ -452,6 +456,7 @@ export function createEngine() {
   function pointer(down: boolean, point: Point, now: number, rand: Rand): EngineEvent[] {
     const events: EngineEvent[] = [];
     if (phase !== "puzzle" || !puzzle) return events;
+    if (down) selectedId = null;
     applyPuzzleEvents(handleDrag(puzzle, POINTER_ID, down, point, now, rand), now, events);
     if (!puzzle.drag) reconcile(puzzle);
     return events;
@@ -497,6 +502,7 @@ export function createEngine() {
       fistProgress,
       fingertips,
       cursors: phase === "puzzle" ? cursors : [],
+      selectedPieceId: phase === "puzzle" ? selectedId : null,
     };
   }
 

@@ -38,14 +38,14 @@ const GESTURES: Gesture[] = [
     color: "bg-white",
   },
   {
-    title: "Pinch over one piece",
-    body: "Pinch a single hand over a puzzle piece to pick it up, then drag it where it belongs.",
+    title: "Pinch a piece to select it",
+    body: "Point at a piece until it's outlined, then pinch quickly. It lights up to show it's selected. Pinch it again to cancel.",
     Icon: Grab,
     color: "bg-marigold",
   },
   {
-    title: "Release near its spot",
-    body: "Let go of the pinch close to the right place and the piece snaps in by itself.",
+    title: "Pinch another to swap",
+    body: "Pinch a second piece and the two swap places. A piece in its right spot turns green and locks.",
     Icon: Target,
     color: "bg-white",
   },

@@ -193,6 +193,50 @@ function snapToCell(puzzle: Puzzle, piece: Piece, now: number, rand: Rand): void
   piece.placed = true;
 }
 
+/** The grid cell a piece's centre sits in. */
+export function cellOf(puzzle: Puzzle, piece: Piece): { row: number; col: number } {
+  const cx = piece.x + piece.w / 2;
+  const cy = piece.y + piece.h / 2;
+  return {
+    col: Math.min(GRID - 1, Math.max(0, Math.floor((cx - puzzle.box.x) / puzzle.tileW))),
+    row: Math.min(GRID - 1, Math.max(0, Math.floor((cy - puzzle.box.y) / puzzle.tileH))),
+  };
+}
+
+function slideToCell(puzzle: Puzzle, piece: Piece, row: number, col: number, now: number): void {
+  piece.displacing = true;
+  piece.tween = {
+    fromX: piece.x,
+    fromY: piece.y,
+    toX: puzzle.box.x + col * puzzle.tileW,
+    toY: puzzle.box.y + row * puzzle.tileH,
+    start: now,
+  };
+  piece.placed = piece.row === row && piece.col === col;
+}
+
+/**
+ * Swaps the cells of two pieces, sliding both into place. Counts as one move, and as a clean one
+ * if either piece lands home. Pieces already in their right spot can't be swapped out.
+ */
+export function swapPieces(puzzle: Puzzle, a: Piece, b: Piece, now: number): PuzzleEvent[] {
+  if (a === b || a.placed || b.placed || puzzle.solved) return [];
+  const cellA = cellOf(puzzle, a);
+  const cellB = cellOf(puzzle, b);
+  slideToCell(puzzle, a, cellB.row, cellB.col, now);
+  slideToCell(puzzle, b, cellA.row, cellA.col, now);
+  const events: PuzzleEvent[] = ["drop"];
+  if (a.placed || b.placed) events.push("snap");
+  const solved = puzzle.pieces.every((p) =>
+    p === a || p === b ? p.placed : !p.displacing && isNearOwnCell(puzzle, p),
+  );
+  if (solved) {
+    puzzle.solved = true;
+    events.push("complete");
+  }
+  return events;
+}
+
 /** Advances displacement animations. Call once per frame. */
 export function stepTweens(puzzle: Puzzle, now: number): void {
   for (const piece of puzzle.pieces) {
