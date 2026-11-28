@@ -33,16 +33,21 @@ function dist3(a: WorldLandmark, b: WorldLandmark): number {
   return Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 
-/** Thumb-to-index gap divided by hand size (wrist to middle knuckle). Uses the 3D landmarks when
- * the tracker provides them, so turning the hand doesn't change the reading. */
+/**
+ * Thumb-to-index gap divided by hand size (wrist to middle knuckle). Takes the smaller of the
+ * flat (2D image) and 3D readings: the 3D one copes with a turned hand, but its depth guess is
+ * shaky when the thumb sits behind the index finger, which is how most people pinch facing a
+ * camera, and there the flat reading is the reliable one.
+ */
 export function pinchRatio(hand: Hand): number {
+  const flat =
+    dist(hand[LM.THUMB_TIP], hand[LM.INDEX_TIP]) /
+    Math.max(dist(hand[LM.WRIST], hand[LM.MIDDLE_MCP]), 1e-6);
   const w = hand.world;
-  if (w && w.length > LM.PINKY_TIP) {
-    const size = dist3(w[LM.WRIST], w[LM.MIDDLE_MCP]);
-    return dist3(w[LM.THUMB_TIP], w[LM.INDEX_TIP]) / Math.max(size, 1e-6);
-  }
-  const size = dist(hand[LM.WRIST], hand[LM.MIDDLE_MCP]);
-  return dist(hand[LM.THUMB_TIP], hand[LM.INDEX_TIP]) / Math.max(size, 1e-6);
+  if (!w || w.length <= LM.PINKY_TIP) return flat;
+  const deep =
+    dist3(w[LM.THUMB_TIP], w[LM.INDEX_TIP]) / Math.max(dist3(w[LM.WRIST], w[LM.MIDDLE_MCP]), 1e-6);
+  return Math.min(flat, deep);
 }
 
 /** Pass `wasPinching` for a hand already holding a pinch, so it needs to open wider to let go. */

@@ -45,8 +45,10 @@ export async function loadTracker(onStage?: (text: string) => void): Promise<Tra
         runningMode: "VIDEO",
         numHands: 2,
         minHandDetectionConfidence: 0.6,
-        minHandPresenceConfidence: 0.6,
-        minTrackingConfidence: 0.6,
+        // A little lower than detection, so a pinched hand (fingers overlapping, harder to see)
+        // keeps being tracked instead of dropping out for a frame.
+        minHandPresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
       }),
       LOAD_TIMEOUT_MS,
       "Timed out downloading the hand model. Check your internet connection.",

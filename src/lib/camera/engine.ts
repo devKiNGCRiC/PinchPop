@@ -36,7 +36,7 @@ export const FRAME_GRACE_MS = 450;
 export const MIN_FRAME_SIZE = 260;
 /** How long a pinch must stay closed before it counts as a tap, so fingers brushing past can't
  * select anything. */
-export const GRAB_MS = 60;
+export const GRAB_MS = 30;
 /** How long the fingers must stay open before the next pinch can count, so one noisy reading
  * can't turn a single pinch into two. */
 export const RELEASE_MS = 130;
@@ -45,6 +45,11 @@ export const RELEASE_MS = 130;
 export const AIM_LOOKBACK_MS = 150;
 /** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
 export const DWELL_MS = 1000;
+/** Two taps closer together than this are one gesture seen twice, so the second is ignored. */
+export const TAP_DEBOUNCE_MS = 350;
+/** A tap can't cancel a selection younger than this: the usual cause is the hover ring
+ * selecting a piece just before the player's own pinch on the same piece lands. */
+export const CANCEL_GUARD_MS = 1000;
 /** How long a hand can vanish from tracking (a blink of the detector) and keep its piece. */
 export const HAND_LOST_GRACE_MS = 300;
 /** A hand further than this (share of canvas width) from every known hand is treated as new. */
@@ -60,6 +65,8 @@ interface TrackedHand {
   pinching: boolean;
   /** When the fingers started looking closed (not yet a pinch), or null. */
   closedSince: number | null;
+  /** Stray "open" readings tolerated while the fingers are closing. */
+  closedMisses: number;
   /** When the fingers started looking open while still pinching, or null. */
   openSince: number | null;
   /** The piece under the pointer, kept until the pointer clearly leaves it. */
@@ -172,6 +179,8 @@ export function createEngine() {
   let tracked: TrackedHand[] = [];
   let nextHandId = 0;
   let selectedId: number | null = null;
+  let selectedAt = 0;
+  let lastTapAt = -Infinity;
 
   function resetToTracking(): void {
     tracked = [];
@@ -273,8 +282,12 @@ export function createEngine() {
     if (board.drag || board.solved || target === null) return;
     const piece = board.pieces[target];
     if (piece.placed || piece.displacing) return;
+    if (now - lastTapAt < TAP_DEBOUNCE_MS) return;
+    if (selectedId === target && now - selectedAt < CANCEL_GUARD_MS) return;
+    lastTapAt = now;
     if (selectedId === null) {
       selectedId = target;
+      selectedAt = now;
       events.push({ type: "pickup" });
       return;
     }
@@ -321,6 +334,7 @@ export function createEngine() {
           point: raw,
           pinching: isPinching(hand),
           closedSince: null,
+          closedMisses: 0,
           openSince: null,
           hoverId: null,
           aimId: null,
@@ -338,6 +352,7 @@ export function createEngine() {
       const wasPinching = match.pinching;
       if (isPinching(hand, match.pinching)) {
         match.openSince = null;
+        match.closedMisses = 0;
         if (!match.pinching) {
           if (match.closedSince === null) {
             match.closedSince = now;
@@ -345,8 +360,12 @@ export function createEngine() {
           }
           if (now - match.closedSince >= GRAB_MS) match.pinching = true;
         }
+      } else if (!match.pinching && match.closedSince !== null && match.closedMisses < 1) {
+        // One shaky "open" reading in the middle of closing the fingers doesn't cancel the pinch.
+        match.closedMisses += 1;
       } else {
         match.closedSince = null;
+        match.closedMisses = 0;
         if (match.pinching) {
           match.openSince ??= now;
           if (now - match.openSince >= RELEASE_MS) {

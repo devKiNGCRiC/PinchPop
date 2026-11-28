@@ -4,6 +4,7 @@ import {
   COUNTDOWN_SECONDS,
   createEngine,
   FIST_HOLD_MS,
+  CANCEL_GUARD_MS,
   DWELL_MS,
   FREEZE_HOLD_MS,
   GRAB_MS,
@@ -384,7 +385,11 @@ describe("steady hand control", () => {
     const [a] = twoLoosePieces(puzzle);
     const now = tap(engine, centre(a), 0);
     expect(engine.view().selectedPieceId).toBe(a.id);
+    // Too soon after selecting: treated as the same gesture, not a cancel.
     tap(engine, centre(a), now);
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    // A deliberate second pinch a moment later cancels.
+    tap(engine, centre(a), now + CANCEL_GUARD_MS);
     expect(engine.view().selectedPieceId).toBeNull();
     expect(engine.stats().moves).toBe(0);
   });
@@ -596,5 +601,53 @@ describe("steady hand control", () => {
       });
     }
     expect(engine.view().selectedPieceId).toBe(a.id);
+  });
+
+  it("does not cancel when a pinch lands right after the hover ring selected the piece", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(30));
+    const [a] = twoLoosePieces(puzzle);
+    let now = 0;
+    // Rest until the ring selects it...
+    while (engine.view().selectedPieceId === null && now < DWELL_MS * 2) {
+      engine.update({
+        hands: [handAt(centre(a), { pinch: false })],
+        now: (now += 33),
+        width,
+        height,
+      });
+    }
+    expect(engine.view().selectedPieceId).toBe(a.id);
+    // ...then the player's own pinch arrives a moment later.
+    for (let i = 0; i < 4; i++) {
+      engine.update({ hands: [handAt(centre(a))], now: (now += 33), width, height });
+    }
+    expect(engine.view().selectedPieceId).toBe(a.id);
+  });
+
+  it("still counts a pinch when one reading in the middle looks open", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(32));
+    const [a] = twoLoosePieces(puzzle);
+    const at = centre(a);
+    let now = 0;
+    for (let i = 0; i < 6; i++) {
+      engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height });
+    }
+    engine.update({ hands: [handAt(at)], now: (now += 33), width, height });
+    engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height });
+    engine.update({ hands: [handAt(at)], now: now + 33, width, height });
+    expect(engine.view().selectedPieceId).toBe(a.id);
+  });
+
+  it("trusts the flat reading when the 3D depth guess says the fingers are apart", () => {
+    const hand = handAt({ x: 500, y: 300 });
+    // 3D landmarks with the thumb 'behind' the index finger by a wrong depth guess.
+    hand.world = hand.map((p, i) => ({
+      x: p.x * 0.4,
+      y: p.y * 0.4,
+      z: i === LM.THUMB_TIP ? 0.06 : 0,
+    }));
+    expect(isPinching(hand)).toBe(true);
   });
 });
