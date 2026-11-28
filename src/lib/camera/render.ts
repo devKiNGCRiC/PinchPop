@@ -246,7 +246,7 @@ function drawCursors(ctx: CanvasRenderingContext2D, view: EngineView) {
       ctx.fillStyle = "#ffffff";
       ctx.strokeStyle = INK;
       ctx.lineWidth = 4;
-      const label = cursor.ratio.toFixed(2);
+      const label = `${cursor.id.replace("hand", "hand ")} ${cursor.ratio.toFixed(2)}`;
       ctx.strokeText(label, x + 16, y - 12);
       ctx.fillText(label, x + 16, y - 12);
     }
@@ -357,7 +357,13 @@ function drawPuzzle(ctx: CanvasRenderingContext2D, args: SceneArgs) {
 function drawDebugPanel(ctx: CanvasRenderingContext2D, view: EngineView) {
   const lines = [
     `camera: ${view.debug.detectionsPerSecond} detections/s`,
-    ...view.cursors.map((c, i) => `hand ${i + 1}: pinch ${c.ratio.toFixed(2)}`),
+    view.puzzle
+      ? `board: x ${Math.round(view.puzzle.box.x)}-${Math.round(view.puzzle.box.x + view.puzzle.box.width)}, y ${Math.round(view.puzzle.box.y)}-${Math.round(view.puzzle.box.y + view.puzzle.box.height)}`
+      : "",
+    ...view.cursors.map(
+      (c) =>
+        `${c.id.replace("hand", "hand ")}: pinch ${c.ratio.toFixed(2)} at (${Math.round(c.point.x)},${Math.round(c.point.y)}) on ${c.hoverPieceId === null ? "nothing" : `piece ${c.hoverPieceId + 1}`}`,
+    ),
     ...view.debug.log,
   ];
   ctx.save();

@@ -650,4 +650,22 @@ describe("steady hand control", () => {
     }));
     expect(isPinching(hand)).toBe(true);
   });
+
+  it("selects when the pointer arrives and pinches straight away", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(34));
+    const [a] = twoLoosePieces(puzzle);
+    const at = centre(a);
+    // One reading off the board, one on the piece, then pinched.
+    engine.update({
+      hands: [handAt({ x: 950, y: 560 }, { pinch: false })],
+      now: 33,
+      width,
+      height,
+    });
+    engine.update({ hands: [handAt(at, { pinch: false })], now: 66, width, height });
+    engine.update({ hands: [handAt(at)], now: 99, width, height });
+    engine.update({ hands: [handAt(at)], now: 132, width, height });
+    expect(engine.view().selectedPieceId).toBe(a.id);
+  });
 });

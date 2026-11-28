@@ -139,6 +139,8 @@ export interface EngineView {
 }
 
 export interface HandCursor {
+  /** Stable id of the tracked hand, shown in the ?debug overlay. */
+  id: string;
   point: Point;
   pinching: boolean;
   /** This hand is carrying a piece. */
@@ -287,38 +289,58 @@ export function createEngine() {
     return pick ?? hand.hoverId;
   }
 
+  /** "hand 3 (412,288)": a hand's id and pointer position, for the ?debug log. */
+  function handLabel(hand: TrackedHand): string {
+    return `${hand.id.replace("hand", "hand ")} (${Math.round(hand.point.x)},${Math.round(hand.point.y)})`;
+  }
+
   /** Adds a line to the ?debug gesture log. */
   function note(now: number, text: string): void {
     debugLog.push(`${(now / 1000).toFixed(1)}s ${text}`);
-    if (debugLog.length > 8) debugLog.shift();
+    if (debugLog.length > 10) debugLog.shift();
   }
 
   /** One deliberate pinch on `target`: select it, cancel the selection, or swap with it. */
-  function pinchTap(board: Puzzle, target: number | null, now: number, events: EngineEvent[]) {
+  function pinchTap(
+    board: Puzzle,
+    hand: TrackedHand,
+    aimed: number | null,
+    now: number,
+    events: EngineEvent[],
+  ) {
     if (board.drag || board.solved) return;
-    if (target === null) return note(now, "ignored: no piece under pointer");
+    // The remembered aim can be empty (the pointer only just got there): use what's under it now.
+    const target = aimed ?? hoverAt(board, null, hand.point);
+    const who = handLabel(hand);
+    if (target === null) {
+      const cell = cellIndexAt(board, hand.point);
+      if (cell === null) return note(now, `${who}: ignored, pointer off the board`);
+      const under = findNearestPiece(board, hand.point.x, hand.point.y);
+      if (under?.placed) return note(now, `${who}: ignored, piece ${under.id + 1} is locked`);
+      return note(now, `${who}: ignored, no piece under pointer`);
+    }
     const piece = board.pieces[target];
-    if (piece.placed) return note(now, "ignored: piece is locked");
-    if (piece.displacing) return note(now, "ignored: piece still sliding");
-    if (now - lastTapAt < TAP_DEBOUNCE_MS) return note(now, "ignored: too soon after last");
+    if (piece.placed) return note(now, `${who}: ignored, piece is locked`);
+    if (piece.displacing) return note(now, `${who}: ignored, piece still sliding`);
+    if (now - lastTapAt < TAP_DEBOUNCE_MS) return note(now, `${who}: ignored, too soon`);
     if (selectedId === target && now - selectedAt < CANCEL_GUARD_MS) {
-      return note(now, "ignored: just selected it");
+      return note(now, `${who}: ignored, just selected it`);
     }
     lastTapAt = now;
     if (selectedId === null) {
       selectedId = target;
       selectedAt = now;
-      note(now, `selected piece ${target + 1}`);
+      note(now, `${who}: selected piece ${target + 1}`);
       events.push({ type: "pickup" });
       return;
     }
     if (selectedId === target) {
       selectedId = null;
-      note(now, "cancelled selection");
+      note(now, `${who}: cancelled selection`);
       return;
     }
     const first = board.pieces[selectedId];
-    note(now, `swapped ${selectedId + 1} and ${target + 1}`);
+    note(now, `${who}: swapped ${selectedId + 1} and ${target + 1}`);
     selectedId = null;
     applyPuzzleEvents(swapPieces(board, first, piece, now), now, events);
   }
@@ -377,7 +399,10 @@ export function createEngine() {
         match.dipMin = Math.min(match.dipMin, ratio);
       } else if (match.dipMin !== Infinity) {
         if (!match.pinching && match.closedSince === null) {
-          note(now, `missed: closest ${match.dipMin.toFixed(2)}, needs < ${PINCH_CLOSE_RATIO}`);
+          note(
+            now,
+            `${handLabel(match)}: missed, closest ${match.dipMin.toFixed(2)} (needs < ${PINCH_CLOSE_RATIO})`,
+          );
         }
         match.dipMin = Infinity;
       }
@@ -393,7 +418,7 @@ export function createEngine() {
           }
           if (now - match.closedSince >= GRAB_MS) {
             match.pinching = true;
-            note(now, `pinch at ${match.dipMin.toFixed(2)}`);
+            note(now, `${handLabel(match)}: pinch at ${match.dipMin.toFixed(2)}`);
           }
         }
       } else if (!match.pinching && match.closedSince !== null && match.closedMisses < 1) {
@@ -415,7 +440,7 @@ export function createEngine() {
       // Only the moment a pinch closes counts, aimed where the fingers began to close. Moving a
       // hand that is already pinched (or half-closed) over pieces never selects them.
       if (match.pinching && !wasPinching) {
-        pinchTap(board, match.aimId, now, events);
+        pinchTap(board, match, match.aimId, now, events);
         // Don't let the hover-select fire on the same cell right after a pinch.
         match.dwellSpent = true;
       }
@@ -443,7 +468,7 @@ export function createEngine() {
       const ready = cell !== null && match.hoverId !== null && resting && !match.dwellSpent;
       if (ready && now - match.dwellSince >= DWELL_MS) {
         match.dwellSpent = true;
-        pinchTap(board, match.hoverId, now, events);
+        pinchTap(board, match, match.hoverId, now, events);
       }
     }
     // Keep briefly lost hands, so a blink of the tracker doesn't reset their pinch state.
@@ -458,6 +483,7 @@ export function createEngine() {
           ? 0
           : Math.min(1, (now - t.dwellSince) / DWELL_MS);
       return {
+        id: t.id,
         point: t.point,
         pinching: t.pinching,
         holding,
