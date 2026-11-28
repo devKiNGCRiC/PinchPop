@@ -3,6 +3,7 @@ import {
   isFist,
   isPinching,
   LM,
+  PINCH_CLOSE_RATIO,
   mirrorX,
   pinchRatio,
   toPixel,
@@ -45,6 +46,8 @@ export const RELEASE_MS = 130;
 export const AIM_LOOKBACK_MS = 150;
 /** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
 export const DWELL_MS = 1000;
+/** A pinch reading below this counts as "trying to pinch" for the ?debug log. */
+const DIP_START_RATIO = 0.8;
 /** Two taps closer together than this are one gesture seen twice, so the second is ignored. */
 export const TAP_DEBOUNCE_MS = 350;
 /** A tap can't cancel a selection younger than this: the usual cause is the hover ring
@@ -67,6 +70,8 @@ interface TrackedHand {
   closedSince: number | null;
   /** Stray "open" readings tolerated while the fingers are closing. */
   closedMisses: number;
+  /** Smallest pinch reading since the fingers last started closing, for the ?debug log. */
+  dipMin: number;
   /** When the fingers started looking open while still pinching, or null. */
   openSince: number | null;
   /** The piece under the pointer, kept until the pointer clearly leaves it. */
@@ -129,6 +134,8 @@ export interface EngineView {
   cursors: HandCursor[];
   /** The piece picked by a first pinch, waiting for a second pinch on the piece to swap with. */
   selectedPieceId: number | null;
+  /** For the ?debug overlay: camera detection rate and the latest gesture decisions. */
+  debug: { detectionsPerSecond: number; log: string[] };
 }
 
 export interface HandCursor {
@@ -181,6 +188,9 @@ export function createEngine() {
   let selectedId: number | null = null;
   let selectedAt = 0;
   let lastTapAt = -Infinity;
+  // ?debug diagnostics: what the camera saw and what the game decided.
+  const debugLog: string[] = [];
+  const detectionTimes: number[] = [];
 
   function resetToTracking(): void {
     tracked = [];
@@ -273,29 +283,42 @@ export function createEngine() {
       if (entry.at > target) break;
       pick = entry.id;
     }
-    if (pick === null) pick = hand.hoverHistory.find((e) => e.id !== null)?.id ?? hand.hoverId;
-    return pick;
+    // The pointer only just arrived on a piece: aim at where it is now, not at nothing.
+    return pick ?? hand.hoverId;
+  }
+
+  /** Adds a line to the ?debug gesture log. */
+  function note(now: number, text: string): void {
+    debugLog.push(`${(now / 1000).toFixed(1)}s ${text}`);
+    if (debugLog.length > 8) debugLog.shift();
   }
 
   /** One deliberate pinch on `target`: select it, cancel the selection, or swap with it. */
   function pinchTap(board: Puzzle, target: number | null, now: number, events: EngineEvent[]) {
-    if (board.drag || board.solved || target === null) return;
+    if (board.drag || board.solved) return;
+    if (target === null) return note(now, "ignored: no piece under pointer");
     const piece = board.pieces[target];
-    if (piece.placed || piece.displacing) return;
-    if (now - lastTapAt < TAP_DEBOUNCE_MS) return;
-    if (selectedId === target && now - selectedAt < CANCEL_GUARD_MS) return;
+    if (piece.placed) return note(now, "ignored: piece is locked");
+    if (piece.displacing) return note(now, "ignored: piece still sliding");
+    if (now - lastTapAt < TAP_DEBOUNCE_MS) return note(now, "ignored: too soon after last");
+    if (selectedId === target && now - selectedAt < CANCEL_GUARD_MS) {
+      return note(now, "ignored: just selected it");
+    }
     lastTapAt = now;
     if (selectedId === null) {
       selectedId = target;
       selectedAt = now;
+      note(now, `selected piece ${target + 1}`);
       events.push({ type: "pickup" });
       return;
     }
     if (selectedId === target) {
       selectedId = null;
+      note(now, "cancelled selection");
       return;
     }
     const first = board.pieces[selectedId];
+    note(now, `swapped ${selectedId + 1} and ${target + 1}`);
     selectedId = null;
     applyPuzzleEvents(swapPieces(board, first, piece, now), now, events);
   }
@@ -335,6 +358,7 @@ export function createEngine() {
           pinching: isPinching(hand),
           closedSince: null,
           closedMisses: 0,
+          dipMin: Infinity,
           openSince: null,
           hoverId: null,
           aimId: null,
@@ -348,6 +372,15 @@ export function createEngine() {
       }
       match.at = now;
       match.ratio = ratio;
+      // ?debug: report a pinch attempt that never got close enough to count.
+      if (ratio < DIP_START_RATIO) {
+        match.dipMin = Math.min(match.dipMin, ratio);
+      } else if (match.dipMin !== Infinity) {
+        if (!match.pinching && match.closedSince === null) {
+          note(now, `missed: closest ${match.dipMin.toFixed(2)}, needs < ${PINCH_CLOSE_RATIO}`);
+        }
+        match.dipMin = Infinity;
+      }
 
       const wasPinching = match.pinching;
       if (isPinching(hand, match.pinching)) {
@@ -358,7 +391,10 @@ export function createEngine() {
             match.closedSince = now;
             match.aimId = hoverBefore(match, now);
           }
-          if (now - match.closedSince >= GRAB_MS) match.pinching = true;
+          if (now - match.closedSince >= GRAB_MS) {
+            match.pinching = true;
+            note(now, `pinch at ${match.dipMin.toFixed(2)}`);
+          }
         }
       } else if (!match.pinching && match.closedSince !== null && match.closedMisses < 1) {
         // One shaky "open" reading in the middle of closing the fingers doesn't cancel the pinch.
@@ -445,6 +481,10 @@ export function createEngine() {
 
     // A repeat of the last detection carries no new information about the hands: only advance
     // what runs on the clock. Counting repeats as new readings made gestures far too twitchy.
+    if (frame.fresh !== false) {
+      detectionTimes.push(now);
+      while (detectionTimes.length > 0 && now - detectionTimes[0] > 1000) detectionTimes.shift();
+    }
     if (frame.fresh === false) {
       if (phase === "countdown") tickCountdown(now, events);
       return events;
@@ -596,6 +636,7 @@ export function createEngine() {
       countdownBox: phase === "countdown" ? countdownState.box : null,
       puzzle,
       fistProgress,
+      debug: { detectionsPerSecond: detectionTimes.length, log: [...debugLog] },
       fingertips,
       cursors: phase === "puzzle" ? cursors : [],
       selectedPieceId: phase === "puzzle" ? selectedId : null,

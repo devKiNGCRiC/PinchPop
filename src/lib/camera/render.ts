@@ -353,6 +353,23 @@ function drawPuzzle(ctx: CanvasRenderingContext2D, args: SceneArgs) {
 }
 
 /** Paints one frame of camera mode. Pure drawing: all game decisions live in the engine. */
+/** ?debug: camera detection rate and the recent gesture decisions, top-left of the canvas. */
+function drawDebugPanel(ctx: CanvasRenderingContext2D, view: EngineView) {
+  const lines = [
+    `camera: ${view.debug.detectionsPerSecond} detections/s`,
+    ...view.cursors.map((c, i) => `hand ${i + 1}: pinch ${c.ratio.toFixed(2)}`),
+    ...view.debug.log,
+  ];
+  ctx.save();
+  ctx.font = "bold 15px monospace";
+  const w = Math.max(...lines.map((l) => ctx.measureText(l).width)) + 20;
+  ctx.fillStyle = "rgba(17,20,38,0.82)";
+  ctx.fillRect(8, 8, w, lines.length * 20 + 12);
+  ctx.fillStyle = "#ffffff";
+  lines.forEach((line, i) => ctx.fillText(line, 18, 30 + i * 20));
+  ctx.restore();
+}
+
 export function renderScene(ctx: CanvasRenderingContext2D, args: SceneArgs): void {
   const { video, hands, view, now, flashAt } = args;
   const { width, height } = ctx.canvas;
@@ -378,6 +395,7 @@ export function renderScene(ctx: CanvasRenderingContext2D, args: SceneArgs): voi
     if (view.phase === "puzzle") {
       hands.forEach((hand) => drawSkeleton(ctx, hand));
       drawCursors(ctx, view);
+      if (DEBUG) drawDebugPanel(ctx, view);
     }
   }
 
