@@ -23,11 +23,14 @@ Hand tracking runs entirely in your browser with MediaPipe, so your video never 
 | Raise both hands | Starts tracking |
 | Spread your index fingers | Frames the shot |
 | Pinch with both hands and hold | Locks the frame and starts a 3-second countdown |
-| Point at a piece and pinch, or hold still for a second | Selects it (it lights up); do it again to cancel |
+| Point at a piece with your index finger | A dot follows your fingertip and the piece it would pick gets a dashed outline |
+| Pinch quickly, or hold still until the ring fills (about a second) | Selects the outlined piece (it lights up); do it again to cancel |
 | Pinch a second piece | Swaps the two; a piece in its right spot turns green and locks |
-| Hold a fist | Saves the solved polaroid, or starts over mid-puzzle |
+| Hold a fist for half a second | Saves the solved polaroid, or starts over mid-puzzle |
 
-You can also upload a photo instead of using the webcam. Each camera run is recorded, from framing the shot to the solve, with the game's sounds, and can be downloaded from the results page as an MP4 (WebM in browsers that can't record MP4). It's kept only until you close the tab.
+You can also upload a photo instead of using the webcam.
+
+Each camera run is recorded, from framing the shot to the solve, with the game's sounds. Download it from the results page as an MP4 (WebM in browsers that can't record MP4), ready to post. Starting over begins a fresh take, and the video is kept only until you close the tab.
 
 ![Camera mode puzzle](docs/screenshots/camera-puzzle.webp)
 
@@ -78,6 +81,7 @@ Everything works without an account and is saved in your browser. Signing in add
 - Your runs and camera photos synced across devices
 - A place on the worldwide leaderboard
 - A profile picture, bio and public player page
+- Password reset by email
 - Account deletion that removes every cloud run and photo
 
 ### On phones
@@ -187,6 +191,9 @@ Never put the Supabase secret key or database password in a `VITE_` variable; an
 1. Create a free Supabase project.
 2. Run the SQL files in `supabase/migrations/` in filename order, in the SQL Editor or with the Supabase CLI. They create the `profiles` and `runs` tables, their policies, the account-deletion function, and the `photos` and `avatars` storage buckets.
 3. Copy the project URL and publishable key into your `.env.local`.
+4. In **Authentication → URL Configuration**, set the Site URL to your deployed address and add `<your site>/reset-password` (and `http://localhost:5173/reset-password` for local work) to the Redirect URLs. Without this, password-reset emails send people to the home page instead of the new-password page.
+
+Supabase's built-in email service only sends a few emails per hour. If sign-up or reset emails start failing with "Too many attempts", connect a free SMTP provider in **Authentication → SMTP Settings**.
 
 ---
 
@@ -200,6 +207,18 @@ The live site is deployed on Cloudflare Pages from this repository:
 - `public/_redirects` sends every path to `index.html`, so client-side routes work on refresh.
 
 If the build fails on Node version, set a `NODE_VERSION` environment variable of 22 or newer in the Pages project.
+
+---
+
+## Troubleshooting camera mode
+
+Add `?debug` to the camera page URL (for example `/camera?debug`) to show a diagnostics panel while solving:
+
+- **camera: N detections/s**: how often the hand tracker reads your hand. Under about 15 makes gestures unreliable; close other tabs or use better lighting.
+- **pinch 0.xx**: the live pinch reading for each hand. A pinch counts below 0.50.
+- A log of every gesture decision, such as `pinch at 0.31`, `selected piece 4`, `missed, closest 0.55`, or `ignored, pointer off the board`, with the hand and pointer position.
+
+Remove `?debug` before recording a video, or the panel will be in it.
 
 ---
 
