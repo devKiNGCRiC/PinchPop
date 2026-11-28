@@ -26,6 +26,8 @@ export const FREEZE_HOLD_MS = 250;
 export const COUNTDOWN_SECONDS = 3;
 /** How long a fist must be held to save (or start over). */
 export const FIST_HOLD_MS = 600;
+/** A held fist survives the tracker missing it for this long (a blink, not a let-go). */
+export const FIST_GAP_MS = 250;
 /** How long the last frame keeps showing after a hand briefly drops out of view. */
 export const FRAME_GRACE_MS = 450;
 /**
@@ -37,7 +39,7 @@ export const FRAME_GRACE_MS = 450;
 export const MIN_FRAME_SIZE = 260;
 /** How long a pinch must stay closed before it counts as a tap, so fingers brushing past can't
  * select anything. */
-export const GRAB_MS = 30;
+export const GRAB_MS = 0;
 /** How long the fingers must stay open before the next pinch can count, so one noisy reading
  * can't turn a single pinch into two. */
 export const RELEASE_MS = 130;
@@ -47,7 +49,7 @@ export const AIM_LOOKBACK_MS = 150;
 /** Holding the pointer on one piece this long selects it (or swaps with it), without a pinch. */
 export const DWELL_MS = 1000;
 /** A pinch reading below this counts as "trying to pinch" for the ?debug log. */
-const DIP_START_RATIO = 0.8;
+const DIP_START_RATIO = 0.6;
 /** Two taps closer together than this are one gesture seen twice, so the second is ignored. */
 export const TAP_DEBOUNCE_MS = 350;
 /** A tap can't cancel a selection younger than this: the usual cause is the hover ring
@@ -72,6 +74,9 @@ interface TrackedHand {
   closedMisses: number;
   /** Smallest pinch reading since the fingers last started closing, for the ?debug log. */
   dipMin: number;
+  /** When this hand last looked like a fist. A fist's thumb rests on the index finger, which
+   * reads as a pinch, so a fist (or a hand that was one a moment ago) never counts as pinching. */
+  fistAt: number;
   /** When the fingers started looking open while still pinching, or null. */
   openSince: number | null;
   /** The piece under the pointer, kept until the pointer clearly leaves it. */
@@ -173,6 +178,7 @@ export function createEngine() {
   let freeze = { holding: false, since: 0 };
   let countdownState = { startedAt: 0, box: null as Box | null, lastN: -1, captured: false };
   let fistSince: number | null = null;
+  let fistLastAt = -Infinity;
   let fistProgress = 0;
   let handsSeen = 0;
   let armed = false;
@@ -381,6 +387,7 @@ export function createEngine() {
           closedSince: null,
           closedMisses: 0,
           dipMin: Infinity,
+          fistAt: -Infinity,
           openSince: null,
           hoverId: null,
           aimId: null,
@@ -408,7 +415,9 @@ export function createEngine() {
       }
 
       const wasPinching = match.pinching;
-      if (isPinching(hand, match.pinching)) {
+      if (isFist(hand)) match.fistAt = now;
+      const fistNow = now - match.fistAt < FIST_GAP_MS;
+      if (!fistNow && isPinching(hand, match.pinching)) {
         match.openSince = null;
         match.closedMisses = 0;
         if (!match.pinching) {
@@ -521,8 +530,10 @@ export function createEngine() {
     fingertips = hands.map((h) => toPixel(mirrorX(h[LM.INDEX_TIP]), width, height));
 
     if (hands.length === 0) {
-      fistSince = null;
-      fistProgress = 0;
+      if (now - fistLastAt > FIST_GAP_MS) {
+        fistSince = null;
+        fistProgress = 0;
+      }
       freeze.holding = false;
       armed = false;
       if (phase === "puzzle" && puzzle) {
@@ -540,15 +551,18 @@ export function createEngine() {
     // A fist only counts when no hand is holding or pinching: a tight pinch can look like a fist.
     const busy = puzzle?.drag != null || tracked.some((t) => t.pinching);
     if (hands.some(isFist) && !busy && phase !== "tracking") {
+      fistLastAt = now;
       fistSince ??= now;
+    } else if (now - fistLastAt > FIST_GAP_MS) {
+      fistSince = null;
+      fistProgress = 0;
+    }
+    if (fistSince !== null) {
       fistProgress = Math.min(1, (now - fistSince) / FIST_HOLD_MS);
       if (now - fistSince >= FIST_HOLD_MS) {
         handleFist(events);
         return events;
       }
-    } else {
-      fistSince = null;
-      fistProgress = 0;
     }
 
     if (phase === "tracking") {

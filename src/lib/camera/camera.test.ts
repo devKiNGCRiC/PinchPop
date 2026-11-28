@@ -668,4 +668,70 @@ describe("steady hand control", () => {
     engine.update({ hands: [handAt(at)], now: 132, width, height });
     expect(engine.view().selectedPieceId).toBe(a.id);
   });
+
+  it("counts a quick pinch seen in only one camera reading", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(36));
+    const [a] = twoLoosePieces(puzzle);
+    const at = centre(a);
+    let now = 0;
+    for (let i = 0; i < 6; i++) {
+      engine.update({ hands: [handAt(at, { pinch: false })], now: (now += 33), width, height });
+    }
+    engine.update({ hands: [handAt(at)], now: (now += 33), width, height });
+    engine.update({ hands: [handAt(at, { pinch: false })], now: now + 33, width, height });
+    expect(engine.view().selectedPieceId).toBe(a.id);
+  });
+
+  /** A fist whose thumb rests on the index finger: it also reads as a tight pinch. */
+  function fistAt(at: Point): Hand {
+    const hand = makeHand({ fist: true });
+    const cx = 1 - at.x / width;
+    const cy = at.y / height;
+    hand[LM.INDEX_TIP] = { x: cx, y: Math.max(cy, 0.78) };
+    hand[LM.THUMB_TIP] = { x: cx + 0.005, y: Math.max(cy, 0.78) };
+    return hand;
+  }
+
+  it("never treats a fist as a pinch", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(38));
+    const [a] = twoLoosePieces(puzzle);
+    let now = 0;
+    for (let i = 0; i < 6; i++) {
+      engine.update({
+        hands: [handAt(centre(a), { pinch: false })],
+        now: (now += 33),
+        width,
+        height,
+      });
+    }
+    for (let i = 0; i < 5; i++) {
+      engine.update({ hands: [fistAt(centre(a))], now: (now += 33), width, height });
+    }
+    expect(engine.view().selectedPieceId).toBeNull();
+    expect(engine.view().fistProgress).toBeGreaterThan(0);
+  });
+
+  it("saves with a fist even when its thumb touches the index and the tracker blinks", () => {
+    const engine = createEngine();
+    const puzzle = engine.beginPuzzle(box, 0, seeded(40));
+    for (const piece of puzzle.pieces) {
+      piece.x = box.x + piece.col * puzzle.tileW;
+      piece.y = box.y + piece.row * puzzle.tileH;
+    }
+    reconcile(puzzle);
+    expect(puzzle.solved).toBe(true);
+    let now = 0;
+    let saved = false;
+    for (let i = 0; i < 40 && !saved; i++) {
+      // Every fifth reading the tracker loses the hand for a moment.
+      const hands = i % 5 === 4 ? [] : [fistAt({ x: 500, y: 300 })];
+      saved = engine
+        .update({ hands, now: (now += 33), width, height })
+        .some((e) => e.type === "save");
+    }
+    expect(saved).toBe(true);
+    expect(now).toBeLessThan(FIST_HOLD_MS + 200);
+  });
 });

@@ -56,15 +56,26 @@ export function isPinching(hand: Hand, wasPinching = false): boolean {
 }
 
 /** A fist: all four fingertips are closer to the wrist than their knuckles are. */
+const FIST_FINGERS: [number, number][] = [
+  [LM.INDEX_TIP, LM.INDEX_MCP],
+  [LM.MIDDLE_TIP, LM.MIDDLE_MCP],
+  [LM.RING_TIP, LM.RING_MCP],
+  [LM.PINKY_TIP, LM.PINKY_MCP],
+];
+
+/** Checked in the flat image and, when available, in 3D: a fist facing the camera squashes the
+ * flat picture, so either one seeing curled fingers is enough. */
 export function isFist(hand: Hand): boolean {
-  const wrist = hand[LM.WRIST];
-  const fingers: [number, number][] = [
-    [LM.INDEX_TIP, LM.INDEX_MCP],
-    [LM.MIDDLE_TIP, LM.MIDDLE_MCP],
-    [LM.RING_TIP, LM.RING_MCP],
-    [LM.PINKY_TIP, LM.PINKY_MCP],
-  ];
-  return fingers.every(([tip, mcp]) => dist(hand[tip], wrist) < dist(hand[mcp], wrist));
+  const flatWrist = hand[LM.WRIST];
+  const flat = FIST_FINGERS.every(
+    ([tip, mcp]) => dist(hand[tip], flatWrist) < dist(hand[mcp], flatWrist),
+  );
+  if (flat) return true;
+  const w = hand.world;
+  if (!w || w.length <= LM.PINKY_TIP) return false;
+  return FIST_FINGERS.every(
+    ([tip, mcp]) => dist3(w[tip], w[LM.WRIST]) < dist3(w[mcp], w[LM.WRIST]),
+  );
 }
 
 /** The camera preview is drawn mirrored like a mirror, so landmarks flip horizontally to match. */
